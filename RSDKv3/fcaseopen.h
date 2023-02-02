@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define fcaseopen_h
 
 #include <stdio.h>
+#include <unistd.h>
 
 #if defined(__cplusplus)
 extern "C" {
