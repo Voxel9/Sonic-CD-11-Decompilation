@@ -6,7 +6,7 @@
 #include <vorbis/vorbisfile.h>
 
 #if RETRO_PLATFORM != RETRO_VITA && RETRO_PLATFORM != RETRO_OSX
-#include "SDL.h"
+#include "SDL2/SDL.h"
 #endif
 
 #if RETRO_USING_SDL1 || RETRO_USING_SDL2
