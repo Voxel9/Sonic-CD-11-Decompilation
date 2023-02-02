@@ -14,7 +14,7 @@
 
 #else
 
-#if RETRO_USING_SDL2
+#if RETRO_USING_SDL2 && RETRO_PLATFORM != RETRO_WIN
 #define FileIO                                          SDL_RWops
 #define fOpen(path, mode)                               SDL_RWFromFile(path, mode)
 #define fRead(buffer, elementSize, elementCount, file)  SDL_RWread(file, buffer, elementSize, elementCount)
