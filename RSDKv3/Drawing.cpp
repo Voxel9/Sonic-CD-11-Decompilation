@@ -102,30 +102,15 @@ int InitRenderDevice()
 
     sprintf(gameTitle, "%s%s", Engine.gameWindowText, Engine.usingDataFile_Config ? "" : " (Using Data Folder)");
 
-#if RETRO_USING_SDL2
-    SDL_Init(SDL_INIT_EVERYTHING);
+    // Init SDL
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, Engine.vsync ? "1" : "0");
-    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
-    SDL_SetHint(SDL_HINT_WINRT_HANDLE_BACK_BUTTON, "1");
-
-    byte flags = 0;
-#if RETRO_USING_OPENGL
-    flags |= SDL_WINDOW_OPENGL;
-
-#if RETRO_PLATFORM != RETRO_OSX // dude idk either you just gotta trust that this works
-#if RETRO_PLATFORM != RETRO_ANDROID
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-#else
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-#endif
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-#endif
-#endif
+    // Init GLFW
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
 
 #if RETRO_GAMEPLATFORM == RETRO_MOBILE
     Engine.startFullScreen = true;
@@ -148,8 +133,7 @@ int InitRenderDevice()
     SCREEN_CENTERX = SCREEN_XSIZE / 2;
     viewOffsetX    = 0;
 
-    Engine.window = SDL_CreateWindow(gameTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_XSIZE * Engine.windowScale,
-                                     SCREEN_YSIZE * Engine.windowScale, SDL_WINDOW_ALLOW_HIGHDPI | flags);
+    Engine.window = glfwCreateWindow(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, gameTitle, NULL, NULL);
 #if !RETRO_USING_OPENGL
     Engine.renderer = SDL_CreateRenderer(Engine.window, -1, SDL_RENDERER_ACCELERATED);
 #endif
@@ -191,22 +175,13 @@ int InitRenderDevice()
 #endif
 
     if (Engine.borderless) {
-        SDL_RestoreWindow(Engine.window);
-        SDL_SetWindowBordered(Engine.window, SDL_FALSE);
+        // glfwRestoreWindow(Engine.window);
+        // SDL_SetWindowBordered(Engine.window, SDL_FALSE);
     }
 
-    SDL_SetWindowPosition(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+    // glfwSetWindowPos(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 
-    SDL_DisplayMode disp;
-    int winID = SDL_GetWindowDisplayIndex(Engine.window);
-    if (SDL_GetCurrentDisplayMode(winID, &disp) == 0) {
-        Engine.screenRefreshRate = disp.refresh_rate;
-    }
-    else {
-        printf("error: %s", SDL_GetError());
-    }
-
-#endif
+    Engine.screenRefreshRate = 60;
 
 #if RETRO_USING_SDL1
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -261,9 +236,11 @@ int InitRenderDevice()
 
 #if RETRO_USING_OPENGL
     // Init GL
-    Engine.glContext = SDL_GL_CreateContext(Engine.window);
+    // Engine.glContext = SDL_GL_CreateContext(Engine.window);
 
-    SDL_GL_SetSwapInterval(Engine.vsync ? 1 : 0);
+    glfwMakeContextCurrent(Engine.window);
+
+    glfwSwapInterval(Engine.vsync ? 1 : 0);
 
 #if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX
     // glew Setup
@@ -1035,18 +1012,13 @@ void ReleaseRenderDevice()
 
 #if RETRO_USING_OPENGL
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) glDeleteTextures(1, &gfxTextureID[i]);
-
-#if RETRO_USING_SDL2
-    if (Engine.glContext)
-        SDL_GL_DeleteContext(Engine.glContext);
-#endif
 #endif
 
 #if RETRO_USING_SDL2
 #if !RETRO_USING_OPENGL
     SDL_DestroyRenderer(Engine.renderer);
 #endif
-    SDL_DestroyWindow(Engine.window);
+    glfwDestroyWindow(Engine.window);
 #endif
 }
 
@@ -1060,8 +1032,8 @@ void SetFullScreen(bool fs)
         SDL_ShowCursor(SDL_FALSE);
 #endif
 #if RETRO_USING_SDL2
-        SDL_RestoreWindow(Engine.window);
-        SDL_SetWindowFullscreen(Engine.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        // glfwRestoreWindow(Engine.window);
+        // SDL_SetWindowFullscreen(Engine.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 #endif
         SDL_DisplayMode mode;
         SDL_GetDesktopDisplayMode(0, &mode);
@@ -1109,10 +1081,10 @@ void SetFullScreen(bool fs)
 
         SetScreenDimensions(SCREEN_XSIZE_CONFIG, SCREEN_YSIZE, SCREEN_XSIZE_CONFIG * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale);
 #if RETRO_USING_SDL2
-        SDL_SetWindowFullscreen(Engine.window, 0);
-        SDL_SetWindowSize(Engine.window, SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale);
-        SDL_SetWindowPosition(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        SDL_RestoreWindow(Engine.window);
+        // SDL_SetWindowFullscreen(Engine.window, 0);
+        // glfwSetWindowSize(Engine.window, SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale);
+        // glfwSetWindowPos(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        // glfwRestoreWindow(Engine.window);
 #endif
     }
 }

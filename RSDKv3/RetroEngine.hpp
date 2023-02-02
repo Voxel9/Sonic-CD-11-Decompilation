@@ -89,8 +89,8 @@ typedef unsigned int uint;
 #ifndef BASE_PATH
 #define BASE_PATH            ""
 #endif
-#define RETRO_USING_MOUSE
-#define RETRO_USING_TOUCH
+// #define RETRO_USING_MOUSE
+// #define RETRO_USING_TOUCH
 #define DEFAULT_SCREEN_XSIZE 424
 #define DEFAULT_FULLSCREEN   false
 #endif
@@ -341,6 +341,12 @@ enum RetroBytecodeFormat {
 #include <theoraplay.h>
 #endif
 
+#if RETRO_PLATFORM == RETRO_WIN
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <GLFW/glfw3.h>
+#endif
+
 #if RETRO_PLATFORM == RETRO_ANDROID
 #include <jni.h>
 #endif
@@ -503,32 +509,7 @@ public:
     int windowXSize; // width of window/screen in the previous frame
     int windowYSize; // height of window/screen in the previous frame
 
-#if RETRO_USING_SDL2
-    SDL_Window *window = nullptr;
-#if !RETRO_USING_OPENGL
-    SDL_Renderer *renderer      = nullptr;
-    SDL_Texture *screenBuffer   = nullptr;
-    SDL_Texture *screenBuffer2x = nullptr;
-    SDL_Texture *videoBuffer    = nullptr;
-#endif
-
-    SDL_Event sdlEvents;
-
-#if RETRO_USING_OPENGL
-    SDL_GLContext glContext; // OpenGL context
-#endif
-
-#endif
-
-#if RETRO_USING_SDL1
-    SDL_Surface *windowSurface = nullptr;
-
-    SDL_Surface *screenBuffer   = nullptr;
-    SDL_Surface *screenBuffer2x = nullptr;
-    SDL_Surface *videoBuffer    = nullptr;
-
-    SDL_Event sdlEvents;
-#endif
+    GLFWwindow *window = nullptr;
 };
 
 extern RetroEngine Engine;

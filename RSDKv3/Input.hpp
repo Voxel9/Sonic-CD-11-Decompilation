@@ -74,32 +74,6 @@ extern int mouseHideTimer;
 #endif
 
 #if !RETRO_USE_ORIGINAL_CODE
-#if RETRO_USING_SDL2
-// Easier this way
-enum ExtraSDLButtons {
-    SDL_CONTROLLER_BUTTON_ZL = SDL_CONTROLLER_BUTTON_MAX + 1,
-    SDL_CONTROLLER_BUTTON_ZR,
-    SDL_CONTROLLER_BUTTON_LSTICK_UP,
-    SDL_CONTROLLER_BUTTON_LSTICK_DOWN,
-    SDL_CONTROLLER_BUTTON_LSTICK_LEFT,
-    SDL_CONTROLLER_BUTTON_LSTICK_RIGHT,
-    SDL_CONTROLLER_BUTTON_RSTICK_UP,
-    SDL_CONTROLLER_BUTTON_RSTICK_DOWN,
-    SDL_CONTROLLER_BUTTON_RSTICK_LEFT,
-    SDL_CONTROLLER_BUTTON_RSTICK_RIGHT,
-    SDL_CONTROLLER_BUTTON_MAX_EXTRA,
-};
-
-void ControllerInit(byte controllerID);
-void ControllerClose(byte controllerID);
-#endif
-
-#if RETRO_USING_SDL1
-extern byte keyState[SDLK_LAST];
-
-extern SDL_Joystick *controller;
-#endif
-
 void ProcessInput();
 #endif
 

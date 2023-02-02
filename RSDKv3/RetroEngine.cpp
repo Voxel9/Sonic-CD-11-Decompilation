@@ -32,228 +32,28 @@ inline int GetLowerRate(int intendRate, int targetRate)
 
 bool ProcessEvents()
 {
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
-    while (SDL_PollEvent(&Engine.sdlEvents)) {
-        // Main Events
-        switch (Engine.sdlEvents.type) {
-#if RETRO_USING_SDL2
-            case SDL_WINDOWEVENT:
-                switch (Engine.sdlEvents.window.event) {
-                    case SDL_WINDOWEVENT_MAXIMIZED: {
-                        SDL_RestoreWindow(Engine.window);
-                        SDL_SetWindowFullscreen(Engine.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-                        Engine.isFullScreen = true;
-                        break;
-                    }
-                    case SDL_WINDOWEVENT_CLOSE: Engine.gameMode = ENGINE_EXITGAME; return false;
-                    case SDL_WINDOWEVENT_FOCUS_LOST:
-                        if (!(disableFocusPause & 1))
-                            Engine.message = MESSAGE_LOSTFOCUS;
-                        Engine.hasFocus = false;
-                        break;
-                    case SDL_WINDOWEVENT_FOCUS_GAINED: Engine.hasFocus = true; break;
-                }
-                break;
-            case SDL_CONTROLLERDEVICEADDED: ControllerInit(Engine.sdlEvents.cdevice.which); break;
-            case SDL_CONTROLLERDEVICEREMOVED: ControllerClose(Engine.sdlEvents.cdevice.which); break;
-            case SDL_APP_WILLENTERBACKGROUND:
-                if (!(disableFocusPause & 1))
-                    Engine.message = MESSAGE_LOSTFOCUS;
-                Engine.hasFocus = false;
-                break;
-            case SDL_APP_WILLENTERFOREGROUND: Engine.hasFocus = true; break;
-            case SDL_APP_TERMINATING: Engine.gameMode = ENGINE_EXITGAME; return false;
+    glfwPollEvents();
 
-#endif
-
-#if defined(RETRO_USING_MOUSE) && RETRO_USING_SDL2
-            case SDL_MOUSEMOTION:
-                if (touches <= 1) { // Touch always takes priority over mouse
-                    uint state = SDL_GetMouseState(&touchX[0], &touchY[0]);
-
-                    int width = 0, height = 0;
-                    SDL_GetWindowSize(Engine.window, &width, &height);
-                    touchX[0] = ((touchX[0] - viewOffsetX) / (float)width) * SCREEN_XSIZE;
-                    touchY[0] = (touchY[0] / (float)height) * SCREEN_YSIZE;
-
-                    touchDown[0] = state & SDL_BUTTON_LMASK;
-                    if (touchDown[0])
-                        touches = 1;
-                }
-                break;
-            case SDL_MOUSEBUTTONDOWN:
-                if (touches <= 1) { // Touch always takes priority over mouse
-                    switch (Engine.sdlEvents.button.button) {
-                        case SDL_BUTTON_LEFT: touchDown[0] = true; break;
-                    }
-                    touches = 1;
-                }
-                break;
-            case SDL_MOUSEBUTTONUP:
-                if (touches <= 1) { // Touch always takes priority over mouse
-                    switch (Engine.sdlEvents.button.button) {
-                        case SDL_BUTTON_LEFT: touchDown[0] = false; break;
-                    }
-                    touches = 0;
-                }
-                break;
-#endif
-
-#if RETRO_USING_SDL2 && defined(RETRO_USING_TOUCH)
-            case SDL_FINGERMOTION:
-            case SDL_FINGERDOWN:
-            case SDL_FINGERUP: {
-                int count = SDL_GetNumTouchFingers(Engine.sdlEvents.tfinger.touchId);
-                touches   = 0;
-                for (int i = 0; i < count; i++) {
-                    SDL_Finger *finger = SDL_GetTouchFinger(Engine.sdlEvents.tfinger.touchId, i);
-                    if (finger) {
-                        touchDown[touches] = true;
-                        touchX[touches]    = finger->x * SCREEN_XSIZE;
-                        touchY[touches]    = finger->y * SCREEN_YSIZE;
-                        touches++;
-                    }
-                }
-                break;
-            }
-#endif
-            case SDL_KEYDOWN:
-                switch (Engine.sdlEvents.key.keysym.sym) {
-                    default: break;
-
-                    case SDLK_ESCAPE:
-                        if (Engine.devMenu) {
-#if RETRO_USE_MOD_LOADER
-                            // hacky patch because people can escape
-                            if (Engine.gameMode == ENGINE_DEVMENU && stageMode == DEVMENU_MODMENU) {
-                                RefreshEngine();
-                            }
-#endif
-
-                            Engine.gameMode = ENGINE_INITDEVMENU;
-                        }
-                        break;
-
-                    case SDLK_F1:
-                        if (Engine.devMenu) {
-                            activeStageList   = 0;
-                            stageListPosition = 0;
-                            stageMode         = STAGEMODE_LOAD;
-                            Engine.gameMode   = ENGINE_MAINGAME;
-                        }
-                        break;
-
-                    case SDLK_F2:
-                        if (Engine.devMenu) {
-                            stageListPosition--;
-                            if (stageListPosition < 0) {
-                                activeStageList--;
-
-                                if (activeStageList < 0) {
-                                    activeStageList = 3;
-                                }
-                                stageListPosition = stageListCount[activeStageList] - 1;
-                            }
-                            stageMode       = STAGEMODE_LOAD;
-                            Engine.gameMode = ENGINE_MAINGAME;
-                            SetGlobalVariableByName("LampPost.Check", 0);
-                            SetGlobalVariableByName("Warp.XPos", 0);
-                        }
-                        break;
-
-                    case SDLK_F3:
-                        if (Engine.devMenu) {
-                            stageListPosition++;
-                            if (stageListPosition >= stageListCount[activeStageList]) {
-                                activeStageList++;
-
-                                stageListPosition = 0;
-
-                                if (activeStageList >= 4) {
-                                    activeStageList = 0;
-                                }
-                            }
-                            stageMode       = STAGEMODE_LOAD;
-                            Engine.gameMode = ENGINE_MAINGAME;
-                            SetGlobalVariableByName("LampPost.Check", 0);
-                            SetGlobalVariableByName("Warp.XPos", 0);
-                        }
-                        break;
-
-                    case SDLK_F4:
-                        Engine.isFullScreen ^= 1;
-                        SetFullScreen(Engine.isFullScreen);
-                        break;
-
-                    case SDLK_F5:
-                        if (Engine.devMenu) {
-                            currentStageFolder[0] = 0; // reload all assets & scripts
-                            stageMode             = STAGEMODE_LOAD;
-                        }
-                        break;
-
-                    case SDLK_F8:
-                        if (Engine.devMenu)
-                            showHitboxes ^= 2;
-                        break;
-
-                    case SDLK_F9:
-                        if (Engine.devMenu)
-                            showHitboxes ^= 1;
-                        break;
-
-                    case SDLK_F10:
-                        if (Engine.devMenu)
-                            Engine.showPaletteOverlay ^= 1;
-                        break;
-
-                    case SDLK_BACKSPACE:
-                        if (Engine.devMenu)
-                            Engine.gameSpeed = Engine.fastForwardSpeed;
-                        break;
-
-#if RETRO_PLATFORM == RETRO_OSX
-                    case SDLK_F6:
-                        if (Engine.masterPaused)
-                            Engine.frameStep = true;
-                        break;
-
-                    case SDLK_F7:
-                        if (Engine.devMenu)
-                            Engine.masterPaused ^= 1;
-                        break;
-#else
-                    case SDLK_F11:
-                    case SDLK_INSERT:
-                        if (Engine.masterPaused)
-                            Engine.frameStep = true;
-                        break;
-
-                    case SDLK_F12:
-                    case SDLK_PAUSE:
-                        if (Engine.devMenu)
-                            Engine.masterPaused ^= 1;
-                        break;
-#endif
-                }
-
-#if RETRO_USING_SDL1
-                keyState[Engine.sdlEvents.key.keysym.sym] = 1;
-#endif
-                break;
-            case SDL_KEYUP:
-                switch (Engine.sdlEvents.key.keysym.sym) {
-                    default: break;
-                    case SDLK_BACKSPACE: Engine.gameSpeed = 1; break;
-                }
-#if RETRO_USING_SDL1
-                keyState[Engine.sdlEvents.key.keysym.sym] = 0;
-#endif
-                break;
-            case SDL_QUIT: Engine.gameMode = ENGINE_EXITGAME; return false;
+    switch(glfwGetMouseButton(Engine.window, GLFW_MOUSE_BUTTON_LEFT)) {
+    case GLFW_PRESS:
+        if (touches <= 1) { // Touch always takes priority over mouse
+            touchDown[0] = true;
+            touches = 1;
         }
+        break;
+    case GLFW_RELEASE:
+        if (touches <= 1) { // Touch always takes priority over mouse
+            touchDown[0] = false;
+            touches = 0;
+        }
+        break;
     }
-#endif
+
+    if(glfwWindowShouldClose(Engine.window)) {
+        Engine.gameMode = ENGINE_EXITGAME;
+        return false;
+    }
+
     return true;
 }
 
@@ -354,14 +154,20 @@ void RetroEngine::Init()
 
 void RetroEngine::Run()
 {
-    unsigned long long targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
+    LARGE_INTEGER perf_freq;
+    QueryPerformanceFrequency(&perf_freq);
+
+    unsigned long long targetFreq = perf_freq.QuadPart / Engine.refreshRate;
     unsigned long long curTicks   = 0;
     unsigned long long prevTicks  = 0;
 
     while (running) {
 #if !RETRO_USE_ORIGINAL_CODE
         if (!vsync) {
-            curTicks = SDL_GetPerformanceCounter();
+            LARGE_INTEGER perf_counter;
+            QueryPerformanceCounter(&perf_counter);
+
+            curTicks = perf_counter.QuadPart;
             if (curTicks < prevTicks + targetFreq)
                 continue;
             prevTicks = curTicks;
@@ -453,9 +259,8 @@ void RetroEngine::Run()
 
         FlipScreen();
 
-#if RETRO_USING_OPENGL && RETRO_USING_SDL2
-        SDL_GL_SwapWindow(Engine.window);
-#endif
+        glfwSwapBuffers(Engine.window);
+        
         frameStep      = false;
         Engine.message = MESSAGE_NONE;
 
@@ -478,9 +283,7 @@ void RetroEngine::Run()
     SaveMods();
 #endif
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
     SDL_Quit();
-#endif
 }
 
 #if RETRO_USE_MOD_LOADER

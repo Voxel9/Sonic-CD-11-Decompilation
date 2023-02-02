@@ -23,7 +23,7 @@ CFLAGS  := -O3 -m32 -static -DGLEW_STATIC -D__WIN32__
 
 CXXFLAGS := $(CFLAGS) -fno-rtti -std=c++17
 
-LIBS    :=  -ltinyxml2 -lvorbisfile -lvorbis -logg -ltheora -lmingw32 -lSDL2 -lSDL2main -lglew32 -lopengl32 \
+LIBS    :=  -ltinyxml2 -lvorbisfile -lvorbis -logg -ltheora -lmingw32 -lSDL2 -lSDL2main -lglfw3 -lglew32 -lopengl32 \
 			-lgdi32 -lwinmm -limm32 -lsetupapi -lversion -lole32 -loleaut32
 
 #---------------------------------------------------------------------------------
