@@ -281,6 +281,7 @@ enum RetroBytecodeFormat {
 #elif RETRO_PLATFORM == RETRO_3DS
 #include <3ds.h>
 #include <citro3d.h>
+#include <tex3ds.h>
 #include <SDL/SDL.h>
 #include <tremor/ivorbiscodec.h>
 #include <tremor/ivorbisfile.h>

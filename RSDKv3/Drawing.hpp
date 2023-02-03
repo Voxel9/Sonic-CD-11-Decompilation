@@ -114,8 +114,8 @@ extern int virtualHeight;
 extern float viewAngle;
 extern float viewAnglePos;
 
-// extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
-// extern GLuint videoBuffer;
+extern C3D_Tex gfxTextureID[HW_TEXTURE_COUNT];
+extern C3D_Tex videoBuffer;
 
 extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];

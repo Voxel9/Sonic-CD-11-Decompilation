@@ -76,8 +76,8 @@ float viewAngle    = 0;
 float viewAnglePos = 0;
 #endif
 
-// GLuint gfxTextureID[HW_TEXTURE_COUNT];
-// GLuint videoBuffer    = 0;
+C3D_Tex gfxTextureID[HW_TEXTURE_COUNT];
+C3D_Tex videoBuffer;
 
 DrawVertex screenRect[4];
 DrawVertex retroScreenRect[4];
@@ -115,58 +115,30 @@ int InitRenderDevice()
     Engine.rendertarget = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
     C3D_RenderTargetSetOutput(Engine.rendertarget, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
-    if (Engine.borderless) {
-        // glfwRestoreWindow(Engine.window);
-        // SDL_SetWindowBordered(Engine.window, SDL_FALSE);
-    }
-
     Engine.screenRefreshRate = 60;
-
-    // Init GL
-    // Engine.glContext = SDL_GL_CreateContext(Engine.window);
-
-    // glfwMakeContextCurrent(Engine.window);
-
-    // glfwSwapInterval(Engine.vsync ? 1 : 0);
-
-#if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX && RETRO_PLATFORM != RETRO_3DS
-    // glew Setup
-    GLenum err = glewInit();
-    if (err != GLEW_OK && err != GLEW_ERROR_NO_GLX_DISPLAY) {
-        PrintLog("glew init error:");
-        PrintLog((const char *)glewGetErrorString(err));
-        return false;
-    }
-#endif
     Engine.highResMode = false;
+
     // glClearColor(0.0, 0.0, 0.0, 1.0);
-    // glDisable(GL_LIGHTING);
-    // glDisable(GL_DITHER);
-    // glEnable(GL_TEXTURE_2D);
-    // glDisable(GL_DEPTH_TEST);
+    C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALL);
 
     // glMatrixMode(GL_MODELVIEW);
     // glLoadIdentity();
 
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
     SetupPolygonLists();
 
     // glMatrixMode(GL_TEXTURE);
     // glLoadIdentity();
 
     // Allows for texture locations in pixels instead of from 0.0 to 1.0, saves us having to do this every time we set UVs
-    /* glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
-    glMatrixMode(GL_PROJECTION);
+    // glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
+    // glMatrixMode(GL_PROJECTION);
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) {
-        glGenTextures(1, &gfxTextureID[i]);
-        glBindTexture(GL_TEXTURE_2D, gfxTextureID[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    } */
+        C3D_TexInit(&gfxTextureID[i], HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GPU_RGBA5551);
+        C3D_TexSetFilter(&gfxTextureID[i], GPU_NEAREST, GPU_NEAREST);
+        C3D_TexSetWrap(&gfxTextureID[i], GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE);
+    }
 
     UpdateHardwareTextures();
 
@@ -202,6 +174,7 @@ int InitRenderDevice()
 
     return 1;
 }
+
 void FlipScreen()
 {
     if (Engine.gameMode == ENGINE_EXITGAME)
@@ -241,18 +214,21 @@ void FlipScreen()
 
 void FlipScreenNoFB()
 {
-    /* glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 
-    glLoadIdentity();
-    glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    // glLoadIdentity();
+    // glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
+    // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glDisable(GL_BLEND);
+    C3D_TexBind(0, &gfxTextureID[texPaletteNum]);
+    // glEnableClientState(GL_COLOR_ARRAY);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST); */
+    C3D_TexSetFilter(
+        &gfxTextureID[texPaletteNum],
+        Engine.scalingMode ? GPU_LINEAR : GPU_NEAREST,
+        Engine.scalingMode ? GPU_LINEAR : GPU_NEAREST
+    );
 
     if (render3DEnabled) {
         float scale         = viewHeight / SCREEN_YSIZE;
@@ -260,55 +236,55 @@ void FlipScreenNoFB()
         float floor3DBottom = (viewHeight)-4.0 * scale;
 
         // Non Blended rendering
-        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glEnable(GL_BLEND);
+        // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
+        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
+        // glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
         // Init 3D Plane
-        glViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
-        glPushMatrix();
-        glLoadIdentity(); */
+        // glViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
+        // glPushMatrix();
+        // glLoadIdentity();
         CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
 
-        /* glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glScalef(1.0f, -1.0f, -1.0f);
-        glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
-        glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
+        // glMatrixMode(GL_MODELVIEW);
+        // glLoadIdentity();
+        // glScalef(1.0f, -1.0f, -1.0f);
+        // glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
+        // glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
 
-        glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
-        glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glLoadIdentity();
+        // glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
+        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
+        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
+        // glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        // glLoadIdentity();
 
         // Return for blended rendering
-        glMatrixMode(GL_PROJECTION);
-        glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-        glPopMatrix(); */
+        // glMatrixMode(GL_PROJECTION);
+        // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+        // glPopMatrix();
     }
     else {
         // Non Blended rendering
-        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
+        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
+        // glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
 
-        glEnable(GL_BLEND); */
+        C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
+    // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+    // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
+    // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
+    // glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY); */
+    C3D_TexSetFilter(&gfxTextureID[texPaletteNum], GPU_NEAREST, GPU_NEAREST);
+
+    // glDisableClientState(GL_COLOR_ARRAY);
 }
 
 #define normalize(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
@@ -346,7 +322,7 @@ void FlipScreenVideo()
     // glClear(GL_COLOR_BUFFER_BIT);
 
     // glLoadIdentity();
-    // glBindTexture(GL_TEXTURE_2D, videoBuffer);
+    C3D_TexBind(0, &videoBuffer);
 #if DONT_USE_VIEW_ANGLE
     // glClear(GL_COLOR_BUFFER_BIT);
 #else
@@ -361,11 +337,11 @@ void FlipScreenVideo()
         glClear(GL_COLOR_BUFFER_BIT);
     }
 #endif
-    /* glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-    glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
+    // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    // glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
+    // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
 }
 
 void ReleaseRenderDevice()
@@ -380,10 +356,8 @@ void ReleaseRenderDevice()
     if (Engine.texBuffer2x)
         delete[] Engine.texBuffer2x;
 
-    // for (int i = 0; i < HW_TEXTURE_COUNT; i++)
-    //     glDeleteTextures(1, &gfxTextureID[i]);
-
-    // glfwDestroyWindow(Engine.window);
+    for (int i = 0; i < HW_TEXTURE_COUNT; i++)
+        C3D_TexDelete(&gfxTextureID[i]);
 }
 
 void GenerateBlendLookupTable()
@@ -513,16 +487,14 @@ void UpdateHardwareTextures()
     UpdateTextureBufferWithTiles();
     UpdateTextureBufferWithSortedSprites();
 
-    // glBindTexture(GL_TEXTURE_2D, gfxTextureID[0]);
-    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+    C3D_TexLoadImage(&gfxTextureID[0], texBuffer, GPU_TEXFACE_2D, 0);
 
     for (byte b = 1; b < HW_TEXTURE_COUNT; ++b) {
         SetActivePalette(b, 0, SCREEN_YSIZE);
         UpdateTextureBufferWithTiles();
         UpdateTextureBufferWithSprites();
 
-        // glBindTexture(GL_TEXTURE_2D, gfxTextureID[b]);
-        // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+        C3D_TexLoadImage(&gfxTextureID[b], texBuffer, GPU_TEXFACE_2D, 0);
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
 }
