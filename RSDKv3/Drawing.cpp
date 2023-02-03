@@ -144,7 +144,6 @@ int InitRenderDevice()
     }
 #endif
     Engine.highResMode = false;
-    glClearColor(0.0, 0.0, 0.0, 1.0);
     glDisable(GL_LIGHTING);
     glDisable(GL_DITHER);
     glEnable(GL_TEXTURE_2D);
@@ -177,7 +176,6 @@ int InitRenderDevice()
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -246,8 +244,6 @@ void FlipScreen()
 
 void FlipScreenNoFB()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glLoadIdentity();
     glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
     glViewport(viewOffsetX, 0, viewWidth, viewHeight);
@@ -348,24 +344,8 @@ void FlipScreenVideo()
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
 
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glLoadIdentity();
     glBindTexture(GL_TEXTURE_2D, videoBuffer);
-#if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
-#else
-    if (viewAngle >= 180.0) {
-        if (viewAnglePos < 180.0) {
-            viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
-    else if (viewAnglePos > 0.0) {
-        viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-#endif
     glViewport(viewOffsetX, 0, viewWidth, viewHeight);
     glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);

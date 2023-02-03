@@ -161,6 +161,9 @@ void RetroEngine::Run()
     unsigned long long curTicks   = 0;
     unsigned long long prevTicks  = 0;
 
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     while (running) {
 #if !RETRO_USE_ORIGINAL_CODE
         if (!vsync) {
