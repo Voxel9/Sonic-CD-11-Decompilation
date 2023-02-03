@@ -91,7 +91,7 @@ typedef unsigned int uint;
 #endif
 // #define RETRO_USING_MOUSE
 // #define RETRO_USING_TOUCH
-#define DEFAULT_SCREEN_XSIZE 424
+#define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
 #endif
 

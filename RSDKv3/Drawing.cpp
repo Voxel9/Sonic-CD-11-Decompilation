@@ -23,9 +23,9 @@ ushort tintLookupTable[0x10000];
 #define maxVal(a, b) (a >= b ? a : b)
 #define minVal(a, b) (a <= b ? a : b)
 
-int SCREEN_XSIZE        = 424;
-int SCREEN_CENTERX      = 424 / 2;
-int SCREEN_XSIZE_CONFIG = 424;
+int SCREEN_XSIZE        = 400;
+int SCREEN_CENTERX      = 400 / 2;
+int SCREEN_XSIZE_CONFIG = 400;
 
 int touchWidth  = SCREEN_XSIZE;
 int touchHeight = SCREEN_YSIZE;
