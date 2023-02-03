@@ -327,7 +327,7 @@ void InitUserdata()
         ini.SetInteger("Window", "DimLimit", Engine.dimLimit = 300);
         Engine.dimLimit *= Engine.refreshRate;
         renderType = RENDER_HW;
-        ini.SetBool("Window", "HardwareRenderer", false);
+        ini.SetBool("Window", "HardwareRenderer", true);
 
         ini.SetFloat("Audio", "BGMVolume", bgmVolume / (float)MAX_VOLUME);
         ini.SetFloat("Audio", "SFXVolume", sfxVolume / (float)MAX_VOLUME);
