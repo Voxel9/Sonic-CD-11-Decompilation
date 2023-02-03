@@ -4,6 +4,11 @@
 # Visual Studio Code
 .vscode/
 
+# 3DS artifacts
+RSDKv3.3ds/*.elf
+RSDKv3.3ds/*.3dsx
+RSDKv3.3ds/*.smdh
+
 # Win32 artifacts
 RSDKv3.win32/*.exe
 RSDKv3.win32/*.ini
