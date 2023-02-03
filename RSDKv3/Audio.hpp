@@ -6,18 +6,11 @@
 #include <vorbis/vorbisfile.h>
 
 #if RETRO_PLATFORM != RETRO_VITA && RETRO_PLATFORM != RETRO_OSX
-#include "SDL2/SDL.h"
+#include "SDL/SDL.h"
 #endif
-
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
 
 #define LockAudioDevice()   SDL_LockAudio()
 #define UnlockAudioDevice() SDL_UnlockAudio()
-
-#else
-#define LockAudioDevice()   ;
-#define UnlockAudioDevice() ;
-#endif
 
 #define TRACK_COUNT   (0x10)
 #define SFX_COUNT     (0x100)
@@ -39,12 +32,9 @@ struct TrackInfo {
 struct StreamInfo {
     OggVorbis_File vorbisFile;
     int vorbBitstream;
-#if RETRO_USING_SDL1
+
     SDL_AudioSpec spec;
-#endif
-#if RETRO_USING_SDL2
-    SDL_AudioStream *stream;
-#endif
+
     Sint16 buffer[MIX_BUFFER_SAMPLES];
     bool trackLoop;
     uint loopPoint;
@@ -103,14 +93,11 @@ extern StreamInfo streamInfo[STREAMFILE_COUNT];
 extern StreamFile *streamFilePtr;
 extern StreamInfo *streamInfoPtr;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
 extern SDL_AudioSpec audioDeviceFormat;
-#endif
 
 int InitAudioPlayback();
 void LoadGlobalSfx();
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
 void ProcessMusicStream(void *data, Sint16 *stream, int len);
 void ProcessAudioPlayback(void *data, Uint8 *stream, int len);
 void ProcessAudioMixing(Sint32 *dst, const Sint16 *src, int len, int volume, sbyte pan);
@@ -119,27 +106,14 @@ inline void FreeMusInfo()
 {
     LockAudioDevice();
 
-#if RETRO_USING_SDL2
-    if (streamInfo[currentStreamIndex].stream)
-        SDL_FreeAudioStream(streamInfo[currentStreamIndex].stream);
-#endif
     ov_clear(&streamInfo[currentStreamIndex].vorbisFile);
-#if RETRO_USING_SDL2
-    streamInfo[currentStreamIndex].stream = nullptr;
-#endif
+
     if (streamFile[currentStreamIndex].buffer)
         free(streamFile[currentStreamIndex].buffer);
     streamFile[currentStreamIndex].buffer = NULL;
 
     UnlockAudioDevice();
 }
-#else
-void ProcessMusicStream() {}
-void ProcessAudioPlayback() {}
-void ProcessAudioMixing() {}
-
-inline void FreeMusInfo() { ov_clear(&streamInfo[currentStreamIndex].vorbisFile); }
-#endif
 
 #if RETRO_USE_MOD_LOADER
 extern char globalSfxNames[SFX_COUNT][0x40];

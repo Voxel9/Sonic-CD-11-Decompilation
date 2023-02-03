@@ -28,13 +28,7 @@ StreamInfo *streamInfoPtr = NULL;
 
 int currentMusicTrack = -1;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
 SDL_AudioSpec audioDeviceFormat;
-
-#if RETRO_USING_SDL2
-SDL_AudioDeviceID audioDevice;
-SDL_AudioStream *ogv_stream;
-#endif
 
 #define AUDIO_FREQUENCY (44100)
 #define AUDIO_FORMAT    (AUDIO_S16SYS) /**< Signed 16-bit samples */
@@ -42,12 +36,10 @@ SDL_AudioStream *ogv_stream;
 #define AUDIO_CHANNELS  (2)
 
 #define ADJUST_VOLUME(s, v) (s = (s * v) / MAX_VOLUME)
-#endif
 
 int InitAudioPlayback()
 {
     StopAllSfx(); //"init"
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
     SDL_AudioSpec want;
     want.freq     = AUDIO_FREQUENCY;
     want.format   = AUDIO_FORMAT;
@@ -55,31 +47,6 @@ int InitAudioPlayback()
     want.channels = AUDIO_CHANNELS;
     want.callback = ProcessAudioPlayback;
 
-#if RETRO_USING_SDL2
-    if ((audioDevice = SDL_OpenAudioDevice(nullptr, 0, &want, &audioDeviceFormat, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE)) > 0) {
-        audioEnabled = true;
-        SDL_PauseAudioDevice(audioDevice, 0);
-        PrintLog("Opened audio device: %d", audioDevice);
-    }
-    else {
-        PrintLog("Unable to open audio device: %s", SDL_GetError());
-        audioEnabled = false;
-        return true; // no audio but game wont crash now
-    }
-
-    // Init video sound stuff
-    // TODO: Unfortunately, we're assuming that video sound is stereo at 48000Hz.
-    // This is true of every .ogv file in the game (the Steam version, at least),
-    // but it would be nice to make this dynamic. Unfortunately, THEORAPLAY's API
-    // makes this awkward.
-    ogv_stream = SDL_NewAudioStream(AUDIO_F32SYS, 2, 48000, audioDeviceFormat.format, audioDeviceFormat.channels, audioDeviceFormat.freq);
-    if (!ogv_stream) {
-        PrintLog("Failed to create stream: %s", SDL_GetError());
-        SDL_CloseAudioDevice(audioDevice);
-        audioEnabled = false;
-        return true; // no audio but game wont crash now
-    }
-#elif RETRO_USING_SDL1
     if (SDL_OpenAudio(&want, &audioDeviceFormat) == 0) {
         audioEnabled = true;
         SDL_PauseAudio(0);
@@ -89,9 +56,6 @@ int InitAudioPlayback()
         audioEnabled = false;
         return true; // no audio but game wont crash now
     }
-#endif // !RETRO_USING_SDL1
-
-#endif
 
     LoadGlobalSfx();
 
@@ -223,38 +187,6 @@ void ProcessMusicStream(Sint32 *stream, size_t bytes_wanted)
     switch (musicStatus) {
         case MUSIC_READY:
         case MUSIC_PLAYING: {
-#if RETRO_USING_SDL2
-            while (musicStatus == MUSIC_PLAYING && SDL_AudioStreamAvailable(streamInfoPtr->stream) < bytes_wanted) {
-                // We need more samples: get some
-                long bytes_read = ov_read(&streamInfoPtr->vorbisFile, (char *)streamInfoPtr->buffer, sizeof(streamInfoPtr->buffer), 0, 2, 1,
-                                          &streamInfoPtr->vorbBitstream);
-
-                if (bytes_read == 0) {
-                    // We've reached the end of the file
-                    if (streamInfoPtr->trackLoop) {
-                        ov_pcm_seek(&streamInfoPtr->vorbisFile, streamInfoPtr->loopPoint);
-                        continue;
-                    }
-                    else {
-                        musicStatus = MUSIC_STOPPED;
-                        break;
-                    }
-                }
-
-                if (musicStatus != MUSIC_PLAYING || SDL_AudioStreamPut(streamInfoPtr->stream, streamInfoPtr->buffer, (int)bytes_read) == -1)
-                    return;
-            }
-
-            // Now that we know there are enough samples, read them and mix them
-            int bytes_done = SDL_AudioStreamGet(streamInfoPtr->stream, streamInfoPtr->buffer, (int)bytes_wanted);
-            if (bytes_done == -1) {
-                return;
-            }
-            if (bytes_done != 0)
-                ProcessAudioMixing(stream, streamInfoPtr->buffer, bytes_done / sizeof(Sint16), (bgmVolume * masterVolume) / MAX_VOLUME, 0);
-#endif
-
-#if RETRO_USING_SDL1
             size_t bytes_gotten = 0;
             byte *buffer        = (byte *)malloc(bytes_wanted);
             memset(buffer, 0, bytes_wanted);
@@ -309,7 +241,6 @@ void ProcessMusicStream(Sint32 *stream, size_t bytes_wanted)
             }
             if (bytes_wanted > 0)
                 free(buffer);
-#endif
             break;
         }
         case MUSIC_STOPPED:
@@ -339,40 +270,6 @@ void ProcessAudioPlayback(void *userdata, Uint8 *stream, int len)
         // Mix music
         ProcessMusicStream(mix_buffer, samples_to_do * sizeof(Sint16));
 
-#if RETRO_USING_SDL2
-        // Process music being played by a ogv video
-        if (videoPlaying == 1) {
-            // Fetch THEORAPLAY audio packets, and shove them into the SDL Audio Stream
-            const size_t bytes_to_do = samples_to_do * sizeof(Sint16);
-
-            const THEORAPLAY_AudioPacket *packet;
-
-            while ((packet = THEORAPLAY_getAudio(videoDecoder)) != NULL) {
-                SDL_AudioStreamPut(ogv_stream, packet->samples, packet->frames * sizeof(float) * 2); // 2 for stereo
-                THEORAPLAY_freeAudio(packet);
-            }
-
-            Sint16 buffer[MIX_BUFFER_SAMPLES];
-
-            // If we need more samples, assume we've reached the end of the file,
-            // and flush the audio stream so we can get more. If we were wrong, and
-            // there's still more file left, then there will be a gap in the audio. Sorry.
-            if (SDL_AudioStreamAvailable(ogv_stream) < bytes_to_do)
-                SDL_AudioStreamFlush(ogv_stream);
-
-            // Fetch the converted audio data, which is ready for mixing.
-            int get = SDL_AudioStreamGet(ogv_stream, buffer, (int)bytes_to_do);
-
-            // Mix the converted audio data into the final output
-            if (get != -1)
-                ProcessAudioMixing(mix_buffer, buffer, get / sizeof(Sint16), bgmVolume, 0);
-        }
-        else {
-            SDL_AudioStreamClear(ogv_stream); // Prevent leftover audio from playing at the start of the next video
-        }
-#endif
-
-#if RETRO_USING_SDL1
         // Process music being played by a video
         // TODO: SDL1.2 lacks SDL_AudioStream so until someone finds good way to replicate that, I'm gonna leave this commented out
         /*if (videoPlaying) {
@@ -424,7 +321,6 @@ void ProcessAudioPlayback(void *userdata, Uint8 *stream, int len)
                     free(convert.buf);
             }
         }*/
-#endif
 
         // Mix SFX
         for (byte i = 0; i < CHANNEL_COUNT; ++i) {
@@ -460,9 +356,7 @@ void ProcessAudioPlayback(void *userdata, Uint8 *stream, int len)
                     }
                 }
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
                 ProcessAudioMixing(mix_buffer, buffer, (int)samples_done, sfxVolume, sfx->pan);
-#endif
             }
         }
 
@@ -485,7 +379,6 @@ void ProcessAudioPlayback(void *userdata, Uint8 *stream, int len)
     }
 }
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
 void ProcessAudioMixing(Sint32 *dst, const Sint16 *src, int len, int volume, sbyte pan)
 {
     if (volume == 0)
@@ -525,7 +418,6 @@ void ProcessAudioMixing(Sint32 *dst, const Sint16 *src, int len, int volume, sby
         i++;
     }
 }
-#endif
 
 #if RETRO_USE_MOD_LOADER
 char globalSfxNames[SFX_COUNT][0x40];
@@ -584,20 +476,9 @@ void LoadMusic()
         if (error == 0) {
             strmInfo->vorbBitstream = -1;
             strmInfo->vorbisFile.vi = ov_info(&strmInfo->vorbisFile, -1);
-
-#if RETRO_USING_SDL2
-            strmInfo->stream = SDL_NewAudioStream(AUDIO_S16, strmInfo->vorbisFile.vi->channels, (int)strmInfo->vorbisFile.vi->rate,
-                                                  audioDeviceFormat.format, audioDeviceFormat.channels, audioDeviceFormat.freq);
-            if (!strmInfo->stream) {
-                PrintLog("Failed to create stream: %s", SDL_GetError());
-            }
-#endif
-
-#if RETRO_USING_SDL1
             strmInfo->spec.format   = AUDIO_S16;
             strmInfo->spec.channels = strmInfo->vorbisFile.vi->channels;
             strmInfo->spec.freq     = (int)strmInfo->vorbisFile.vi->rate;
-#endif
 
             musicStatus         = MUSIC_PLAYING;
             masterVolume        = MAX_VOLUME;
@@ -677,7 +558,6 @@ void LoadSfx(char *filePath, byte sfxID)
         CloseFile();
 
         LockAudioDevice();
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
         SDL_RWops *src = SDL_RWFromMem(sfx, info.vFileSize);
         if (src == NULL) {
             PrintLog("Unable to open sfx: %s", info.fileName);
@@ -717,7 +597,6 @@ void LoadSfx(char *filePath, byte sfxID)
                 }
             }
         }
-#endif
         UnlockAudioDevice();
     }
 }

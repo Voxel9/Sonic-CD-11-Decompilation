@@ -95,15 +95,6 @@ typedef unsigned int uint;
 #define DEFAULT_FULLSCREEN   false
 #endif
 
-#if RETRO_PLATFORM == RETRO_WIN || RETRO_PLATFORM == RETRO_OSX || RETRO_PLATFORM == RETRO_iOS || RETRO_PLATFORM == RETRO_VITA                        \
-    || RETRO_PLATFORM == RETRO_UWP || RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_LINUX
-#define RETRO_USING_SDL1 (0)
-#define RETRO_USING_SDL2 (1)
-#else // Since its an else & not an elif these platforms probably aren't supported yet
-#define RETRO_USING_SDL1 (0)
-#define RETRO_USING_SDL2 (0)
-#endif
-
 #if RETRO_PLATFORM == RETRO_iOS || RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_WP7
 #define RETRO_GAMEPLATFORM (RETRO_MOBILE)
 #elif RETRO_PLATFORM == RETRO_UWP
@@ -112,60 +103,7 @@ typedef unsigned int uint;
 #define RETRO_GAMEPLATFORM (RETRO_STANDARD)
 #endif
 
-#define RETRO_USING_OPENGL (1)
-
-#if RETRO_USING_OPENGL
-#if RETRO_PLATFORM == RETRO_ANDROID
-#define GL_GLEXT_PROTOTYPES
-
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-
-#undef glGenFramebuffers
-#undef glBindFramebuffers
-#undef glFramebufferTexture2D
-
-#undef GL_FRAMEBUFFER
-#undef GL_COLOR_ATTACHMENT0
-#undef GL_FRAMEBUFFER_BINDING
-
-#define glGenFramebuffers      glGenFramebuffersOES
-#define glBindFramebuffer      glBindFramebufferOES
-#define glFramebufferTexture2D glFramebufferTexture2DOES
-#define glDeleteFramebuffers   glDeleteFramebuffersOES
-#define glOrtho                glOrthof
-
-#define GL_FRAMEBUFFER         GL_FRAMEBUFFER_OES
-#define GL_COLOR_ATTACHMENT0   GL_COLOR_ATTACHMENT0_OES
-#define GL_FRAMEBUFFER_BINDING GL_FRAMEBUFFER_BINDING_OES
-#elif RETRO_PLATFORM == RETRO_OSX
-#define GL_GLEXT_PROTOTYPES
-#define GL_SILENCE_DEPRECATION
-
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-
-#undef glGenFramebuffers
-#undef glBindFramebuffer
-#undef glFramebufferTexture2D
-#undef glDeleteFramebuffers
-
-#undef GL_FRAMEBUFFER
-#undef GL_COLOR_ATTACHMENT0
-#undef GL_FRAMEBUFFER_BINDING
-
-#define glGenFramebuffers      glGenFramebuffersEXT
-#define glBindFramebuffer      glBindFramebufferEXT
-#define glFramebufferTexture2D glFramebufferTexture2DEXT
-#define glDeleteFramebuffers   glDeleteFramebuffersEXT
-
-#define GL_FRAMEBUFFER         GL_FRAMEBUFFER_EXT
-#define GL_COLOR_ATTACHMENT0   GL_COLOR_ATTACHMENT0_EXT
-#define GL_FRAMEBUFFER_BINDING GL_FRAMEBUFFER_BINDING_EXT
-#else
 #include <GL/glew.h>
-#endif
-#endif
 
 #define RETRO_USE_HAPTICS (1)
 
@@ -312,11 +250,7 @@ enum RetroBytecodeFormat {
 #define SCREEN_CENTERY (SCREEN_YSIZE / 2)
 
 #if RETRO_PLATFORM == RETRO_WIN || RETRO_PLATFORM == RETRO_UWP || RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_LINUX
-#if RETRO_USING_SDL2
-#include <SDL2/SDL.h>
-#elif RETRO_USING_SDL1
-#include <SDL.h>
-#endif
+#include <SDL/SDL.h>
 #include <vorbis/vorbisfile.h>
 #include <theora/theora.h>
 #include <theoraplay.h>

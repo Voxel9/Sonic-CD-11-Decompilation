@@ -19,12 +19,13 @@ INCLUDES    :=	../RSDKv3 \
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS  := -O3 -m32 -static -DGLEW_STATIC -D__WIN32__
+CFLAGS  := -O3 -m32 -static -D_WIN32
 
-CXXFLAGS := $(CFLAGS) -fno-rtti -std=c++17
+CXXFLAGS := $(shell pkg-config --cflags --static tinyxml2 vorbisfile vorbis theora sdl glew glfw3) \
+			$(CFLAGS) -fno-rtti -std=c++17
 
-LIBS    :=  -ltinyxml2 -lvorbisfile -lvorbis -logg -ltheora -lmingw32 -lSDL2 -lSDL2main -lglfw3 -lglew32 -lopengl32 \
-			-lgdi32 -lwinmm -limm32 -lsetupapi -lversion -lole32 -loleaut32
+LIBS    :=  $(shell pkg-config --libs --static tinyxml2 vorbisfile vorbis theora sdl glew glfw3) \
+			-lmingw32 -lopengl32
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

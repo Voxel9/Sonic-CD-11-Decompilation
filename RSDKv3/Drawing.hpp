@@ -114,14 +114,13 @@ extern int virtualHeight;
 extern float viewAngle;
 extern float viewAnglePos;
 
-#if RETRO_USING_OPENGL
 extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
 extern GLuint framebufferHW;
 extern GLuint renderbufferHW;
 extern GLuint retroBuffer;
 extern GLuint retroBuffer2x;
 extern GLuint videoBuffer;
-#endif
+
 extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];
 
@@ -136,8 +135,6 @@ void RenderFromRetroBuffer();
 void FlipScreenVideo();
 
 void ReleaseRenderDevice();
-
-void SetFullScreen(bool fs);
 
 void GenerateBlendLookupTable();
 
