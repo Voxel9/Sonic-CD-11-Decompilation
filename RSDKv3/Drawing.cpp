@@ -176,6 +176,7 @@ int InitRenderDevice()
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -249,7 +250,6 @@ void FlipScreenNoFB()
     glViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
     glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glEnableClientState(GL_COLOR_ARRAY);
     glDisable(GL_BLEND);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
@@ -309,7 +309,6 @@ void FlipScreenNoFB()
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY);
 }
 
 #define normalize(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
