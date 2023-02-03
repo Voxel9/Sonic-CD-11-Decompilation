@@ -66,7 +66,7 @@ LeaderboardEntry leaderboards[LEADERBOARD_COUNT];
 #endif
 
 int controlMode              = -1;
-bool disableTouchControls    = false;
+bool disableTouchControls    = true;
 int disableFocusPause        = 0;
 int disableFocusPause_Config = 0;
 
@@ -312,7 +312,7 @@ void InitUserdata()
         ini.SetInteger("Game", "Language", Engine.language = RETRO_EN);
         ini.SetInteger("Game", "GameType", Engine.gameTypeID = 0);
         ini.SetInteger("Game", "OriginalControls", controlMode = -1);
-        ini.SetBool("Game", "DisableTouchControls", disableTouchControls = false);
+        ini.SetBool("Game", "DisableTouchControls", disableTouchControls = true);
         ini.SetInteger("Game", "DisableFocusPause", disableFocusPause = 0);
         disableFocusPause_Config = disableFocusPause;
 
@@ -326,7 +326,7 @@ void InitUserdata()
         ini.SetInteger("Window", "RefreshRate", Engine.refreshRate = 60);
         ini.SetInteger("Window", "DimLimit", Engine.dimLimit = 300);
         Engine.dimLimit *= Engine.refreshRate;
-        renderType = RENDER_SW;
+        renderType = RENDER_HW;
         ini.SetBool("Window", "HardwareRenderer", false);
 
         ini.SetFloat("Audio", "BGMVolume", bgmVolume / (float)MAX_VOLUME);
@@ -400,7 +400,7 @@ void InitUserdata()
         if (!ini.GetInteger("Game", "OriginalControls", &controlMode))
             controlMode = -1;
         if (!ini.GetBool("Game", "DisableTouchControls", &disableTouchControls))
-            disableTouchControls = false;
+            disableTouchControls = true;
         if (!ini.GetInteger("Game", "DisableFocusPause", &disableFocusPause))
             disableFocusPause = 0;
         disableFocusPause_Config = disableFocusPause;
