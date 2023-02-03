@@ -114,23 +114,15 @@ extern int virtualHeight;
 extern float viewAngle;
 extern float viewAnglePos;
 
-/* extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
-extern GLuint framebufferHW;
-extern GLuint renderbufferHW;
-extern GLuint retroBuffer;
-extern GLuint retroBuffer2x;
-extern GLuint videoBuffer; */
+// extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
+// extern GLuint videoBuffer;
 
 extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];
 
 int InitRenderDevice();
 void FlipScreen();
-void FlipScreenFB();
 void FlipScreenNoFB();
-void FlipScreenHRes();
-void RenderFromTexture();
-void RenderFromRetroBuffer();
 
 void FlipScreenVideo();
 
@@ -147,7 +139,6 @@ void ClearScreen(byte index);
 
 void SetScreenSize(int width, int lineSize);
 void CopyFrameOverlay2x();
-void TransferRetroBuffer();
 
 inline bool CheckSurfaceSize(int size)
 {

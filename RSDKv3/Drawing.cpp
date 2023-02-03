@@ -76,12 +76,8 @@ float viewAngle    = 0;
 float viewAnglePos = 0;
 #endif
 
-/* GLuint gfxTextureID[HW_TEXTURE_COUNT];
-GLuint framebufferHW  = 0;
-GLuint renderbufferHW = 0;
-GLuint retroBuffer    = 0;
-GLuint retroBuffer2x  = 0;
-GLuint videoBuffer    = 0; */
+// GLuint gfxTextureID[HW_TEXTURE_COUNT];
+// GLuint videoBuffer    = 0;
 
 DrawVertex screenRect[4];
 DrawVertex retroScreenRect[4];
@@ -170,42 +166,13 @@ int InitRenderDevice()
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
-    glGenFramebuffers(1, &framebufferHW);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
-    glGenTextures(1, &renderbufferHW);
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 512, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbufferHW, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+    } */
 
     UpdateHardwareTextures();
 
     /* glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glGenTextures(1, &retroBuffer);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE, SCREEN_YSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-    glGenTextures(1, &retroBuffer2x);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); */
+    glClear(GL_COLOR_BUFFER_BIT); */
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -258,104 +225,18 @@ void FlipScreen()
     }
 #endif
 
-    if (renderType == RENDER_SW) {
-#if !RETRO_USE_ORIGINAL_CODE
-        if (dimAmount < 1.0 && stageMode != STAGEMODE_PAUSED)
-            DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
-#endif
-        if (Engine.gameMode == ENGINE_VIDEOWAIT) {
-            FlipScreenVideo();
-        }
-        else {
-            TransferRetroBuffer();
-            RenderFromRetroBuffer();
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        if (dimAmount < 1.0 && stageMode != STAGEMODE_PAUSED)
-            DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
+    if (dimAmount < 1.0 && stageMode != STAGEMODE_PAUSED)
+        DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
 
-        bool fb             = Engine.useFBTexture;
-        Engine.useFBTexture = Engine.useFBTexture || stageMode == STAGEMODE_PAUSED;
+    bool fb             = Engine.useFBTexture;
+    Engine.useFBTexture = Engine.useFBTexture || stageMode == STAGEMODE_PAUSED;
 
-        if (Engine.gameMode == ENGINE_VIDEOWAIT)
-            FlipScreenVideo();
-        else
-            Engine.highResMode ? FlipScreenHRes() : Engine.useFBTexture ? FlipScreenFB() : FlipScreenNoFB();
+    if (Engine.gameMode == ENGINE_VIDEOWAIT)
+        FlipScreenVideo();
+    else
+        FlipScreenNoFB();
 
-        Engine.useFBTexture = fb;
-    }
-}
-
-void FlipScreenFB()
-{
-    /* glLoadIdentity();
-    glRotatef(-90.0, 0.0, 0.0, 1.0);
-    glOrtho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
-    glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
-
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glDisable(GL_BLEND); */
-
-    if (render3DEnabled) {
-        float floor3DTop    = 2.0;
-        float floor3DBottom = SCREEN_YSIZE + 4.0;
-
-        // Non Blended rendering
-        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glEnable(GL_BLEND);
-
-        // Init 3D Plane
-        glViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
-        glPushMatrix();
-        glLoadIdentity(); */
-        CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
-        /* glRotatef(-90.0, 0.0, 0.0, 1.0);
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glScalef(1.0f, 1.0f, -1.0f);
-        glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
-        glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
-
-        glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
-        glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glLoadIdentity();
-
-        // Return for blended rendering
-        glMatrixMode(GL_PROJECTION);
-        glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
-        glPopMatrix(); */
-    }
-    else {
-        // Non Blended rendering
-        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-
-        glEnable(GL_BLEND); */
-    }
-
-    int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
-
-    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
-    glDisableClientState(GL_COLOR_ARRAY);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); */
-
-    RenderFromTexture();
+    Engine.useFBTexture = fb;
 }
 
 void FlipScreenNoFB()
@@ -428,150 +309,6 @@ void FlipScreenNoFB()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glDisableClientState(GL_COLOR_ARRAY); */
-}
-
-void FlipScreenHRes()
-{
-#if DONT_USE_VIEW_ANGLE
-    // glClear(GL_COLOR_BUFFER_BIT);
-#else
-    if (viewAngle >= 180.0) {
-        if (viewAnglePos < 180.0) {
-            viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
-    else if (viewAnglePos > 0.0) {
-        viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-#endif
-
-    /* glLoadIdentity();
-
-    glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    glViewport(viewOffsetX, 0, bufferWidth, bufferHeight);
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glDisable(GL_BLEND);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-
-    glEnable(GL_BLEND); */
-
-    int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
-    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY); */
-}
-
-void RenderFromTexture()
-{
-    // glBindTexture(GL_TEXTURE_2D, renderbufferHW);
-#if DONT_USE_VIEW_ANGLE
-    // glClear(GL_COLOR_BUFFER_BIT);
-#else
-    if (viewAngle >= 180.0) {
-        if (viewAnglePos < 180.0) {
-            viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
-    else if (viewAnglePos > 0.0) {
-        viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-#endif
-    /* glLoadIdentity();
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
-}
-
-void RenderFromRetroBuffer()
-{
-    if (drawStageGFXHQ) {
-        // glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
-
-        uint *texBufferPtr     = Engine.texBuffer2x;
-        ushort *framebufferPtr = Engine.frameBuffer;
-        for (int y = 0; y < (SCREEN_YSIZE / 2) + 12; ++y) {
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                framebufferPtr++;
-            }
-            framebufferPtr += GFX_LINESIZE - SCREEN_XSIZE;
-
-            framebufferPtr -= GFX_LINESIZE;
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                framebufferPtr++;
-            }
-            framebufferPtr += GFX_LINESIZE - SCREEN_XSIZE;
-        }
-
-        framebufferPtr = Engine.frameBuffer2x;
-        for (int y = 0; y < ((SCREEN_YSIZE / 2) - 12) * 2; ++y) {
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                framebufferPtr++;
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                framebufferPtr++;
-                texBufferPtr++;
-            }
-            framebufferPtr += 2 * (GFX_LINESIZE - SCREEN_XSIZE);
-        }
-
-        // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer2x);
-    }
-
-    // glLoadIdentity();
-    // glBindTexture(GL_TEXTURE_2D, drawStageGFXHQ ? retroBuffer2x : retroBuffer);
-#if DONT_USE_VIEW_ANGLE
-    // glClear(GL_COLOR_BUFFER_BIT);
-#else
-    if (viewAngle >= 180.0) {
-        if (viewAnglePos < 180.0) {
-            viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-    }
-    else if (viewAnglePos > 0.0) {
-        viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-#endif
-    /* glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
 }
 
 #define normalize(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
@@ -769,25 +506,6 @@ void CopyFrameOverlay2x()
         }
     }
 }
-void TransferRetroBuffer()
-{
-    // glBindTexture(GL_TEXTURE_2D, retroBuffer);
-
-    ushort *frameBufferPtr = Engine.frameBuffer;
-    uint *texBufferPtr     = Engine.texBuffer;
-    for (int y = 0; y < SCREEN_YSIZE; ++y) {
-        for (int x = 0; x < SCREEN_XSIZE; ++x) {
-            texBufferPtr[x] = gfxPalette16to32[frameBufferPtr[x]];
-        }
-
-        texBufferPtr += SCREEN_XSIZE;
-        frameBufferPtr += GFX_LINESIZE;
-    }
-
-    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer);
-
-    // glBindTexture(GL_TEXTURE_2D, 0);
-}
 
 void UpdateHardwareTextures()
 {
@@ -823,18 +541,6 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     SetScreenSize(width, (width + 9) & -0x10);
 
-    /* if (framebufferHW)
-        glDeleteFramebuffers(1, &framebufferHW);
-
-    if (renderbufferHW)
-        glDeleteTextures(1, &renderbufferHW);
-
-    if (retroBuffer)
-        glDeleteTextures(1, &retroBuffer);
-
-    if (retroBuffer2x)
-        glDeleteTextures(1, &retroBuffer2x); */
-
     // Setup framebuffer texture
 
     int bufferW = 0;
@@ -850,35 +556,6 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
         val = 1 << bufferH++;
     } while (val < SCREEN_YSIZE);
     bufferH--;
-
-    /* glGenFramebuffers(1, &framebufferHW);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
-    glGenTextures(1, &renderbufferHW);
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1 << bufferH, 1 << bufferW, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbufferHW, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glGenTextures(1, &retroBuffer);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE, SCREEN_YSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-    glGenTextures(1, &retroBuffer2x);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); */
 
     screenRect[0].x = -1;
     screenRect[0].y = 1;
