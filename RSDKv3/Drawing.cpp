@@ -36,8 +36,8 @@ int gfxDataPosition;
 GFXSurface gfxSurface[SURFACE_COUNT];
 byte graphicData[GFXDATA_SIZE];
 
-DrawVertex gfxPolyList[VERTEX_COUNT];
-short gfxPolyListIndex[INDEX_COUNT];
+DrawVertex *gfxPolyList;
+short *gfxPolyListIndex;
 ushort gfxVertexSize       = 0;
 ushort gfxVertexSizeOpaque = 0;
 ushort gfxIndexSize        = 0;
@@ -76,8 +76,18 @@ float viewAngle    = 0;
 float viewAnglePos = 0;
 #endif
 
+C3D_Mtx mv_mtx, p_mtx, p3d_mtx, tex_mtx;
+
 C3D_Tex gfxTextureID[HW_TEXTURE_COUNT];
 C3D_Tex videoBuffer;
+
+C3D_AttrInfo* attrInfo;
+C3D_BufInfo* bufInfo;
+
+#include "gfxshader_shbin.h"
+
+static DVLB_s* gfxshader_dvlb;
+static shaderProgram_s gfxshader_prog;
 
 DrawVertex screenRect[4];
 DrawVertex retroScreenRect[4];
@@ -115,23 +125,39 @@ int InitRenderDevice()
     Engine.rendertarget = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
     C3D_RenderTargetSetOutput(Engine.rendertarget, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
+    gfxPolyList = (DrawVertex*)linearAlloc(VERTEX_COUNT * sizeof(DrawVertex));
+    gfxPolyListIndex = (short*)linearAlloc(INDEX_COUNT * sizeof(short));
+
+    // Configure the first fragment shading substage to blend the texture color with
+	// the vertex color (calculated by the vertex shader using a lighting algorithm)
+	// See https://www.opengl.org/sdk/docs/man2/xhtml/glTexEnv.xml for more insight
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
+	C3D_TexEnvSrc(env, C3D_Both, GPU_TEXTURE0, GPU_PRIMARY_COLOR, (GPU_TEVSRC)0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+
+    // Load the vertex shader, create a shader program and bind it
+	gfxshader_dvlb = DVLB_ParseFile((u32*)gfxshader_shbin, gfxshader_shbin_size);
+	shaderProgramInit(&gfxshader_prog);
+	shaderProgramSetVsh(&gfxshader_prog, &gfxshader_dvlb->DVLE[0]);
+	C3D_BindProgram(&gfxshader_prog);
+
     Engine.screenRefreshRate = 60;
     Engine.highResMode = false;
 
+    C3D_CullFace(GPU_CULL_NONE);
     C3D_DepthTest(false, GPU_ALWAYS, GPU_WRITE_ALL);
 
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
+    Mtx_Identity(&mv_mtx);
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "mv"), &mv_mtx);
 
     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
     SetupPolygonLists();
 
-    // glMatrixMode(GL_TEXTURE);
-    // glLoadIdentity();
-
     // Allows for texture locations in pixels instead of from 0.0 to 1.0, saves us having to do this every time we set UVs
-    // glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
-    // glMatrixMode(GL_PROJECTION);
+    Mtx_Identity(&tex_mtx);
+    Mtx_Scale(&tex_mtx, 1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "tex"), &tex_mtx);
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) {
         C3D_TexInit(&gfxTextureID[i], HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GPU_RGBA5551);
@@ -140,9 +166,6 @@ int InitRenderDevice()
     }
 
     UpdateHardwareTextures();
-
-    // glEnableClientState(GL_VERTEX_ARRAY);
-    // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -212,12 +235,13 @@ void FlipScreen()
 
 void FlipScreenNoFB()
 {
-    // glLoadIdentity();
-    // glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Mtx_Identity(&p_mtx);
+    Mtx_OrthoTilt(&p_mtx, 0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0, true);
+    // C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p_mtx);
 
     C3D_TexBind(0, &gfxTextureID[texPaletteNum]);
-    // glEnableClientState(GL_COLOR_ARRAY);
     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
 
     C3D_TexSetFilter(
@@ -231,56 +255,86 @@ void FlipScreenNoFB()
         float floor3DTop    = -2.0 * scale;
         float floor3DBottom = (viewHeight)-4.0 * scale;
 
+        // Configure attributes for use with the vertex shader
+        attrInfo = C3D_GetAttrInfo();
+        AttrInfo_Init(attrInfo);
+        AttrInfo_AddLoader(attrInfo, 0, GPU_SHORT, 2);          // v0=position
+        AttrInfo_AddLoader(attrInfo, 1, GPU_SHORT, 2);          // v1=texcoord
+        AttrInfo_AddLoader(attrInfo, 2, GPU_UNSIGNED_BYTE, 4);  // v2=color
+
+        // Configure buffers
+        bufInfo = C3D_GetBufInfo();
+        BufInfo_Init(bufInfo);
+        BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
+
         // Non Blended rendering
-        // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        // glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
         // Init 3D Plane
-        // glViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
-        // glPushMatrix();
-        // glLoadIdentity();
-        CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
+        /* C3D_SetViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
+        Mtx_Identity(&p3d_mtx);
+        Mtx_PerspTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, false);
 
-        // glMatrixMode(GL_MODELVIEW);
-        // glLoadIdentity();
-        // glScalef(1.0f, -1.0f, -1.0f);
-        // glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
-        // glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
+        Mtx_Identity(&mv_mtx);
+        Mtx_Scale(&mv_mtx, 1.0f, -1.0f, -1.0f);
+        Mtx_RotateY(&mv_mtx, floor3DAngle + 180.0f, true);
+        Mtx_Translate(&mv_mtx, floor3DXPos, floor3DYPos, floor3DZPos, true);
 
-        // glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
-        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
-        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
-        // glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        // glLoadIdentity();
+        // Configure attributes for use with the vertex shader
+        attrInfo = C3D_GetAttrInfo();
+        AttrInfo_Init(attrInfo);
+        AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3);          // v0=position
+        AttrInfo_AddLoader(attrInfo, 1, GPU_SHORT, 2);          // v1=texcoord
+        AttrInfo_AddLoader(attrInfo, 2, GPU_UNSIGNED_BYTE, 4);  // v2=color
+
+        // Configure buffers
+        bufInfo = C3D_GetBufInfo();
+        BufInfo_Init(bufInfo);
+        BufInfo_Add(bufInfo, polyList3D, sizeof(DrawVertex3D), 3, 0x210);
+
+        C3D_DrawElements(GPU_TRIANGLES, indexSize3D, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+        Mtx_Identity(&mv_mtx);
 
         // Return for blended rendering
-        // glMatrixMode(GL_PROJECTION);
-        // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-        // glPopMatrix();
+        C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight); */
     }
     else {
+        // Configure attributes for use with the vertex shader
+        attrInfo = C3D_GetAttrInfo();
+        AttrInfo_Init(attrInfo);
+        AttrInfo_AddLoader(attrInfo, 0, GPU_SHORT, 2);          // v0=position
+        AttrInfo_AddLoader(attrInfo, 1, GPU_SHORT, 2);          // v1=texcoord
+        AttrInfo_AddLoader(attrInfo, 2, GPU_UNSIGNED_BYTE, 4);  // v2=color
+
+        // Configure buffers
+        bufInfo = C3D_GetBufInfo();
+        BufInfo_Init(bufInfo);
+        BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
+
         // Non Blended rendering
-        // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        // glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
 
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    // glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    // glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    // glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
+    // Configure attributes for use with the vertex shader
+    attrInfo = C3D_GetAttrInfo();
+    AttrInfo_Init(attrInfo);
+    AttrInfo_AddLoader(attrInfo, 0, GPU_SHORT, 2);          // v0=position
+    AttrInfo_AddLoader(attrInfo, 1, GPU_SHORT, 2);          // v1=texcoord
+    AttrInfo_AddLoader(attrInfo, 2, GPU_UNSIGNED_BYTE, 4);  // v2=color
+
+    // Configure buffers
+    bufInfo = C3D_GetBufInfo();
+    BufInfo_Init(bufInfo);
+    BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
+
+    C3D_DrawElements(GPU_TRIANGLES, blendedGfxCount, C3D_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
     C3D_TexSetFilter(&gfxTextureID[texPaletteNum], GPU_NEAREST, GPU_NEAREST);
-
-    // glDisableClientState(GL_COLOR_ARRAY);
 }
 
 #define normalize(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
@@ -315,14 +369,24 @@ void FlipScreenVideo()
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
 
-    // glLoadIdentity();
+    Mtx_Identity(&p_mtx);
     C3D_TexBind(0, &videoBuffer);
 
-    // glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-    // glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
-    // glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);
+    C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+
+    // Configure attributes for use with the vertex shader
+    attrInfo = C3D_GetAttrInfo();
+    AttrInfo_Init(attrInfo);
+    AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 2);  // v0=position
+    AttrInfo_AddLoader(attrInfo, 1, GPU_SHORT, 2);  // v1=texcoord
+
+    // Configure buffers
+    bufInfo = C3D_GetBufInfo();
+    BufInfo_Init(bufInfo);
+    BufInfo_Add(bufInfo, screenVerts, sizeof(DrawVertex3D), 2, 0x10);
+
     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
-    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    C3D_DrawElements(GPU_TRIANGLES, 6, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
 }
 
 void ReleaseRenderDevice()
@@ -479,6 +543,7 @@ void UpdateHardwareTextures()
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
 }
+
 void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 {
     bufferWidth  = width;
@@ -572,36 +637,6 @@ void ScaleViewport(int width, int height)
         virtualWidth = viewWidth * ((float)height / viewHeight);
         virtualX     = (width - virtualWidth) >> 1;
     }
-}
-
-void CalcPerspective(float fov, float aspectRatio, float nearPlane, float farPlane)
-{
-    float matrix[16];
-    float w = 1.0 / tanf(fov * 0.5f);
-    float h = 1.0 / (w * aspectRatio);
-    float q = (nearPlane + farPlane) / (farPlane - nearPlane);
-
-    matrix[0] = w;
-    matrix[1] = 0;
-    matrix[2] = 0;
-    matrix[3] = 0;
-
-    matrix[4] = 0;
-    matrix[5] = h / 2;
-    matrix[6] = 0;
-    matrix[7] = 0;
-
-    matrix[8]  = 0;
-    matrix[9]  = 0;
-    matrix[10] = q;
-    matrix[11] = 1.0;
-
-    matrix[12] = 0;
-    matrix[13] = 0;
-    matrix[14] = (((farPlane * -2.0f) * nearPlane) / (farPlane - nearPlane));
-    matrix[15] = 0;
-
-    // glMultMatrixf(matrix);
 }
 
 void SetupPolygonLists()

@@ -77,8 +77,8 @@ struct DrawVertex3D {
     Colour colour;
 };
 
-extern DrawVertex gfxPolyList[VERTEX_COUNT];
-extern short gfxPolyListIndex[INDEX_COUNT];
+extern DrawVertex *gfxPolyList;
+extern short *gfxPolyListIndex;
 extern ushort gfxVertexSize;
 extern ushort gfxVertexSizeOpaque;
 extern ushort gfxIndexSize;
