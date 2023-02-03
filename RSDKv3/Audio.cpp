@@ -195,7 +195,7 @@ void ProcessMusicStream(Sint32 *stream, size_t bytes_wanted)
                 long bytes_read = ov_read(&streamInfoPtr->vorbisFile, (char *)streamInfoPtr->buffer,
                                           sizeof(streamInfoPtr->buffer) > (bytes_wanted - bytes_gotten) ? (bytes_wanted - bytes_gotten)
                                                                                                         : sizeof(streamInfoPtr->buffer),
-                                          0, 2, 1, &streamInfoPtr->vorbBitstream);
+                                          &streamInfoPtr->vorbBitstream);
 
                 if (bytes_read == 0) {
                     // We've reached the end of the file
@@ -566,7 +566,7 @@ void LoadSfx(char *filePath, byte sfxID)
             SDL_AudioSpec wav_spec;
             uint wav_length;
             byte *wav_buffer;
-            SDL_AudioSpec *wav = SDL_LoadWAV_RW(src, 0, &wav_spec, &wav_buffer, &wav_length);
+            SDL_AudioSpec *wav = SDL_LoadWAV_RW(src, 0, &wav_spec, &wav_buffer, (Uint32 *)&wav_length);
 
             SDL_RWclose(src);
             delete[] sfx;

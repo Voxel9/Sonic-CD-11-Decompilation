@@ -76,12 +76,12 @@ float viewAngle    = 0;
 float viewAnglePos = 0;
 #endif
 
-GLuint gfxTextureID[HW_TEXTURE_COUNT];
+/* GLuint gfxTextureID[HW_TEXTURE_COUNT];
 GLuint framebufferHW  = 0;
 GLuint renderbufferHW = 0;
 GLuint retroBuffer    = 0;
 GLuint retroBuffer2x  = 0;
-GLuint videoBuffer    = 0;
+GLuint videoBuffer    = 0; */
 
 DrawVertex screenRect[4];
 DrawVertex retroScreenRect[4];
@@ -95,6 +95,11 @@ bool disableEnhancedScaling = false;
 bool bilinearScaling = false;
 #endif
 
+#define DISPLAY_TRANSFER_FLAGS \
+    (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
+    GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
+    GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
+
 int InitRenderDevice()
 {
     char gameTitle[0x40];
@@ -104,41 +109,31 @@ int InitRenderDevice()
     // Init SDL
     SDL_InitSubSystem(SDL_INIT_AUDIO);
 
-    // Init GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
+    gfxInitDefault();
+	consoleInit(GFX_BOTTOM, NULL);
+	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     SCREEN_CENTERX = SCREEN_XSIZE / 2;
     viewOffsetX    = 0;
 
-    Engine.window = glfwCreateWindow(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, gameTitle, NULL, NULL);
-
-    if (!Engine.window) {
-        PrintLog("ERROR: failed to create window!");
-        Engine.gameMode = ENGINE_EXITGAME;
-        return 0;
-    }
+    Engine.rendertarget = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    C3D_RenderTargetSetOutput(Engine.rendertarget, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
 
     if (Engine.borderless) {
         // glfwRestoreWindow(Engine.window);
         // SDL_SetWindowBordered(Engine.window, SDL_FALSE);
     }
 
-    // glfwSetWindowPos(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-
     Engine.screenRefreshRate = 60;
 
     // Init GL
     // Engine.glContext = SDL_GL_CreateContext(Engine.window);
 
-    glfwMakeContextCurrent(Engine.window);
+    // glfwMakeContextCurrent(Engine.window);
 
-    glfwSwapInterval(Engine.vsync ? 1 : 0);
+    // glfwSwapInterval(Engine.vsync ? 1 : 0);
 
-#if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX
+#if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX && RETRO_PLATFORM != RETRO_3DS
     // glew Setup
     GLenum err = glewInit();
     if (err != GLEW_OK && err != GLEW_ERROR_NO_GLX_DISPLAY) {
@@ -148,23 +143,23 @@ int InitRenderDevice()
     }
 #endif
     Engine.highResMode = false;
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DITHER);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
+    // glClearColor(0.0, 0.0, 0.0, 1.0);
+    // glDisable(GL_LIGHTING);
+    // glDisable(GL_DITHER);
+    // glEnable(GL_TEXTURE_2D);
+    // glDisable(GL_DEPTH_TEST);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     SetupPolygonLists();
 
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
+    // glMatrixMode(GL_TEXTURE);
+    // glLoadIdentity();
 
     // Allows for texture locations in pixels instead of from 0.0 to 1.0, saves us having to do this every time we set UVs
-    glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
+    /* glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
     glMatrixMode(GL_PROJECTION);
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) {
@@ -188,11 +183,11 @@ int InitRenderDevice()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 512, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbufferHW, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); */
 
     UpdateHardwareTextures();
 
-    glEnableClientState(GL_VERTEX_ARRAY);
+    /* glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -210,7 +205,7 @@ int InitRenderDevice()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); */
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -294,7 +289,7 @@ void FlipScreen()
 
 void FlipScreenFB()
 {
-    glLoadIdentity();
+    /* glLoadIdentity();
     glRotatef(-90.0, 0.0, 0.0, 1.0);
     glOrtho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
     glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
@@ -303,14 +298,14 @@ void FlipScreenFB()
 
     glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
     glEnableClientState(GL_COLOR_ARRAY);
-    glDisable(GL_BLEND);
+    glDisable(GL_BLEND); */
 
     if (render3DEnabled) {
         float floor3DTop    = 2.0;
         float floor3DBottom = SCREEN_YSIZE + 4.0;
 
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
         glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
         glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
@@ -319,9 +314,9 @@ void FlipScreenFB()
         // Init 3D Plane
         glViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
         glPushMatrix();
-        glLoadIdentity();
+        glLoadIdentity(); */
         CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
-        glRotatef(-90.0, 0.0, 0.0, 1.0);
+        /* glRotatef(-90.0, 0.0, 0.0, 1.0);
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -338,34 +333,34 @@ void FlipScreenFB()
         // Return for blended rendering
         glMatrixMode(GL_PROJECTION);
         glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
-        glPopMatrix();
+        glPopMatrix(); */
     }
     else {
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
         glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
         glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
 
-        glEnable(GL_BLEND);
+        glEnable(GL_BLEND); */
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
     glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
     glDisableClientState(GL_COLOR_ARRAY);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); */
 
     RenderFromTexture();
 }
 
 void FlipScreenNoFB()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    /* glClear(GL_COLOR_BUFFER_BIT);
 
     glLoadIdentity();
     glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
@@ -376,7 +371,7 @@ void FlipScreenNoFB()
     glDisable(GL_BLEND);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST); */
 
     if (render3DEnabled) {
         float scale         = viewHeight / SCREEN_YSIZE;
@@ -384,7 +379,7 @@ void FlipScreenNoFB()
         float floor3DBottom = (viewHeight)-4.0 * scale;
 
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
         glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
         glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
@@ -393,10 +388,10 @@ void FlipScreenNoFB()
         // Init 3D Plane
         glViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
         glPushMatrix();
-        glLoadIdentity();
+        glLoadIdentity(); */
         CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
 
-        glMatrixMode(GL_MODELVIEW);
+        /* glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glScalef(1.0f, -1.0f, -1.0f);
         glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
@@ -411,34 +406,34 @@ void FlipScreenNoFB()
         // Return for blended rendering
         glMatrixMode(GL_PROJECTION);
         glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-        glPopMatrix();
+        glPopMatrix(); */
     }
     else {
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+        /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
         glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
         glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
 
-        glEnable(GL_BLEND);
+        glEnable(GL_BLEND); */
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
     glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY); */
 }
 
 void FlipScreenHRes()
 {
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
@@ -452,7 +447,7 @@ void FlipScreenHRes()
     }
 #endif
 
-    glLoadIdentity();
+    /* glLoadIdentity();
 
     glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
     glViewport(viewOffsetX, 0, bufferWidth, bufferHeight);
@@ -468,24 +463,24 @@ void FlipScreenHRes()
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
     glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
 
-    glEnable(GL_BLEND);
+    glEnable(GL_BLEND); */
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
+    /* glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
     glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY); */
 }
 
 void RenderFromTexture()
 {
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
+    // glBindTexture(GL_TEXTURE_2D, renderbufferHW);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
@@ -498,18 +493,18 @@ void RenderFromTexture()
         glClear(GL_COLOR_BUFFER_BIT);
     }
 #endif
-    glLoadIdentity();
+    /* glLoadIdentity();
     glViewport(viewOffsetX, 0, viewWidth, viewHeight);
     glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].u);
     glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
 }
 
 void RenderFromRetroBuffer()
 {
     if (drawStageGFXHQ) {
-        glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
+        // glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
 
         uint *texBufferPtr     = Engine.texBuffer2x;
         ushort *framebufferPtr = Engine.frameBuffer;
@@ -552,13 +547,13 @@ void RenderFromRetroBuffer()
             framebufferPtr += 2 * (GFX_LINESIZE - SCREEN_XSIZE);
         }
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer2x);
+        // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer2x);
     }
 
-    glLoadIdentity();
-    glBindTexture(GL_TEXTURE_2D, drawStageGFXHQ ? retroBuffer2x : retroBuffer);
+    // glLoadIdentity();
+    // glBindTexture(GL_TEXTURE_2D, drawStageGFXHQ ? retroBuffer2x : retroBuffer);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
@@ -571,12 +566,12 @@ void RenderFromRetroBuffer()
         glClear(GL_COLOR_BUFFER_BIT);
     }
 #endif
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    /* glViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
     glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].u);
     glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
 }
 
 #define normalize(val, minVal, maxVal) ((float)(val) - (float)(minVal)) / ((float)(maxVal) - (float)(minVal))
@@ -611,12 +606,12 @@ void FlipScreenVideo()
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 
-    glLoadIdentity();
-    glBindTexture(GL_TEXTURE_2D, videoBuffer);
+    // glLoadIdentity();
+    // glBindTexture(GL_TEXTURE_2D, videoBuffer);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    // glClear(GL_COLOR_BUFFER_BIT);
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
@@ -629,11 +624,11 @@ void FlipScreenVideo()
         glClear(GL_COLOR_BUFFER_BIT);
     }
 #endif
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    /* glViewport(viewOffsetX, 0, viewWidth, viewHeight);
     glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
     glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);
     glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex); */
 }
 
 void ReleaseRenderDevice()
@@ -648,10 +643,10 @@ void ReleaseRenderDevice()
     if (Engine.texBuffer2x)
         delete[] Engine.texBuffer2x;
 
-    for (int i = 0; i < HW_TEXTURE_COUNT; i++)
-        glDeleteTextures(1, &gfxTextureID[i]);
+    // for (int i = 0; i < HW_TEXTURE_COUNT; i++)
+    //     glDeleteTextures(1, &gfxTextureID[i]);
 
-    glfwDestroyWindow(Engine.window);
+    // glfwDestroyWindow(Engine.window);
 }
 
 void GenerateBlendLookupTable()
@@ -776,7 +771,7 @@ void CopyFrameOverlay2x()
 }
 void TransferRetroBuffer()
 {
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
+    // glBindTexture(GL_TEXTURE_2D, retroBuffer);
 
     ushort *frameBufferPtr = Engine.frameBuffer;
     uint *texBufferPtr     = Engine.texBuffer;
@@ -789,9 +784,9 @@ void TransferRetroBuffer()
         frameBufferPtr += GFX_LINESIZE;
     }
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer);
+    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void UpdateHardwareTextures()
@@ -800,16 +795,16 @@ void UpdateHardwareTextures()
     UpdateTextureBufferWithTiles();
     UpdateTextureBufferWithSortedSprites();
 
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[0]);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+    // glBindTexture(GL_TEXTURE_2D, gfxTextureID[0]);
+    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
 
     for (byte b = 1; b < HW_TEXTURE_COUNT; ++b) {
         SetActivePalette(b, 0, SCREEN_YSIZE);
         UpdateTextureBufferWithTiles();
         UpdateTextureBufferWithSprites();
 
-        glBindTexture(GL_TEXTURE_2D, gfxTextureID[b]);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+        // glBindTexture(GL_TEXTURE_2D, gfxTextureID[b]);
+        // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
 }
@@ -828,7 +823,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     SetScreenSize(width, (width + 9) & -0x10);
 
-    if (framebufferHW)
+    /* if (framebufferHW)
         glDeleteFramebuffers(1, &framebufferHW);
 
     if (renderbufferHW)
@@ -838,7 +833,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
         glDeleteTextures(1, &retroBuffer);
 
     if (retroBuffer2x)
-        glDeleteTextures(1, &retroBuffer2x);
+        glDeleteTextures(1, &retroBuffer2x); */
 
     // Setup framebuffer texture
 
@@ -856,7 +851,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     } while (val < SCREEN_YSIZE);
     bufferH--;
 
-    glGenFramebuffers(1, &framebufferHW);
+    /* glGenFramebuffers(1, &framebufferHW);
     glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
     glGenTextures(1, &renderbufferHW);
     glBindTexture(GL_TEXTURE_2D, renderbufferHW);
@@ -883,7 +878,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0); */
 
     screenRect[0].x = -1;
     screenRect[0].y = 1;
@@ -976,7 +971,7 @@ void CalcPerspective(float fov, float aspectRatio, float nearPlane, float farPla
     matrix[14] = (((farPlane * -2.0f) * nearPlane) / (farPlane - nearPlane));
     matrix[15] = 0;
 
-    glMultMatrixf(matrix);
+    // glMultMatrixf(matrix);
 }
 
 void SetupPolygonLists()
@@ -1691,7 +1686,7 @@ void DrawHLineScrollLayer(int layerID)
                     tilePxLineCnt = TILE_SIZE - tilePxXPos;
                     lineRemain -= tilePxLineCnt;
                     switch (tiles128x128.direction[chunk]) {
-                        case FLIP_NONE:
+                        case FLIP_OFF:
                             gfxDataPtr = &tilesetGFXData[tileOffsetY + tiles128x128.gfxDataPos[chunk] + tilePxXPos];
                             while (tilePxLineCnt--) {
                                 if (*gfxDataPtr > 0)
@@ -1753,7 +1748,7 @@ void DrawHLineScrollLayer(int layerID)
                     // Loop Unrolling (faster but messier code)
                     if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
                         switch (tiles128x128.direction[chunk]) {
-                            case FLIP_NONE:
+                            case FLIP_OFF:
                                 gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetY];
                                 if (*gfxDataPtr > 0)
                                     *frameBufferPtr = activePalette[*gfxDataPtr];
@@ -2045,7 +2040,7 @@ void DrawHLineScrollLayer(int layerID)
                     lineRemain -= tilePxLineCnt;
                     if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
                         switch (tiles128x128.direction[chunk]) {
-                            case FLIP_NONE:
+                            case FLIP_OFF:
                                 gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetY];
                                 while (tilePxLineCnt--) {
                                     if (*gfxDataPtr > 0)
@@ -2238,7 +2233,7 @@ void DrawHLineScrollLayer(int layerID)
                     if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
                         tileGFXPos = 0;
                         switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_NONE: {
+                            case FLIP_OFF: {
                                 gfxPolyList[gfxVertexSize].x = deformX1;
                                 gfxPolyList[gfxVertexSize].y = deformY;
                                 gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
@@ -2474,7 +2469,7 @@ void DrawHLineScrollLayer(int layerID)
                     if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
                         tileGFXPos = 0;
                         switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_NONE: {
+                            case FLIP_OFF: {
                                 gfxPolyList[gfxVertexSize].x = deformX1;
                                 gfxPolyList[gfxVertexSize].y = deformY;
                                 gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
@@ -2712,7 +2707,7 @@ void DrawHLineScrollLayer(int layerID)
                     if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
                         tileGFXPos = 0;
                         switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_NONE: {
+                            case FLIP_OFF: {
                                 gfxPolyList[gfxVertexSize].x = deformX1;
                                 gfxPolyList[gfxVertexSize].y = deformY;
                                 gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
@@ -3026,7 +3021,7 @@ void DrawVLineScrollLayer(int layerID)
             if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
                 lineRemain -= tilePxLineCnt;
                 switch (tiles128x128.direction[chunk]) {
-                    case FLIP_NONE:
+                    case FLIP_OFF:
                         gfxDataPtr = &tilesetGFXData[TILE_SIZE * tileY + tileX16 + tiles128x128.gfxDataPos[chunk]];
                         while (tilePxLineCnt--) {
                             if (*gfxDataPtr > 0)
@@ -3094,7 +3089,7 @@ void DrawVLineScrollLayer(int layerID)
                 // Loop Unrolling (faster but messier code)
                 if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
                     switch (tiles128x128.direction[chunk]) {
-                        case FLIP_NONE:
+                        case FLIP_OFF:
                             gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileX16];
                             if (*gfxDataPtr > 0)
                                 *frameBufferPtr = activePalette[*gfxDataPtr];
@@ -3447,7 +3442,7 @@ void DrawVLineScrollLayer(int layerID)
 
                 if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
                     switch (tiles128x128.direction[chunk]) {
-                        case FLIP_NONE:
+                        case FLIP_OFF:
                             gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileX16];
                             while (tilePxLineCnt--) {
                                 if (*gfxDataPtr > 0)
@@ -3549,7 +3544,7 @@ void Draw3DFloorLayer(int layerID)
                     int chunk       = tile3DFloorBuffer[(YPos >> 16 << 8) + (XPos >> 16)];
                     byte *tilePixel = &tilesetGFXData[tiles128x128.gfxDataPos[chunk]];
                     switch (tiles128x128.direction[chunk]) {
-                        case FLIP_NONE: tilePixel += 16 * (tileY & 0xF) + (tileX & 0xF); break;
+                        case FLIP_OFF: tilePixel += 16 * (tileY & 0xF) + (tileX & 0xF); break;
                         case FLIP_X: tilePixel += 16 * (tileY & 0xF) + 15 - (tileX & 0xF); break;
                         case FLIP_Y: tilePixel += (tileX & 0xF) + SCREEN_YSIZE - 16 * (tileY & 0xF); break;
                         case FLIP_XY: tilePixel += 15 - (tileX & 0xF) + SCREEN_YSIZE - 16 * (tileY & 0xF); break;
@@ -3641,7 +3636,7 @@ void Draw3DFloorLayer(int layerID)
                         if (tiles128x128.gfxDataPos[tileIndex] > 0) {
                             tileOffset = 0;
                             switch (tiles128x128.direction[tileIndex]) {
-                                case FLIP_NONE: {
+                                case FLIP_OFF: {
                                     polyList3D[vertexSize3D].x = sinValue512;
                                     polyList3D[vertexSize3D].y = 0.0f;
                                     polyList3D[vertexSize3D].z = cosValue512;
@@ -3874,7 +3869,7 @@ void Draw3DFloorLayer(int layerID)
                         if (tiles128x128.gfxDataPos[tileIndex] > 0) {
                             tileOffset = 0;
                             switch (tiles128x128.direction[tileIndex]) {
-                                case FLIP_NONE: {
+                                case FLIP_OFF: {
                                     polyList3D[vertexSize3D].x = sinValue512;
                                     polyList3D[vertexSize3D].y = 0.0f;
                                     polyList3D[vertexSize3D].z = cosValue512;
@@ -4131,7 +4126,7 @@ void Draw3DSkyLayer(int layerID)
                     int chunk       = tile3DFloorBuffer[(YPos >> 16 << 8) + (XPos >> 16)];
                     byte *tilePixel = &tilesetGFXData[tiles128x128.gfxDataPos[chunk]];
                     switch (tiles128x128.direction[chunk]) {
-                        case FLIP_NONE: tilePixel += TILE_SIZE * (tileY & 0xF) + (tileX & 0xF); break;
+                        case FLIP_OFF: tilePixel += TILE_SIZE * (tileY & 0xF) + (tileX & 0xF); break;
                         case FLIP_X: tilePixel += TILE_SIZE * (tileY & 0xF) + 0xF - (tileX & 0xF); break;
                         case FLIP_Y: tilePixel += (tileX & 0xF) + SCREEN_YSIZE - TILE_SIZE * (tileY & 0xF); break;
                         case FLIP_XY: tilePixel += 0xF - (tileX & 0xF) + SCREEN_YSIZE - TILE_SIZE * (tileY & 0xF); break;
@@ -4586,7 +4581,7 @@ void DrawSpriteFlipped(int XPos, int YPos, int width, int height, int sprX, int 
         byte *gfxData;
         ushort *frameBufferPtr;
         switch (direction) {
-            case FLIP_NONE:
+            case FLIP_OFF:
                 pitch          = GFX_LINESIZE - width;
                 gfxPitch       = surface->width - width;
                 lineBuffer     = &gfxLineBuffer[YPos];
@@ -4679,7 +4674,7 @@ void DrawSpriteFlipped(int XPos, int YPos, int width, int height, int sprX, int 
         GFXSurface *surface = &gfxSurface[sheetID];
         if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
             switch (direction) {
-                case FLIP_NONE:
+                case FLIP_OFF:
                     gfxPolyList[gfxVertexSize].x        = XPos << 4;
                     gfxPolyList[gfxVertexSize].y        = YPos << 4;
                     gfxPolyList[gfxVertexSize].colour.r = 0xFF;
@@ -5225,7 +5220,7 @@ void DrawSpriteRotated(int direction, int XPos, int YPos, int pivotX, int pivotY
         int sin = sin512LookupTable[rotation];
         int cos = cos512LookupTable[rotation];
         if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
-            if (direction == FLIP_NONE) {
+            if (direction == FLIP_OFF) {
                 int x                               = -pivotX;
                 int y                               = -pivotY;
                 gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
@@ -5494,7 +5489,7 @@ void DrawSpriteRotozoom(int direction, int XPos, int YPos, int pivotX, int pivot
         int sin = sin512LookupTable[rotation] * scale >> 9;
         int cos = cos512LookupTable[rotation] * scale >> 9;
         if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
-            if (direction == FLIP_NONE) {
+            if (direction == FLIP_OFF) {
                 int x                               = -pivotX;
                 int y                               = -pivotY;
                 gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
@@ -6020,8 +6015,8 @@ void DrawObjectAnimation(void *objScr, void *ent, int XPos, int YPos)
     switch (sprAnim->rotationStyle) {
         case ROTSTYLE_NONE:
             switch (entity->direction) {
-                case FLIP_NONE:
-                    DrawSpriteFlipped(frame->pivotX + XPos, frame->pivotY + YPos, frame->width, frame->height, frame->sprX, frame->sprY, FLIP_NONE,
+                case FLIP_OFF:
+                    DrawSpriteFlipped(frame->pivotX + XPos, frame->pivotY + YPos, frame->width, frame->height, frame->sprX, frame->sprY, FLIP_OFF,
                                       frame->sheetID);
                     break;
                 case FLIP_X:
@@ -6487,11 +6482,11 @@ void DrawBitmapText(void *menu, int XPos, int YPos, int scale, int spacing, int 
             ushort c             = tMenu->textData[tMenu->entryStart[rowStart] + i];
             FontCharacter *fChar = &fontCharacterList[c];
             if (renderType == RENDER_SW) {
-                DrawSpriteScaled(FLIP_NONE, X >> 9, Y >> 9, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
+                DrawSpriteScaled(FLIP_OFF, X >> 9, Y >> 9, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
                                  fChar->srcY, textMenuSurfaceNo);
             }
             else if (renderType == RENDER_HW) {
-                DrawScaledChar(FLIP_NONE, X >> 5, Y >> 5, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
+                DrawScaledChar(FLIP_OFF, X >> 5, Y >> 5, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
                                fChar->srcY, textMenuSurfaceNo);
             }
             X += fChar->xAdvance * scale;

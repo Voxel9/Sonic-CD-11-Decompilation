@@ -8,7 +8,7 @@
 // usually 7, but origins has an extra one for some reason
 #define DRAWLAYER_COUNT (8)
 
-enum FlipFlags { FLIP_NONE, FLIP_X, FLIP_Y, FLIP_XY };
+enum FlipFlags { FLIP_OFF, FLIP_X, FLIP_Y, FLIP_XY };
 enum InkFlags { INK_NONE, INK_BLEND, INK_ALPHA, INK_ADD, INK_SUB };
 enum DrawFXFlags { FX_SCALE, FX_ROTATE, FX_ROTOZOOM, FX_INK, FX_TINT, FX_FLIP };
 
@@ -114,12 +114,12 @@ extern int virtualHeight;
 extern float viewAngle;
 extern float viewAnglePos;
 
-extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
+/* extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
 extern GLuint framebufferHW;
 extern GLuint renderbufferHW;
 extern GLuint retroBuffer;
 extern GLuint retroBuffer2x;
-extern GLuint videoBuffer;
+extern GLuint videoBuffer; */
 
 extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];

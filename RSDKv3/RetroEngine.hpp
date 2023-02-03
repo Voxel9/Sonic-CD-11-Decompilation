@@ -8,7 +8,7 @@
 // be set to true only for preservation purposes
 #define RETRO_USE_ORIGINAL_CODE (0)
 
-#define RETRO_USE_MOD_LOADER (!RETRO_USE_ORIGINAL_CODE && 1)
+#define RETRO_USE_MOD_LOADER (!RETRO_USE_ORIGINAL_CODE && 0)
 
 // ================
 // STANDARD LIBS
@@ -37,6 +37,7 @@ typedef unsigned int uint;
 #define RETRO_VITA (7)
 #define RETRO_UWP  (8)
 #define RETRO_LINUX (9)
+#define RETRO_3DS (10)
 
 // Platform types (Game manages platform-specific code such as HUD position using this rather than the above)
 #define RETRO_STANDARD (0)
@@ -73,6 +74,8 @@ typedef unsigned int uint;
 #define RETRO_PLATFORM (RETRO_VITA)
 #elif defined __linux__
 #define RETRO_PLATFORM (RETRO_LINUX)
+#elif defined __3DS__
+#define RETRO_PLATFORM (RETRO_3DS)
 #else
 #define RETRO_PLATFORM (RETRO_WIN) // Default
 #endif
@@ -84,6 +87,10 @@ typedef unsigned int uint;
 #elif RETRO_PLATFORM == RETRO_UWP
 #define BASE_PATH            ""
 #define DEFAULT_SCREEN_XSIZE 424
+#define DEFAULT_FULLSCREEN   false
+#elif RETRO_PLATFORM == RETRO_3DS
+#define BASE_PATH            "sdmc:/3ds/SonicCD/"
+#define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
 #else
 #ifndef BASE_PATH
@@ -103,8 +110,6 @@ typedef unsigned int uint;
 #define RETRO_GAMEPLATFORM (RETRO_STANDARD)
 #endif
 
-#include <GL/glew.h>
-
 #define RETRO_USE_HAPTICS (1)
 
 #if RETRO_PLATFORM <= RETRO_WP7
@@ -112,7 +117,7 @@ typedef unsigned int uint;
 #else
 
 // use *this* macro to determine what platform the game thinks its running on (since only the first 7 platforms are supported natively by scripts)
-#if RETRO_PLATFORM == RETRO_VITA
+#if RETRO_PLATFORM == RETRO_VITA || RETRO_PLATFORM == RETRO_3DS
 #define RETRO_GAMEPLATFORMID (RETRO_WIN)
 #elif RETRO_PLATFORM == RETRO_UWP
 #define RETRO_GAMEPLATFORMID (UAP_GetRetroGamePlatformId())
@@ -273,12 +278,21 @@ enum RetroBytecodeFormat {
 #include <vorbis/vorbisfile.h>
 #include <theora/theora.h>
 #include <theoraplay.h>
+#elif RETRO_PLATFORM == RETRO_3DS
+#include <3ds.h>
+#include <citro3d.h>
+#include <SDL/SDL.h>
+#include <tremor/ivorbiscodec.h>
+#include <tremor/ivorbisfile.h>
+#include <theora/theora.h>
+#include <theoraplay.h>
 #endif
 
 #if RETRO_PLATFORM == RETRO_WIN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <GLFW/glfw3.h>
+#include <GL/glew.h>
 #endif
 
 #if RETRO_PLATFORM == RETRO_ANDROID
@@ -443,7 +457,7 @@ public:
     int windowXSize; // width of window/screen in the previous frame
     int windowYSize; // height of window/screen in the previous frame
 
-    GLFWwindow *window = nullptr;
+    C3D_RenderTarget *rendertarget;
 };
 
 extern RetroEngine Engine;

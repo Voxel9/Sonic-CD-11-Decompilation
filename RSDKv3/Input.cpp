@@ -163,10 +163,10 @@ int lastMouseY     = 0;
 void ProcessInput()
 {
     byte keyState[256];
-    GetKeyboardState((PBYTE)keyState);
+    // GetKeyboardState((PBYTE)keyState);
 
-    for(int i = 0; i < 256; i++)
-        keyState[i] &= 0x80;
+    // for(int i = 0; i < 256; i++)
+    //     keyState[i] &= 0x80;
 
     for (int i = 0; i < INPUT_ANY; i++) {
         if (keyState[inputDevice[i].keyMappings]) {

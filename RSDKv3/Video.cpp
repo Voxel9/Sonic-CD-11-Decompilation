@@ -122,7 +122,7 @@ void PlayVideoFile(char *filePath)
         videoAR = float(videoWidth) / float(videoHeight);
 
         SetupVideoBuffer(videoWidth, videoHeight);
-        vidBaseticks = GetTickCount();
+        vidBaseticks = osGetTimeRef().value_tick;
         vidFrameMS   = (videoVidData->fps == 0.0) ? 0 : ((Uint32)(1000.0 / videoVidData->fps));
         videoPlaying = 1; // playing ogv
         trackID      = TRACK_COUNT - 1;
@@ -214,7 +214,7 @@ int ProcessVideo()
 
         // Don't pause or it'll go wild
         if (videoPlaying == 1) {
-            const Uint32 now = (GetTickCount() - vidBaseticks);
+            const Uint32 now = (osGetTimeRef().value_tick - vidBaseticks);
 
             if (!videoVidData)
                 videoVidData = THEORAPLAY_getVideo(videoDecoder);
@@ -245,9 +245,9 @@ int ProcessVideo()
                     // video lagging uh oh
                 }
 
-                glBindTexture(GL_TEXTURE_2D, videoBuffer);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoVidData->width, videoVidData->height, GL_RGBA, GL_UNSIGNED_BYTE, videoVidData->pixels);
-                glBindTexture(GL_TEXTURE_2D, 0);
+                // glBindTexture(GL_TEXTURE_2D, videoBuffer);
+                // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoVidData->width, videoVidData->height, GL_RGBA, GL_UNSIGNED_BYTE, videoVidData->pixels);
+                // glBindTexture(GL_TEXTURE_2D, 0);
 
                 THEORAPLAY_freeVideo(videoVidData);
                 videoVidData = NULL;
@@ -289,7 +289,7 @@ void StopVideoPlayback()
 
 void SetupVideoBuffer(int width, int height)
 {
-    if (videoBuffer > 0) {
+    /* if (videoBuffer > 0) {
         glDeleteTextures(1, &videoBuffer);
         videoBuffer = 0;
     }
@@ -302,15 +302,15 @@ void SetupVideoBuffer(int width, int height)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D, 0); */
 }
 
 void CloseVideoBuffer()
 {
-    if (videoPlaying == 1) {
+    /* if (videoPlaying == 1) {
         if (videoBuffer > 0) {
             glDeleteTextures(1, &videoBuffer);
             videoBuffer = 0;
         }
-    }
+    } */
 }

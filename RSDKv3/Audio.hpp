@@ -3,11 +3,9 @@
 
 #include <stdlib.h>
 
-#include <vorbis/vorbisfile.h>
-
-#if RETRO_PLATFORM != RETRO_VITA && RETRO_PLATFORM != RETRO_OSX
+#include <tremor/ivorbiscodec.h>
+#include <tremor/ivorbisfile.h>
 #include "SDL/SDL.h"
-#endif
 
 #define LockAudioDevice()   SDL_LockAudio()
 #define UnlockAudioDevice() SDL_UnlockAudio()

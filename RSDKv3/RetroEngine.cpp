@@ -32,7 +32,7 @@ inline int GetLowerRate(int intendRate, int targetRate)
 
 bool ProcessEvents()
 {
-    glfwPollEvents();
+    /* glfwPollEvents();
 
     switch(glfwGetMouseButton(Engine.window, GLFW_MOUSE_BUTTON_LEFT)) {
     case GLFW_PRESS:
@@ -52,9 +52,9 @@ bool ProcessEvents()
     if(glfwWindowShouldClose(Engine.window)) {
         Engine.gameMode = ENGINE_EXITGAME;
         return false;
-    }
+    } */
 
-    return true;
+    return aptMainLoop();
 }
 
 void RetroEngine::Init()
@@ -154,24 +154,18 @@ void RetroEngine::Init()
 
 void RetroEngine::Run()
 {
-    LARGE_INTEGER perf_freq;
-    QueryPerformanceFrequency(&perf_freq);
-
-    unsigned long long targetFreq = perf_freq.QuadPart / Engine.refreshRate;
+    unsigned long long targetFreq = osGetTimeRef().sysclock_hz / Engine.refreshRate;
     unsigned long long curTicks   = 0;
     unsigned long long prevTicks  = 0;
 
     while (running) {
 #if !RETRO_USE_ORIGINAL_CODE
-        if (!vsync) {
-            LARGE_INTEGER perf_counter;
-            QueryPerformanceCounter(&perf_counter);
-
-            curTicks = perf_counter.QuadPart;
+        /* if (!vsync) {
+            curTicks = osGetTimeRef().value_tick;
             if (curTicks < prevTicks + targetFreq)
                 continue;
             prevTicks = curTicks;
-        }
+        } */
 #endif
         running = ProcessEvents();
 
@@ -187,6 +181,11 @@ void RetroEngine::Run()
                 Engine.focusState = 0;
             }
         }
+
+        C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+        C3D_RenderTargetClear(Engine.rendertarget, C3D_CLEAR_ALL, 0x68B0D8FF, 0);
+        C3D_FrameDrawOn(Engine.rendertarget);
 
         if (!(Engine.focusState & 1)) {
             for (int s = 0; s < gameSpeed; ++s) {
@@ -258,8 +257,7 @@ void RetroEngine::Run()
         }
 
         FlipScreen();
-
-        glfwSwapBuffers(Engine.window);
+        C3D_FrameEnd(0);
         
         frameStep      = false;
         Engine.message = MESSAGE_NONE;

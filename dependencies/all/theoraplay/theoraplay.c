@@ -24,6 +24,11 @@
 #define THEORAPLAY_THREAD_T    HANDLE
 #define THEORAPLAY_MUTEX_T     HANDLE
 #define sleepms(x) Sleep(x)
+#elif __3DS__
+#include <3ds/thread.h>
+#define sleepms(x) svcSleepThread((x) * 1000000)
+#define THEORAPLAY_THREAD_T    Thread
+#define THEORAPLAY_MUTEX_T     LightLock
 #else
 #include <pthread.h>
 #include <unistd.h>
@@ -34,7 +39,7 @@
 
 #include "theoraplay.h"
 #include "theora/theoradec.h"
-#include "vorbis/codec.h"
+#include "tremor/ivorbiscodec.h"
 
 #define THEORAPLAY_INTERNAL 1
 
@@ -172,6 +177,33 @@ static inline void Mutex_Lock(THEORAPLAY_MUTEX_T mutex)
 static inline void Mutex_Unlock(THEORAPLAY_MUTEX_T mutex)
 {
     ReleaseMutex(mutex);
+}
+#elif __3DS__
+static inline int Thread_Create(TheoraDecoder *ctx, void *(*routine) (void*))
+{
+    ctx->worker = threadCreate((ThreadFunc)routine, ctx, 0x1000, 0x1A, -2, true);
+    return (ctx->worker == NULL);
+}
+static inline void Thread_Join(THEORAPLAY_THREAD_T thread)
+{
+    threadJoin(thread, U64_MAX);
+}
+static inline int Mutex_Create(TheoraDecoder *ctx)
+{
+    LightLock_Init(&ctx->lock);
+    return (ctx->lock == (LightLock)NULL);
+}
+static inline void Mutex_Destroy(THEORAPLAY_MUTEX_T mutex)
+{
+    // Do nothing?
+}
+static inline void Mutex_Lock(THEORAPLAY_MUTEX_T mutex)
+{
+    LightLock_Lock(&mutex);
+}
+static inline void Mutex_Unlock(THEORAPLAY_MUTEX_T mutex)
+{
+    LightLock_Unlock(&mutex);
 }
 #else
 static inline int Thread_Create(TheoraDecoder *ctx, void *(*routine) (void*))
@@ -408,7 +440,7 @@ static void WorkerThread(TheoraDecoder *ctx)
         while (!ctx->halt && vpackets)
         {
             float **pcm = NULL;
-            const int frames = vorbis_synthesis_pcmout(&vdsp, &pcm);
+            const int frames = vorbis_synthesis_pcmout(&vdsp, (ogg_int32_t ***)&pcm);
             if (frames > 0)
             {
                 const int channels = vinfo.channels;
