@@ -19,14 +19,20 @@ Even if your platform isn't supported by the official releases, you **must** buy
 * It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
 * It also **runs full speed on both O3DS and N3DS!**
 * Using Data.rsdk from the mobile version is highly recommended; see known issues below for reasons why.
+* FMVs are currently unsupported, so don't copy them to the 3DS. You'll only need the Data.rsdk for now.
 
 ## Known Issues
 * When using non-mobile Data.rsdk, the floor in special stages is graphically broken (no LOD tiles?).
 * When using non-mobile Data.rsdk, Tidal Tempest is completely graphically broken (black screen/garbage).
 * When using mobile Data.rsdk, the pause button is mapped to the B button, and pausing doesn't work at all in special stages.
 
-## How to build
-* Coming soon... (unless you're already savvy, of course)
+## How to build (via Windows)
+* Install and setup msys2: https://www.msys2.org/
+* Add the devkitpro repositories to pacman: https://devkitpro.org/wiki/devkitPro_pacman
+* Run `pacman -S git 3ds-dev 3ds-sdl 3ds-libogg 3ds-libvorbisidec 3ds-libtheora` and install all the packages
+* `git clone` this repository
+* `cd` to the `RSDKv3.3ds` folder
+* Run `make`
 
 ## FAQ
 ### Q: Is there stereoscopic 3D support?

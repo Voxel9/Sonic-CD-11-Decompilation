@@ -383,7 +383,8 @@ void FlipScreenVideo()
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
 
-    Mtx_Identity(&p_mtx);
+    // TODO: FMV support
+    /* Mtx_Identity(&p_mtx);
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p_mtx);
 
     C3D_TexBind(0, &videoBuffer);
@@ -402,7 +403,7 @@ void FlipScreenVideo()
     BufInfo_Add(bufInfo, screenVerts, sizeof(DrawVertex3D), 2, 0x10);
 
     C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
-    C3D_DrawElements(GPU_TRIANGLES, 6, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+    C3D_DrawElements(GPU_TRIANGLES, 6, C3D_UNSIGNED_SHORT, gfxPolyListIndex); */
 }
 
 void ReleaseRenderDevice()
