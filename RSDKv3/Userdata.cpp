@@ -334,14 +334,14 @@ void InitUserdata()
 
         ini.SetComment("Keyboard 1", "IK1Comment",
                        "Keyboard Mappings for P1");
-        ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = 0x1);
-        ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = 0x2);
-        ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = 0x4);
-        ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = 0x8);
-        ini.SetInteger("Keyboard 1", "A", inputDevice[INPUT_BUTTONA].keyMappings = 0x10);
-        ini.SetInteger("Keyboard 1", "B", inputDevice[INPUT_BUTTONB].keyMappings = 0x20);
-        ini.SetInteger("Keyboard 1", "C", inputDevice[INPUT_BUTTONC].keyMappings = 0x40);
-        ini.SetInteger("Keyboard 1", "Start", inputDevice[INPUT_START].keyMappings = 0x80);
+        ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = KEY_DUP);
+        ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = KEY_DDOWN);
+        ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = KEY_DLEFT);
+        ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = KEY_DRIGHT);
+        ini.SetInteger("Keyboard 1", "A", inputDevice[INPUT_BUTTONA].keyMappings = KEY_A);
+        ini.SetInteger("Keyboard 1", "B", inputDevice[INPUT_BUTTONB].keyMappings = KEY_B);
+        ini.SetInteger("Keyboard 1", "C", inputDevice[INPUT_BUTTONC].keyMappings = KEY_Y);
+        ini.SetInteger("Keyboard 1", "Start", inputDevice[INPUT_START].keyMappings = KEY_START);
 
         ini.SetComment("Controller 1", "IC1Comment",
                        "Controller Mappings for P1");
@@ -461,21 +461,21 @@ void InitUserdata()
             sfxVolume = 0;
 
         if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))
-            inputDevice[0].keyMappings = 0x1;
+            inputDevice[0].keyMappings = KEY_DUP;
         if (!ini.GetInteger("Keyboard 1", "Down", &inputDevice[INPUT_DOWN].keyMappings))
-            inputDevice[1].keyMappings = 0x2;
+            inputDevice[1].keyMappings = KEY_DDOWN;
         if (!ini.GetInteger("Keyboard 1", "Left", &inputDevice[INPUT_LEFT].keyMappings))
-            inputDevice[2].keyMappings = 0x4;
+            inputDevice[2].keyMappings = KEY_DLEFT;
         if (!ini.GetInteger("Keyboard 1", "Right", &inputDevice[INPUT_RIGHT].keyMappings))
-            inputDevice[3].keyMappings = 0x8;
+            inputDevice[3].keyMappings = KEY_DRIGHT;
         if (!ini.GetInteger("Keyboard 1", "A", &inputDevice[INPUT_BUTTONA].keyMappings))
-            inputDevice[4].keyMappings = 0x10;
+            inputDevice[4].keyMappings = KEY_A;
         if (!ini.GetInteger("Keyboard 1", "B", &inputDevice[INPUT_BUTTONB].keyMappings))
-            inputDevice[5].keyMappings = 0x20;
+            inputDevice[5].keyMappings = KEY_B;
         if (!ini.GetInteger("Keyboard 1", "C", &inputDevice[INPUT_BUTTONC].keyMappings))
-            inputDevice[6].keyMappings = 0x40;
+            inputDevice[6].keyMappings = KEY_Y;
         if (!ini.GetInteger("Keyboard 1", "Start", &inputDevice[INPUT_START].keyMappings))
-            inputDevice[7].keyMappings = 0x80;
+            inputDevice[7].keyMappings = KEY_START;
 
         if (!ini.GetInteger("Controller 1", "Up", &inputDevice[INPUT_UP].contMappings))
             inputDevice[0].contMappings = 0;

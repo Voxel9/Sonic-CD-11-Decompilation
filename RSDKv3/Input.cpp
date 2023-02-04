@@ -162,14 +162,11 @@ int lastMouseY     = 0;
 
 void ProcessInput()
 {
-    byte keyState[256];
-    // GetKeyboardState((PBYTE)keyState);
-
-    // for(int i = 0; i < 256; i++)
-    //     keyState[i] &= 0x80;
+    hidScanInput();
+    u32 kHeld = hidKeysHeld();
 
     for (int i = 0; i < INPUT_ANY; i++) {
-        if (keyState[inputDevice[i].keyMappings]) {
+        if (kHeld & inputDevice[i].keyMappings) {
             inputDevice[i].setHeld();
             if (!inputDevice[INPUT_ANY].hold)
                 inputDevice[INPUT_ANY].setHeld();
@@ -180,7 +177,7 @@ void ProcessInput()
 
     bool isPressed = false;
     for (int i = 0; i < INPUT_BUTTONCOUNT; i++) {
-        if (keyState[inputDevice[i].keyMappings]) {
+        if (kHeld & inputDevice[i].keyMappings) {
             isPressed = true;
             break;
         }

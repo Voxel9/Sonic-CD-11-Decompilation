@@ -36,11 +36,16 @@
 	dp4 outpos.z, p[2], r1
 	dp4 outpos.w, p[3], r1
 
+	; Force the w component of intc0 to be 1.0
+	mov r2.xy, intc0
+	mov r2.z, zeros
+	mov r2.w, ones
+
 	; outtc0 = tex * intc0
-	dp4 outtc0.x, tex[0], intc0
-	dp4 outtc0.y, tex[1], intc0
-	dp4 outtc0.z, tex[2], intc0
-	dp4 outtc0.w, tex[3], intc0
+	dp4 outtc0.x, tex[0], r2
+	dp4 outtc0.y, tex[1], r2
+	dp4 outtc0.z, tex[2], r2
+	dp4 outtc0.w, tex[3], r2
 
 	mov r6.x, coldiv
 
