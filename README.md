@@ -18,15 +18,22 @@ Even if your platform isn't supported by the official releases, you **must** buy
 * This is a brand new 3DS port based on the HW version of the decomp.
 * It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
 * It also **runs full speed on both O3DS and N3DS!**
-* Using Data.rsdk from the mobile version is highly recommended, as the special stages are graphically broken with the non-mobile Data.rsdk (no LOD tiles?).
-* Stereo 3D support isn't currently implemented yet, but is planned. If you'd like to play with some form of S3D support right now, SaturnSH2x2's 3DS port (HW version) supports it quite well (apart from special stages, which are broken in that version).
+* Using Data.rsdk from the mobile version is highly recommended; see known issues below for reasons why.
 
 This port is still very work-in-progress, so if you're looking to just play the game right now with no issues, go and grab SaturnSH2x2's 3DS port over on their repository:
 https://github.com/SaturnSH2x2/Sonic-CD-11-3DS
 
-# How to build
+## Known Issues
+* When using non-mobile Data.rsdk, the floor in special stages is graphically broken (no LOD tiles?).
+* When using non-mobile Data.rsdk, Tidal Tempest is completely graphically broken (black screen/garbage).
+* When using mobile Data.rsdk, the pause button is mapped to the B button, and pausing doesn't work at all in special stages.
+
+## How to build
 * Coming soon... (unless you're already savvy, of course)
 
-# FAQ
+## FAQ
+### Q: Is there stereoscopic 3D support?
+A: S3D currently isn't implemented yet, but is planned. If you'd like to play the game with some form of S3D support right now, SaturnSH2x2's 3DS port (HW version) supports it quite well (apart from special stages, which are broken in that version).
+
 ### Q: Can the D-Pad and Circle Pad both be mapped to movement at the same time?
 A: Not yet. For now, choose one you feel most comfortable with and modify the keyboard mappings in settings.ini, using the key button masks defined in libctru.
