@@ -20,9 +20,6 @@ Even if your platform isn't supported by the official releases, you **must** buy
 * It also **runs full speed on both O3DS and N3DS!**
 * Using Data.rsdk from the mobile version is highly recommended; see known issues below for reasons why.
 
-This port is still very work-in-progress, so if you're looking to just play the game right now with no issues, go and grab SaturnSH2x2's 3DS port over on their repository:
-https://github.com/SaturnSH2x2/Sonic-CD-11-3DS
-
 ## Known Issues
 * When using non-mobile Data.rsdk, the floor in special stages is graphically broken (no LOD tiles?).
 * When using non-mobile Data.rsdk, Tidal Tempest is completely graphically broken (black screen/garbage).
