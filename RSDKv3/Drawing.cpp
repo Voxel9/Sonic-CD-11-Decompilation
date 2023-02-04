@@ -532,14 +532,14 @@ void UpdateHardwareTextures()
     UpdateTextureBufferWithTiles();
     UpdateTextureBufferWithSortedSprites();
 
-    C3D_TexLoadImage(&gfxTextureID[0], texBuffer, GPU_TEXFACE_2D, 0);
+    C3D_TexUpload(&gfxTextureID[0], texBuffer);
 
     for (byte b = 1; b < HW_TEXTURE_COUNT; ++b) {
         SetActivePalette(b, 0, SCREEN_YSIZE);
         UpdateTextureBufferWithTiles();
         UpdateTextureBufferWithSprites();
 
-        C3D_TexLoadImage(&gfxTextureID[b], texBuffer, GPU_TEXFACE_2D, 0);
+        C3D_TexUpload(&gfxTextureID[b], texBuffer);
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
 }
