@@ -17,9 +17,9 @@ Even if your platform isn't supported by the official releases, you **must** buy
 # Nintendo 3DS Port (Again)
 * This is a brand new 3DS port based on the HW version of the decomp.
 * It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
+* It also **runs full speed on both O3DS and N3DS!**
 * Using Data.rsdk from the mobile version is highly recommended, as the special stages are graphically broken with the non-mobile Data.rsdk (no LOD tiles?).
-* Currently, in-game dev menu toggling has been ripped out of the source code, but it'll be restored at a later date once everything is complete and the code is tidied up.
-* Stereo 3D support isn't currently implemented yet, but is planned. If you'd like to play with some form of S3D support right now, SaturnSH2x2's 3DS port (HW version) supports it quite well.
+* Stereo 3D support isn't currently implemented yet, but is planned. If you'd like to play with some form of S3D support right now, SaturnSH2x2's 3DS port (HW version) supports it quite well (apart from special stages, which are broken in that version).
 
 This port is still very work-in-progress, so if you're looking to just play the game right now with no issues, go and grab SaturnSH2x2's 3DS port over on their repository:
 https://github.com/SaturnSH2x2/Sonic-CD-11-3DS

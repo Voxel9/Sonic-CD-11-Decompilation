@@ -32,27 +32,19 @@ inline int GetLowerRate(int intendRate, int targetRate)
 
 bool ProcessEvents()
 {
-    /* glfwPollEvents();
+    u32 kDown = hidKeysDown();
 
-    switch(glfwGetMouseButton(Engine.window, GLFW_MOUSE_BUTTON_LEFT)) {
-    case GLFW_PRESS:
-        if (touches <= 1) { // Touch always takes priority over mouse
-            touchDown[0] = true;
-            touches = 1;
+    if(kDown & KEY_SELECT) {
+        if (Engine.devMenu) {
+#if RETRO_USE_MOD_LOADER
+            // hacky patch because people can escape
+            if (Engine.gameMode == ENGINE_DEVMENU && stageMode == DEVMENU_MODMENU) {
+                RefreshEngine();
+            }
+#endif
+            Engine.gameMode = ENGINE_INITDEVMENU;
         }
-        break;
-    case GLFW_RELEASE:
-        if (touches <= 1) { // Touch always takes priority over mouse
-            touchDown[0] = false;
-            touches = 0;
-        }
-        break;
     }
-
-    if(glfwWindowShouldClose(Engine.window)) {
-        Engine.gameMode = ENGINE_EXITGAME;
-        return false;
-    } */
 
     return aptMainLoop();
 }
