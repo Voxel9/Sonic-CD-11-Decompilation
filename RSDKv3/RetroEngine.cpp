@@ -893,7 +893,7 @@ void RetroEngine::Callback(int callbackID)
             stageMode = STAGEMODE_LOAD;
             break;
         case CALLBACK_EXIT_SELECTED:
-            // gameMode = ENGINE_EXITGAME;
+            gameMode = ENGINE_EXITGAME;
             PrintLog("Callback: Exit Selected");
             if (bytecodeMode == BYTECODE_PC) {
                 running = false;

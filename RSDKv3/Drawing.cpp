@@ -422,6 +422,22 @@ void ReleaseRenderDevice()
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++)
         C3D_TexDelete(&gfxTextureID[i]);
+    
+    // Free the shader program
+    shaderProgramFree(&gfxshader_prog);
+    DVLB_Free(gfxshader_dvlb);
+
+    // Free the vertex buffers
+    linearFree(polyList3D);
+    linearFree(gfxPolyListIndex);
+    linearFree(gfxPolyList);
+
+    // Deinitialize graphics
+    C3D_Fini();
+    gfxExit();
+
+    // Deinitialize SDL audio
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void GenerateBlendLookupTable()
