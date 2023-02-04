@@ -51,6 +51,12 @@ bool ProcessEvents()
 
 void RetroEngine::Init()
 {
+    bool isN3DS = false;
+    APT_CheckNew3DS(&isN3DS);
+
+	if(isN3DS)
+		osSetSpeedupEnable(true);
+
     CalculateTrigAngles();
     GenerateBlendLookupTable();
     InitUserdata();

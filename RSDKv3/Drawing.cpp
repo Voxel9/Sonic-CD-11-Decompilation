@@ -115,9 +115,6 @@ int InitRenderDevice()
 
     sprintf(gameTitle, "%s%s", Engine.gameWindowText, Engine.usingDataFile_Config ? "" : " (Using Data Folder)");
 
-    // Init SDL
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
-
     gfxInitDefault();
 	consoleInit(GFX_BOTTOM, NULL);
 	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
@@ -435,9 +432,6 @@ void ReleaseRenderDevice()
     // Deinitialize graphics
     C3D_Fini();
     gfxExit();
-
-    // Deinitialize SDL audio
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void GenerateBlendLookupTable()

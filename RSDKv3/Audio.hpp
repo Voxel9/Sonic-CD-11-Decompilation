@@ -7,8 +7,8 @@
 #include <tremor/ivorbisfile.h>
 #include "SDL/SDL.h"
 
-#define LockAudioDevice()   SDL_LockAudio()
-#define UnlockAudioDevice() SDL_UnlockAudio()
+#define LockAudioDevice()   ; //SDL_LockAudio()
+#define UnlockAudioDevice() ; //SDL_UnlockAudio()
 
 #define TRACK_COUNT   (0x10)
 #define SFX_COUNT     (0x100)
@@ -201,6 +201,9 @@ inline void ReleaseAudioDevice()
     StopAllSfx();
     ReleaseStageSfx();
     ReleaseGlobalSfx();
+
+    // Deinitialize SDL audio
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 #endif // !AUDIO_H

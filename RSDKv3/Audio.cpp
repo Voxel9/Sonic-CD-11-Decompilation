@@ -39,8 +39,12 @@ SDL_AudioSpec audioDeviceFormat;
 
 int InitAudioPlayback()
 {
+    // Init SDL
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+
     StopAllSfx(); //"init"
-    /* SDL_AudioSpec want;
+
+    SDL_AudioSpec want;
     want.freq     = AUDIO_FREQUENCY;
     want.format   = AUDIO_FORMAT;
     want.samples  = AUDIO_SAMPLES;
@@ -55,7 +59,7 @@ int InitAudioPlayback()
         PrintLog("Unable to open audio device: %s", SDL_GetError());
         audioEnabled = false;
         return true; // no audio but game wont crash now
-    } */
+    }
 
     LoadGlobalSfx();
 
@@ -187,7 +191,7 @@ void ProcessMusicStream(Sint32 *stream, size_t bytes_wanted)
     switch (musicStatus) {
         case MUSIC_READY:
         case MUSIC_PLAYING: {
-            /* size_t bytes_gotten = 0;
+            size_t bytes_gotten = 0;
             byte *buffer        = (byte *)malloc(bytes_wanted);
             memset(buffer, 0, bytes_wanted);
             while (bytes_gotten < bytes_wanted) {
@@ -240,7 +244,7 @@ void ProcessMusicStream(Sint32 *stream, size_t bytes_wanted)
                     free(convert.buf);
             }
             if (bytes_wanted > 0)
-                free(buffer); */
+                free(buffer);
             break;
         }
         case MUSIC_STOPPED:
@@ -543,7 +547,7 @@ bool PlayMusic(int track)
 
 void LoadSfx(char *filePath, byte sfxID)
 {
-    /* if (!audioEnabled)
+    if (!audioEnabled)
         return;
 
     FileInfo info;
@@ -598,11 +602,11 @@ void LoadSfx(char *filePath, byte sfxID)
             }
         }
         UnlockAudioDevice();
-    } */
+    }
 }
 void PlaySfx(int sfx, bool loop)
 {
-    /* LockAudioDevice();
+    LockAudioDevice();
     int sfxChannelID = nextChannelPos++;
     for (int c = 0; c < CHANNEL_COUNT; ++c) {
         if (sfxChannels[c].sfxID == sfx) {
@@ -619,11 +623,11 @@ void PlaySfx(int sfx, bool loop)
     sfxInfo->pan          = 0;
     if (nextChannelPos == CHANNEL_COUNT)
         nextChannelPos = 0;
-    UnlockAudioDevice(); */
+    UnlockAudioDevice();
 }
 void SetSfxAttributes(int sfx, int loopCount, sbyte pan)
 {
-    /* LockAudioDevice();
+    LockAudioDevice();
     int sfxChannel = -1;
     for (int i = 0; i < CHANNEL_COUNT; ++i) {
         if (sfxChannels[i].sfxID == sfx || sfxChannels[i].sfxID == -1) {
@@ -641,5 +645,5 @@ void SetSfxAttributes(int sfx, int loopCount, sbyte pan)
     sfxInfo->loopSFX      = loopCount == -1 ? sfxInfo->loopSFX : loopCount;
     sfxInfo->pan          = pan;
     sfxInfo->sfxID        = sfx;
-    UnlockAudioDevice(); */
+    UnlockAudioDevice();
 }
