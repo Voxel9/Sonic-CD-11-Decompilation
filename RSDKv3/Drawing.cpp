@@ -1,4 +1,5 @@
 #include "RetroEngine.hpp"
+#include "swizzle.hpp"
 
 // Workaround for a "bug" in Linux with AMD cards where the presented buffer
 // isn't cleared and displays corrupted memory in the letter/pillar boxes.
@@ -43,7 +44,7 @@ ushort gfxVertexSizeOpaque = 0;
 ushort gfxIndexSize        = 0;
 ushort gfxIndexSizeOpaque  = 0;
 
-DrawVertex3D polyList3D[VERTEX3D_COUNT];
+DrawVertex3D *polyList3D;
 
 ushort vertexSize3D = 0;
 ushort indexSize3D  = 0;
@@ -83,6 +84,8 @@ C3D_Tex videoBuffer;
 
 C3D_AttrInfo* attrInfo;
 C3D_BufInfo* bufInfo;
+
+ushort swizzleTexBuffer[HW_TEXBUFFER_SIZE];
 
 #include "gfxshader_shbin.h"
 
@@ -127,6 +130,8 @@ int InitRenderDevice()
 
     gfxPolyList = (DrawVertex*)linearAlloc(VERTEX_COUNT * sizeof(DrawVertex));
     gfxPolyListIndex = (short*)linearAlloc(INDEX_COUNT * sizeof(short));
+
+    polyList3D = (DrawVertex3D*)linearAlloc(VERTEX3D_COUNT * sizeof(DrawVertex3D));
 
     // Configure the first fragment shading substage to blend the texture color with
 	// the vertex color (calculated by the vertex shader using a lighting algorithm)
@@ -237,7 +242,7 @@ void FlipScreenNoFB()
 {
     Mtx_Identity(&p_mtx);
     Mtx_OrthoTilt(&p_mtx, 0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0, true);
-    // C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    C3D_SetViewport(0, viewOffsetX, viewHeight, viewWidth);
 
     C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p_mtx);
 
@@ -274,14 +279,17 @@ void FlipScreenNoFB()
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
         // Init 3D Plane
-        /* C3D_SetViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
+        C3D_SetViewport(floor3DTop, viewOffsetX, floor3DBottom, viewWidth);
         Mtx_Identity(&p3d_mtx);
         Mtx_PerspTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, false);
 
+        C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p3d_mtx);
+
         Mtx_Identity(&mv_mtx);
-        Mtx_Scale(&mv_mtx, 1.0f, -1.0f, -1.0f);
-        Mtx_RotateY(&mv_mtx, floor3DAngle + 180.0f, true);
+        Mtx_Scale(&mv_mtx, -1.0f, -1.0f, -1.0f);
+        Mtx_RotateY(&mv_mtx, C3D_AngleFromDegrees(floor3DAngle), true);
         Mtx_Translate(&mv_mtx, floor3DXPos, floor3DYPos, floor3DZPos, true);
+        C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "mv"), &mv_mtx);
 
         // Configure attributes for use with the vertex shader
         attrInfo = C3D_GetAttrInfo();
@@ -295,11 +303,14 @@ void FlipScreenNoFB()
         BufInfo_Init(bufInfo);
         BufInfo_Add(bufInfo, polyList3D, sizeof(DrawVertex3D), 3, 0x210);
 
-        C3D_DrawElements(GPU_TRIANGLES, indexSize3D, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+        if(indexSize3D >= 3)
+            C3D_DrawElements(GPU_TRIANGLES, indexSize3D, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+
         Mtx_Identity(&mv_mtx);
+        C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "mv"), &mv_mtx);
 
         // Return for blended rendering
-        C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight); */
+        C3D_SetViewport(0, viewOffsetX, viewHeight, viewWidth);
     }
     else {
         // Configure attributes for use with the vertex shader
@@ -322,6 +333,8 @@ void FlipScreenNoFB()
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p_mtx);
 
     // Configure attributes for use with the vertex shader
     attrInfo = C3D_GetAttrInfo();
@@ -378,7 +391,7 @@ void FlipScreenVideo()
 
     C3D_TexBind(0, &videoBuffer);
 
-    // C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    C3D_SetViewport(0, viewOffsetX, viewHeight, viewWidth);
 
     // Configure attributes for use with the vertex shader
     attrInfo = C3D_GetAttrInfo();
@@ -538,14 +551,18 @@ void UpdateHardwareTextures()
     UpdateTextureBufferWithTiles();
     UpdateTextureBufferWithSortedSprites();
 
-    C3D_TexUpload(&gfxTextureID[0], texBuffer);
+    SwizzleTexBuffer(texBuffer, swizzleTexBuffer, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, 2);
+
+    C3D_TexUpload(&gfxTextureID[0], swizzleTexBuffer);
 
     for (byte b = 1; b < HW_TEXTURE_COUNT; ++b) {
         SetActivePalette(b, 0, SCREEN_YSIZE);
         UpdateTextureBufferWithTiles();
         UpdateTextureBufferWithSprites();
 
-        C3D_TexUpload(&gfxTextureID[b], texBuffer);
+        SwizzleTexBuffer(texBuffer, swizzleTexBuffer, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, 2);
+
+        C3D_TexUpload(&gfxTextureID[b], swizzleTexBuffer);
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
 }

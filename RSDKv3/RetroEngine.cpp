@@ -184,7 +184,7 @@ void RetroEngine::Run()
 
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-        C3D_RenderTargetClear(Engine.rendertarget, C3D_CLEAR_ALL, 0x68B0D8FF, 0);
+        C3D_RenderTargetClear(Engine.rendertarget, C3D_CLEAR_ALL, 0x000000ff, 0);
         C3D_FrameDrawOn(Engine.rendertarget);
 
         if (!(Engine.focusState & 1)) {

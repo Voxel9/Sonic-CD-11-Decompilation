@@ -84,7 +84,7 @@ extern ushort gfxVertexSizeOpaque;
 extern ushort gfxIndexSize;
 extern ushort gfxIndexSizeOpaque;
 
-extern DrawVertex3D polyList3D[VERTEX3D_COUNT];
+extern DrawVertex3D *polyList3D;
 
 extern ushort vertexSize3D;
 extern ushort indexSize3D;
