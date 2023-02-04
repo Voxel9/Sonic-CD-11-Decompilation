@@ -25,10 +25,9 @@ static inline u32 GetMortonOffset(u32 x, u32 y, u32 bytes_per_pixel) {
 }
 
 static u32 GetPixelOffset(u32 x, u32 y, u32 width, u32 height, u32 bytes_per_pixel) {
-    int new_y = height - y;
-    const u32 coarse_y = new_y & ~7;
-    u32 stride = width * bytes_per_pixel;
-    return GetMortonOffset(x, new_y, bytes_per_pixel) + coarse_y * stride;
+    y = height - 1 - y;
+    u32 coarse_y = y & ~7;
+    return GetMortonOffset(x, y, 2) + coarse_y * width * 2;
 }
 
 static void SwizzleTexBuffer(ushort *in, ushort *out, u32 w, u32 h, u32 bytes_pp) {
