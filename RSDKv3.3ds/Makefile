@@ -46,6 +46,10 @@ GFXBUILD	:=	$(BUILD)
 #ROMFS		:=	romfs
 #GFXBUILD	:=	$(ROMFS)/gfx
 
+APP_TITLE		:=	Sonic CD
+APP_DESCRIPTION	:=	3DS port of the Sonic CD (2011) Decompilation
+APP_AUTHOR		:=	Rubberduckycooly, Voxel9, others
+
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
@@ -60,7 +64,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=c++17
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=	-lSDL -ltinyxml2 -ltheoradec -lvorbisidec -logg -lcitro3d -lctru -lm
+LIBS	:=	-lSDL -ltheoradec -lvorbisidec -logg -lcitro3d -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
