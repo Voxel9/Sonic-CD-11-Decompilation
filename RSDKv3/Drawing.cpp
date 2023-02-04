@@ -268,7 +268,9 @@ void FlipScreenNoFB()
         BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
 
         // Non Blended rendering
-        C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+        if(gfxIndexSizeOpaque >= 3)
+            C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
 
         // Init 3D Plane
@@ -313,7 +315,8 @@ void FlipScreenNoFB()
         BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
 
         // Non Blended rendering
-        C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
+        if(gfxIndexSizeOpaque >= 3)
+            C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
 
         C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA, GPU_ONE_MINUS_SRC_ALPHA);
     }
@@ -332,7 +335,8 @@ void FlipScreenNoFB()
     BufInfo_Init(bufInfo);
     BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
 
-    C3D_DrawElements(GPU_TRIANGLES, blendedGfxCount, C3D_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
+    if(blendedGfxCount >= 3)
+        C3D_DrawElements(GPU_TRIANGLES, blendedGfxCount, C3D_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
     C3D_TexSetFilter(&gfxTextureID[texPaletteNum], GPU_NEAREST, GPU_NEAREST);
 }
@@ -370,9 +374,11 @@ void FlipScreenVideo()
     screenVerts[3].y = h + y;
 
     Mtx_Identity(&p_mtx);
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p_mtx);
+
     C3D_TexBind(0, &videoBuffer);
 
-    C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    // C3D_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
     // Configure attributes for use with the vertex shader
     attrInfo = C3D_GetAttrInfo();
