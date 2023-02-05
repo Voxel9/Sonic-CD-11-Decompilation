@@ -18,8 +18,9 @@ Even if your platform isn't supported by the official releases, you **must** buy
 * This is a brand new 3DS port based on the HW version of the decomp.
 * It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
 * It also **runs full speed on both O3DS and N3DS!**
-* Using Data.rsdk from the mobile version is highly recommended; see known issues below for reasons why.
+* Using Data.rsdk from the **mobile version** is highly recommended; see known issues below for reasons why.
 * Just copy `SonicCD.3dsx` (or install `SonicCD.cia`) and `Data.rsdk` to `/3ds/SonicCD/` on the SD card.
+* **Don't copy over an existing settings.ini**; this might result in unexpected issues (i.e. no input). Just let a new settings.ini be generated on first startup before modifying anything in the config.
 * FMVs are currently unsupported, so don't bother copying them. You'll only need the Data.rsdk for now.
 
 ## Known Issues
