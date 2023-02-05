@@ -19,10 +19,11 @@ This is a brand new 3DS port based on the HW version of the decomp.
 It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
 
 ## Features
+* Built on the most recent decomp code base (as of Feb 2023)
 * **Runs full speed on both O3DS and N3DS!**
 * No laggy/slow special stages
-* Built on the most recent decomp code base (as of Feb 2023)
 * (Hopefully) less crash-prone than the other existing 3DS port
+* Remappable (keyboard) keys in settings.ini (Uses [bitmasks](https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/services/hid.h) from libctru)
 * And just like the other port, dev menu can be accessed at any time by pressing SELECT
 
 ## Setup
