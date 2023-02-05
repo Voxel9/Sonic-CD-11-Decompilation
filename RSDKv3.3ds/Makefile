@@ -49,6 +49,7 @@ GFXBUILD	:=	$(BUILD)
 APP_TITLE		:=	Sonic CD
 APP_DESCRIPTION	:=	3DS port of the Sonic CD (2011) Decompilation
 APP_AUTHOR		:=	Rubberduckycooly, Voxel9, others
+ICON			:=	res/icon.png
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -141,6 +142,8 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
+export RES	:=	$(TOPDIR)/res
+
 export _3DSXDEPS	:=	$(if $(NO_SMDH),,$(OUTPUT).smdh)
 
 ifeq ($(strip $(ICON)),)
@@ -186,7 +189,7 @@ endif
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(GFXBUILD)
+	@rm -fr $(BUILD) *.3dsx *.smdh *.elf *.cia $(GFXBUILD) $(RES)/*.bin
 
 #---------------------------------------------------------------------------------
 $(GFXBUILD)/%.t3x	$(BUILD)/%.h	:	%.t3s
@@ -200,11 +203,17 @@ else
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).3dsx	:	$(OUTPUT).elf $(_3DSXDEPS)
+$(OUTPUT).3dsx	:	$(OUTPUT).elf $(_3DSXDEPS) $(OUTPUT).cia
 
 $(OFILES_SOURCES) : $(HFILES)
 
 $(OUTPUT).elf	:	$(OFILES)
+
+$(OUTPUT).cia	:	$(OUTPUT).elf $(OUTPUT).smdh
+	@bannertool makebanner -i "$(RES)/banner.png" -a "$(RES)/banner.wav" -o "$(RES)/banner.bin"
+	@bannertool makesmdh -i "$(RES)/icon.png" -s "$(APP_TITLE)" -l "$(APP_TITLE)" -p "$(APP_AUTHOR)" -o "$(RES)/icon.bin"
+	@makerom -f cia -target t -exefslogo -o "$(OUTPUT).cia" -elf "$(OUTPUT).elf" -rsf "$(RES)/build-cia.rsf" -banner "$(RES)/banner.bin" -icon "$(RES)/icon.bin" -logo "$(RES)/logo.bcma.lz"
+	@echo "built CIA file"
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data

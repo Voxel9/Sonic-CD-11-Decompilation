@@ -19,7 +19,8 @@ Even if your platform isn't supported by the official releases, you **must** buy
 * It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among the usual dependencies.
 * It also **runs full speed on both O3DS and N3DS!**
 * Using Data.rsdk from the mobile version is highly recommended; see known issues below for reasons why.
-* FMVs are currently unsupported, so don't copy them to the 3DS. You'll only need the Data.rsdk for now.
+* Just copy `SonicCD.3dsx` (or install `SonicCD.cia`) and `Data.rsdk` to `/3ds/SonicCD/` on the SD card.
+* FMVs are currently unsupported, so don't bother copying them. You'll only need the Data.rsdk for now.
 
 ## Known Issues
 * When using non-mobile Data.rsdk, the floor in special stages is graphically broken (no LOD tiles?).

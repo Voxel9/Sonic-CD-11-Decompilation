@@ -8,6 +8,8 @@
 RSDKv3.3ds/*.elf
 RSDKv3.3ds/*.3dsx
 RSDKv3.3ds/*.smdh
+RSDKv3.3ds/*.cia
+RSDKv3.3ds/res/*.bin
 
 # Win32 artifacts
 RSDKv3.win32/*.exe
