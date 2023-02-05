@@ -27,6 +27,7 @@ It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among t
 * And just like the other port, dev menu can be accessed at any time by pressing SELECT
 
 ## Setup
+* You need to [dump the DSP firm](https://github.com/zoogie/DSP1/releases) before running the game, otherwise there will be no audio.
 * Using Data.rsdk from the **mobile version** is highly recommended; see known issues below for reasons why.
 * Just copy `SonicCD.3dsx` (or install `SonicCD.cia`) and `Data.rsdk` to `/3ds/SonicCD/` on the SD card.
 * **Don't copy over an existing settings.ini**; this might result in unexpected issues (i.e. no input). Just let a new settings.ini be generated on first startup before modifying anything in the config.
