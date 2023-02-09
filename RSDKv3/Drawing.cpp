@@ -183,20 +183,6 @@ int InitRenderDevice()
 
     SetScreenDimensions(SCREEN_XSIZE, SCREEN_YSIZE, SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale);
 
-    if (renderType == RENDER_SW) {
-        Engine.frameBuffer   = new ushort[GFX_LINESIZE * SCREEN_YSIZE];
-        memset(Engine.frameBuffer, 0, (GFX_LINESIZE * SCREEN_YSIZE) * sizeof(ushort));
-        if (Engine.useHQModes) {
-            Engine.frameBuffer2x = new ushort[GFX_LINESIZE_DOUBLE * (SCREEN_YSIZE * 2)];
-            memset(Engine.frameBuffer2x, 0, GFX_LINESIZE_DOUBLE * (SCREEN_YSIZE * 2) * sizeof(ushort));
-        }
-        
-        Engine.texBuffer   = new uint[SCREEN_XSIZE * SCREEN_YSIZE];
-        Engine.texBuffer2x = new uint[(SCREEN_XSIZE * 2) * (SCREEN_YSIZE * 2)];
-        memset(Engine.texBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint));
-        memset(Engine.texBuffer2x, 0, (SCREEN_XSIZE * 2) * (SCREEN_YSIZE * 2) * sizeof(uint));
-    }
-
     OBJECT_BORDER_X2 = SCREEN_XSIZE + 0x80;
     // OBJECT_BORDER_Y2 = SCREEN_YSIZE + 0x100;
 
@@ -457,58 +443,47 @@ void GenerateBlendLookupTable()
 
 void ClearScreen(byte index)
 {
-    if (renderType == RENDER_SW) {
-        ushort colour       = activePalette[index];
-        ushort *framebuffer = Engine.frameBuffer;
-        int cnt             = GFX_LINESIZE * SCREEN_YSIZE;
-        while (cnt--) {
-            *framebuffer = colour;
-            ++framebuffer;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        gfxPolyList[gfxVertexSize].x        = 0.0f;
-        gfxPolyList[gfxVertexSize].y        = 0.0f;
-        gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
-        gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
-        gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
-        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-        gfxPolyList[gfxVertexSize].u        = 0.0f;
-        gfxPolyList[gfxVertexSize].v        = 0.0f;
+    gfxPolyList[gfxVertexSize].x        = 0.0f;
+    gfxPolyList[gfxVertexSize].y        = 0.0f;
+    gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
+    gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
+    gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
+    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+    gfxPolyList[gfxVertexSize].u        = 0.0f;
+    gfxPolyList[gfxVertexSize].v        = 0.0f;
 
-        gfxVertexSize++;
-        gfxPolyList[gfxVertexSize].x        = SCREEN_XSIZE << 4;
-        gfxPolyList[gfxVertexSize].y        = 0.0f;
-        gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
-        gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
-        gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
-        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-        gfxPolyList[gfxVertexSize].u        = 0.0f;
-        gfxPolyList[gfxVertexSize].v        = 0.0f;
+    gfxVertexSize++;
+    gfxPolyList[gfxVertexSize].x        = SCREEN_XSIZE << 4;
+    gfxPolyList[gfxVertexSize].y        = 0.0f;
+    gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
+    gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
+    gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
+    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+    gfxPolyList[gfxVertexSize].u        = 0.0f;
+    gfxPolyList[gfxVertexSize].v        = 0.0f;
 
-        gfxVertexSize++;
-        gfxPolyList[gfxVertexSize].x        = 0.0f;
-        gfxPolyList[gfxVertexSize].y        = SCREEN_YSIZE << 4;
-        gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
-        gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
-        gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
-        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-        gfxPolyList[gfxVertexSize].u        = 0.0f;
-        gfxPolyList[gfxVertexSize].v        = 0.0f;
+    gfxVertexSize++;
+    gfxPolyList[gfxVertexSize].x        = 0.0f;
+    gfxPolyList[gfxVertexSize].y        = SCREEN_YSIZE << 4;
+    gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
+    gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
+    gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
+    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+    gfxPolyList[gfxVertexSize].u        = 0.0f;
+    gfxPolyList[gfxVertexSize].v        = 0.0f;
 
-        gfxVertexSize++;
-        gfxPolyList[gfxVertexSize].x        = SCREEN_XSIZE << 4;
-        gfxPolyList[gfxVertexSize].y        = SCREEN_YSIZE << 4;
-        gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
-        gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
-        gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
-        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-        gfxPolyList[gfxVertexSize].u        = 0.0f;
-        gfxPolyList[gfxVertexSize].v        = 0.0f;
-        gfxVertexSize++;
+    gfxVertexSize++;
+    gfxPolyList[gfxVertexSize].x        = SCREEN_XSIZE << 4;
+    gfxPolyList[gfxVertexSize].y        = SCREEN_YSIZE << 4;
+    gfxPolyList[gfxVertexSize].colour.r = activePalette32[index].r;
+    gfxPolyList[gfxVertexSize].colour.g = activePalette32[index].g;
+    gfxPolyList[gfxVertexSize].colour.b = activePalette32[index].b;
+    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+    gfxPolyList[gfxVertexSize].u        = 0.0f;
+    gfxPolyList[gfxVertexSize].v        = 0.0f;
+    gfxVertexSize++;
 
-        gfxIndexSize += 6;
-    }
+    gfxIndexSize += 6;
 }
 
 void SetScreenSize(int width, int lineSize)
@@ -1056,22 +1031,13 @@ void DrawStageGFX()
 {
     waterDrawPos = waterLevel - yScrollOffset;
 
-    if (renderType == RENDER_SW) {
-        if (waterDrawPos < 0)
-            waterDrawPos = 0;
+    gfxVertexSize = 0;
+    gfxIndexSize  = 0;
 
-        if (waterDrawPos > SCREEN_YSIZE)
-            waterDrawPos = SCREEN_YSIZE;
-    }
-    else if (renderType == RENDER_HW) {
-        gfxVertexSize = 0;
-        gfxIndexSize  = 0;
-
-        if (waterDrawPos < -TILE_SIZE)
-            waterDrawPos = -TILE_SIZE;
-        if (waterDrawPos >= SCREEN_YSIZE)
-            waterDrawPos = SCREEN_YSIZE + TILE_SIZE;
-    }
+    if (waterDrawPos < -TILE_SIZE)
+        waterDrawPos = -TILE_SIZE;
+    if (waterDrawPos >= SCREEN_YSIZE)
+        waterDrawPos = SCREEN_YSIZE + TILE_SIZE;
 
     DrawObjectList(0);
     if (activeTileLayers[0] < LAYER_COUNT) {
@@ -1085,10 +1051,8 @@ void DrawStageGFX()
             case LAYER_3DSKY:
                 if (Engine.useHQModes)
                     drawStageGFXHQ = true;
-                if (renderType == RENDER_SW)
-                    Draw3DSkyLayer(0);
-                else
-                    Draw3DFloorLayer(0);
+                
+                Draw3DFloorLayer(0);
                 break;
             default: break;
         }
@@ -1111,10 +1075,8 @@ void DrawStageGFX()
             case LAYER_3DSKY:
                 if (Engine.useHQModes)
                     drawStageGFXHQ = true;
-                if (renderType == RENDER_SW)
-                    Draw3DSkyLayer(1);
-                else
-                    Draw3DFloorLayer(1);
+                
+                Draw3DFloorLayer(1);
                 break;
             default: break;
         }
@@ -1132,10 +1094,8 @@ void DrawStageGFX()
             case LAYER_3DSKY:
                 if (Engine.useHQModes)
                     drawStageGFXHQ = true;
-                if (renderType == RENDER_SW)
-                    Draw3DSkyLayer(2);
-                else
-                    Draw3DFloorLayer(2);
+                
+                Draw3DFloorLayer(2);
                 break;
             default: break;
         }
@@ -1154,10 +1114,8 @@ void DrawStageGFX()
             case LAYER_3DSKY:
                 if (Engine.useHQModes)
                     drawStageGFXHQ = true;
-                if (renderType == RENDER_HW)
-                    Draw3DSkyLayer(3);
-                else
-                    Draw3DFloorLayer(3);
+                
+                Draw3DSkyLayer(3);
                 break;
             default: break;
         }
@@ -1173,14 +1131,7 @@ void DrawStageGFX()
         DrawDebugOverlays();
 #endif
 
-    if (drawStageGFXHQ && renderType == RENDER_SW) {
-        CopyFrameOverlay2x();
-        if (fadeMode > 0) {
-            DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, fadeR, fadeG, fadeB, fadeA);
-            SetFadeHQ(fadeR, fadeG, fadeB, fadeA);
-        }
-    }
-    else if (fadeMode > 0) {
+    if (fadeMode > 0) {
         DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, fadeR, fadeG, fadeB, fadeA);
     }
 
@@ -1280,2598 +1231,1375 @@ void DrawDebugOverlays()
 
 void DrawHLineScrollLayer(int layerID)
 {
-    if (renderType == RENDER_SW) {
-        TileLayer *layer   = &stageLayouts[activeTileLayers[layerID]];
-        int screenwidth16  = (GFX_LINESIZE >> 4) - 1;
-        int layerwidth     = layer->xsize;
-        int layerheight    = layer->ysize;
-        bool aboveMidPoint = layerID >= tLayerMidPoint;
+    TileLayer *layer      = &stageLayouts[activeTileLayers[layerID]];
+    byte *lineScrollPtr   = NULL;
+    int chunkPosX         = 0;
+    int chunkTileX        = 0;
+    int gfxIndex          = 0;
+    int yscrollOffset     = 0;
+    int tileGFXPos        = 0;
+    int deformX1          = 0;
+    int deformX2          = 0;
+    byte highPlane        = layerID >= tLayerMidPoint;
+    int *deformationData  = NULL;
+    int *deformationDataW = NULL;
+    int deformOffset      = 0;
+    int deformOffsetW     = 0;
+    int lineID            = 0;
+    int layerWidth        = layer->xsize;
+    int layerHeight       = layer->ysize;
+    int renderWidth       = (GFX_LINESIZE >> 4) + 3;
+    bool flag             = false;
 
-        byte *lineScroll;
-        int *deformationData;
-        int *deformationDataW;
-
-        int yscrollOffset = 0;
-        if (activeTileLayers[layerID]) { // BG Layer
-            int yScroll    = yScrollOffset * layer->parallaxFactor >> 8;
-            int fullheight = layerheight << 7;
-            layer->scrollPos += layer->scrollSpeed;
-            if (layer->scrollPos > fullheight << 16)
-                layer->scrollPos -= fullheight << 16;
-            yscrollOffset    = (yScroll + (layer->scrollPos >> 16)) % fullheight;
-            layerheight      = fullheight >> 7;
-            lineScroll       = layer->lineScroll;
-            deformationData  = &bgDeformationData2[(byte)(yscrollOffset + layer->deformationOffset)];
-            deformationDataW = &bgDeformationData3[(byte)(yscrollOffset + waterDrawPos + layer->deformationOffsetW)];
+    if (activeTileLayers[layerID]) {
+        layer            = &stageLayouts[activeTileLayers[layerID]];
+        yscrollOffset    = layer->parallaxFactor * yScrollOffset >> 8;
+        layerHeight      = layerHeight << 7;
+        layer->scrollPos = layer->scrollPos + layer->scrollSpeed;
+        if (layer->scrollPos > layerHeight << 16) {
+            layer->scrollPos -= (layerHeight << 16);
         }
-        else { // FG Layer
-            lastXSize     = layer->xsize;
-            yscrollOffset = yScrollOffset;
-            lineScroll    = layer->lineScroll;
-            for (int i = 0; i < PARALLAX_COUNT; ++i) hParallax.linePos[i] = xScrollOffset;
-            deformationData  = &bgDeformationData0[(byte)(yscrollOffset + layer->deformationOffset)];
-            deformationDataW = &bgDeformationData1[(byte)(yscrollOffset + waterDrawPos + layer->deformationOffsetW)];
-        }
+        yscrollOffset += (layer->scrollPos >> 16);
+        yscrollOffset %= layerHeight;
 
-        if (layer->type == LAYER_HSCROLL) {
-            if (lastXSize != layerwidth) {
-                int fullLayerwidth = layerwidth << 7;
-                for (int i = 0; i < hParallax.entryCount; ++i) {
-                    hParallax.linePos[i] = xScrollOffset * hParallax.parallaxFactor[i] >> 8;
-                    hParallax.scrollPos[i] += hParallax.scrollSpeed[i];
-                    if (hParallax.scrollPos[i] > fullLayerwidth << 16)
-                        hParallax.scrollPos[i] -= fullLayerwidth << 16;
-                    if (hParallax.scrollPos[i] < 0)
-                        hParallax.scrollPos[i] += fullLayerwidth << 16;
-                    hParallax.linePos[i] += hParallax.scrollPos[i] >> 16;
-                    hParallax.linePos[i] %= fullLayerwidth;
-                }
-            }
-            lastXSize = layerwidth;
-        }
-
-        ushort *frameBufferPtr = Engine.frameBuffer;
-        byte *lineBuffer       = gfxLineBuffer;
-        int tileYPos           = yscrollOffset % (layerheight << 7);
-        if (tileYPos < 0)
-            tileYPos += layerheight << 7;
-        byte *scrollIndex = &lineScroll[tileYPos];
-        int tileY16       = tileYPos & 0xF;
-        int chunkY        = tileYPos >> 7;
-        int tileY         = (tileYPos & 0x7F) >> 4;
-
-        // Draw Above Water (if applicable)
-        int drawableLines[2] = { waterDrawPos, SCREEN_YSIZE - waterDrawPos };
-        for (int i = 0; i < 2; ++i) {
-            while (drawableLines[i]--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int chunkX = hParallax.linePos[*scrollIndex];
-                if (i == 0) {
-                    int deform = 0;
-                    if (hParallax.deform[*scrollIndex])
-                        deform = *deformationData;
-
-                    // Fix for SS5 mobile bug
-                    if (StrComp(stageList[activeStageList][stageListPosition].name, "5") && activeStageList == STAGELIST_SPECIAL
-                        && renderType == RENDER_HW)
-                        deform >>= 4;
-
-                    chunkX += deform;
-                    ++deformationData;
-                }
-                else {
-                    if (hParallax.deform[*scrollIndex])
-                        chunkX += *deformationDataW;
-                    ++deformationDataW;
-                }
-                ++scrollIndex;
-                int fullLayerwidth = layerwidth << 7;
-                if (chunkX < 0)
-                    chunkX += fullLayerwidth;
-                if (chunkX >= fullLayerwidth)
-                    chunkX -= fullLayerwidth;
-                int chunkXPos         = chunkX >> 7;
-                int tilePxXPos        = chunkX & 0xF;
-                int tileXPxRemain     = TILE_SIZE - tilePxXPos;
-                int chunk             = (layer->tiles[(chunkX >> 7) + (chunkY << 8)] << 6) + ((chunkX & 0x7F) >> 4) + 8 * tileY;
-                int tileOffsetY       = TILE_SIZE * tileY16;
-                int tileOffsetYFlipX  = TILE_SIZE * tileY16 + 0xF;
-                int tileOffsetYFlipY  = TILE_SIZE * (0xF - tileY16);
-                int tileOffsetYFlipXY = TILE_SIZE * (0xF - tileY16) + 0xF;
-                int lineRemain        = GFX_LINESIZE;
-
-                byte *gfxDataPtr  = NULL;
-                int tilePxLineCnt = 0;
-
-                // Draw the first tile to the left
-                if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                    tilePxLineCnt = TILE_SIZE - tilePxXPos;
-                    lineRemain -= tilePxLineCnt;
-                    switch (tiles128x128.direction[chunk]) {
-                        case FLIP_OFF:
-                            gfxDataPtr = &tilesetGFXData[tileOffsetY + tiles128x128.gfxDataPos[chunk] + tilePxXPos];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                            }
-                            break;
-                        case FLIP_X:
-                            gfxDataPtr = &tilesetGFXData[tileOffsetYFlipX + tiles128x128.gfxDataPos[chunk] - tilePxXPos];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                            }
-                            break;
-                        case FLIP_Y:
-                            gfxDataPtr = &tilesetGFXData[tileOffsetYFlipY + tiles128x128.gfxDataPos[chunk] + tilePxXPos];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                            }
-                            break;
-                        case FLIP_XY:
-                            gfxDataPtr = &tilesetGFXData[tileOffsetYFlipXY + tiles128x128.gfxDataPos[chunk] - tilePxXPos];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                            }
-                            break;
-                        default: break;
-                    }
-                }
-                else {
-                    frameBufferPtr += tileXPxRemain;
-                    lineRemain -= tileXPxRemain;
-                }
-
-                // Draw the bulk of the tiles
-                int chunkTileX   = ((chunkX & 0x7F) >> 4) + 1;
-                int tilesPerLine = screenwidth16;
-                while (tilesPerLine--) {
-                    if (chunkTileX <= 7) {
-                        ++chunk;
-                    }
-                    else {
-                        if (++chunkXPos == layerwidth)
-                            chunkXPos = 0;
-                        chunkTileX = 0;
-                        chunk      = (layer->tiles[chunkXPos + (chunkY << 8)] << 6) + 8 * tileY;
-                    }
-                    lineRemain -= TILE_SIZE;
-
-                    // Loop Unrolling (faster but messier code)
-                    if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                        switch (tiles128x128.direction[chunk]) {
-                            case FLIP_OFF:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetY];
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                break;
-                            case FLIP_X:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipX];
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                break;
-                            case FLIP_Y:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipY];
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                ++gfxDataPtr;
-                                break;
-                            case FLIP_XY:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipXY];
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                ++frameBufferPtr;
-                                --gfxDataPtr;
-                                break;
-                        }
-                    }
-                    else {
-                        frameBufferPtr += 0x10;
-                    }
-                    ++chunkTileX;
-                }
-
-                // Draw any remaining tiles
-                while (lineRemain > 0) {
-                    if (chunkTileX++ <= 7) {
-                        ++chunk;
-                    }
-                    else {
-                        chunkTileX = 0;
-                        if (++chunkXPos == layerwidth)
-                            chunkXPos = 0;
-                        chunk = (layer->tiles[chunkXPos + (chunkY << 8)] << 6) + 8 * tileY;
-                    }
-
-                    tilePxLineCnt = lineRemain >= TILE_SIZE ? TILE_SIZE : lineRemain;
-                    lineRemain -= tilePxLineCnt;
-                    if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                        switch (tiles128x128.direction[chunk]) {
-                            case FLIP_OFF:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetY];
-                                while (tilePxLineCnt--) {
-                                    if (*gfxDataPtr > 0)
-                                        *frameBufferPtr = activePalette[*gfxDataPtr];
-                                    ++frameBufferPtr;
-                                    ++gfxDataPtr;
-                                }
-                                break;
-                            case FLIP_X:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipX];
-                                while (tilePxLineCnt--) {
-                                    if (*gfxDataPtr > 0)
-                                        *frameBufferPtr = activePalette[*gfxDataPtr];
-                                    ++frameBufferPtr;
-                                    --gfxDataPtr;
-                                }
-                                break;
-                            case FLIP_Y:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipY];
-                                while (tilePxLineCnt--) {
-                                    if (*gfxDataPtr > 0)
-                                        *frameBufferPtr = activePalette[*gfxDataPtr];
-                                    ++frameBufferPtr;
-                                    ++gfxDataPtr;
-                                }
-                                break;
-                            case FLIP_XY:
-                                gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetYFlipXY];
-                                while (tilePxLineCnt--) {
-                                    if (*gfxDataPtr > 0)
-                                        *frameBufferPtr = activePalette[*gfxDataPtr];
-                                    ++frameBufferPtr;
-                                    --gfxDataPtr;
-                                }
-                                break;
-                            default: break;
-                        }
-                    }
-                    else {
-                        frameBufferPtr += tilePxLineCnt;
-                    }
-                }
-
-                if (++tileY16 > TILE_SIZE - 1) {
-                    tileY16 = 0;
-                    ++tileY;
-                }
-                if (tileY > 7) {
-                    if (++chunkY == layerheight) {
-                        chunkY = 0;
-                        scrollIndex -= 0x80 * layerheight;
-                    }
-                    tileY = 0;
-                }
-            }
-        }
+        layerHeight      = layerHeight >> 7;
+        lineScrollPtr    = layer->lineScroll;
+        deformOffset     = (byte)(layer->deformationOffset + yscrollOffset);
+        deformOffsetW    = (byte)(layer->deformationOffsetW + yscrollOffset);
+        deformationData  = bgDeformationData2;
+        deformationDataW = bgDeformationData3;
     }
-    else if (renderType == RENDER_HW) {
-        TileLayer *layer      = &stageLayouts[activeTileLayers[layerID]];
-        byte *lineScrollPtr   = NULL;
-        int chunkPosX         = 0;
-        int chunkTileX        = 0;
-        int gfxIndex          = 0;
-        int yscrollOffset     = 0;
-        int tileGFXPos        = 0;
-        int deformX1          = 0;
-        int deformX2          = 0;
-        byte highPlane        = layerID >= tLayerMidPoint;
-        int *deformationData  = NULL;
-        int *deformationDataW = NULL;
-        int deformOffset      = 0;
-        int deformOffsetW     = 0;
-        int lineID            = 0;
-        int layerWidth        = layer->xsize;
-        int layerHeight       = layer->ysize;
-        int renderWidth       = (GFX_LINESIZE >> 4) + 3;
-        bool flag             = false;
+    else {
+        layer                = &stageLayouts[0];
+        lastXSize            = layerWidth;
+        yscrollOffset        = yScrollOffset;
+        lineScrollPtr        = layer->lineScroll;
+        hParallax.linePos[0] = xScrollOffset;
+        deformOffset         = (byte)(stageLayouts[0].deformationOffset + yscrollOffset);
+        deformOffsetW        = (byte)(stageLayouts[0].deformationOffsetW + yscrollOffset);
+        deformationData      = bgDeformationData0;
+        deformationDataW     = bgDeformationData1;
+        yscrollOffset %= (layerHeight << 7);
+    }
 
-        if (activeTileLayers[layerID]) {
-            layer            = &stageLayouts[activeTileLayers[layerID]];
-            yscrollOffset    = layer->parallaxFactor * yScrollOffset >> 8;
-            layerHeight      = layerHeight << 7;
-            layer->scrollPos = layer->scrollPos + layer->scrollSpeed;
-            if (layer->scrollPos > layerHeight << 16) {
-                layer->scrollPos -= (layerHeight << 16);
+    if (layer->type == LAYER_HSCROLL) {
+        if (lastXSize != layerWidth) {
+            layerWidth = layerWidth << 7;
+            for (int i = 0; i < hParallax.entryCount; i++) {
+                hParallax.linePos[i]   = hParallax.parallaxFactor[i] * xScrollOffset >> 8;
+                hParallax.scrollPos[i] = hParallax.scrollPos[i] + hParallax.scrollSpeed[i];
+                if (hParallax.scrollPos[i] > layerWidth << 16) {
+                    hParallax.scrollPos[i] = hParallax.scrollPos[i] - (layerWidth << 16);
+                }
+                hParallax.linePos[i] = hParallax.linePos[i] + (hParallax.scrollPos[i] >> 16);
+                hParallax.linePos[i] = hParallax.linePos[i] % layerWidth;
             }
-            yscrollOffset += (layer->scrollPos >> 16);
-            yscrollOffset %= layerHeight;
+            layerWidth = layerWidth >> 7;
+        }
+        lastXSize = layerWidth;
+    }
 
-            layerHeight      = layerHeight >> 7;
-            lineScrollPtr    = layer->lineScroll;
-            deformOffset     = (byte)(layer->deformationOffset + yscrollOffset);
-            deformOffsetW    = (byte)(layer->deformationOffsetW + yscrollOffset);
-            deformationData  = bgDeformationData2;
-            deformationDataW = bgDeformationData3;
+    if (yscrollOffset < 0)
+        yscrollOffset += (layerHeight << 7);
+
+    int deformY = yscrollOffset >> 4 << 4;
+    lineID += deformY;
+    deformOffset += (deformY - yscrollOffset);
+    deformOffsetW += (deformY - yscrollOffset);
+
+    if (deformOffset < 0)
+        deformOffset += 0x100;
+    if (deformOffsetW < 0)
+        deformOffsetW += 0x100;
+
+    deformY        = -(yscrollOffset & 15);
+    int chunkPosY  = yscrollOffset >> 7;
+    int chunkTileY = (yscrollOffset & 127) >> 4;
+    waterDrawPos <<= 4;
+    deformY <<= 4;
+    for (int j = (deformY ? 0x110 : 0x100); j > 0; j -= 16) {
+        int parallaxLinePos = hParallax.linePos[lineScrollPtr[lineID]] - 16;
+        lineID += 8;
+
+        if (parallaxLinePos == hParallax.linePos[lineScrollPtr[lineID]] - 16) {
+            if (hParallax.deform[lineScrollPtr[lineID]]) {
+                deformX1 = deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+                deformX2 = (deformY + 64) <= waterDrawPos ? deformationData[deformOffset + 8] : deformationDataW[deformOffsetW + 8];
+                flag     = deformX1 != deformX2;
+            }
+            else {
+                flag = false;
+            }
         }
         else {
-            layer                = &stageLayouts[0];
-            lastXSize            = layerWidth;
-            yscrollOffset        = yScrollOffset;
-            lineScrollPtr        = layer->lineScroll;
-            hParallax.linePos[0] = xScrollOffset;
-            deformOffset         = (byte)(stageLayouts[0].deformationOffset + yscrollOffset);
-            deformOffsetW        = (byte)(stageLayouts[0].deformationOffsetW + yscrollOffset);
-            deformationData      = bgDeformationData0;
-            deformationDataW     = bgDeformationData1;
-            yscrollOffset %= (layerHeight << 7);
+            flag = true;
         }
 
-        if (layer->type == LAYER_HSCROLL) {
-            if (lastXSize != layerWidth) {
-                layerWidth = layerWidth << 7;
-                for (int i = 0; i < hParallax.entryCount; i++) {
-                    hParallax.linePos[i]   = hParallax.parallaxFactor[i] * xScrollOffset >> 8;
-                    hParallax.scrollPos[i] = hParallax.scrollPos[i] + hParallax.scrollSpeed[i];
-                    if (hParallax.scrollPos[i] > layerWidth << 16) {
-                        hParallax.scrollPos[i] = hParallax.scrollPos[i] - (layerWidth << 16);
-                    }
-                    hParallax.linePos[i] = hParallax.linePos[i] + (hParallax.scrollPos[i] >> 16);
-                    hParallax.linePos[i] = hParallax.linePos[i] % layerWidth;
-                }
-                layerWidth = layerWidth >> 7;
+        lineID -= 8;
+        if (flag) {
+            if (parallaxLinePos < 0)
+                parallaxLinePos += layerWidth << 7;
+            if (parallaxLinePos >= layerWidth << 7)
+                parallaxLinePos -= layerWidth << 7;
+
+            chunkPosX  = parallaxLinePos >> 7;
+            chunkTileX = (parallaxLinePos & 0x7F) >> 4;
+            deformX1   = -((parallaxLinePos & 0xF) << 4);
+            deformX1 -= 0x100;
+            deformX2 = deformX1;
+            if (hParallax.deform[lineScrollPtr[lineID]]) {
+                deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+                deformOffset += 8;
+                deformOffsetW += 8;
+                deformX2 -= (deformY + 64) <= waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
             }
-            lastXSize = layerWidth;
-        }
-
-        if (yscrollOffset < 0)
-            yscrollOffset += (layerHeight << 7);
-
-        int deformY = yscrollOffset >> 4 << 4;
-        lineID += deformY;
-        deformOffset += (deformY - yscrollOffset);
-        deformOffsetW += (deformY - yscrollOffset);
-
-        if (deformOffset < 0)
-            deformOffset += 0x100;
-        if (deformOffsetW < 0)
-            deformOffsetW += 0x100;
-
-        deformY        = -(yscrollOffset & 15);
-        int chunkPosY  = yscrollOffset >> 7;
-        int chunkTileY = (yscrollOffset & 127) >> 4;
-        waterDrawPos <<= 4;
-        deformY <<= 4;
-        for (int j = (deformY ? 0x110 : 0x100); j > 0; j -= 16) {
-            int parallaxLinePos = hParallax.linePos[lineScrollPtr[lineID]] - 16;
+            else {
+                deformOffset += 8;
+                deformOffsetW += 8;
+            }
             lineID += 8;
 
-            if (parallaxLinePos == hParallax.linePos[lineScrollPtr[lineID]] - 16) {
-                if (hParallax.deform[lineScrollPtr[lineID]]) {
-                    deformX1 = deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                    deformX2 = (deformY + 64) <= waterDrawPos ? deformationData[deformOffset + 8] : deformationDataW[deformOffsetW + 8];
-                    flag     = deformX1 != deformX2;
+            gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
+            gfxIndex += chunkTileX + (chunkTileY << 3);
+            for (int i = renderWidth; i > 0; i--) {
+                if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
+                    tileGFXPos = 0;
+                    switch (tiles128x128.direction[gfxIndex]) {
+                        case FLIP_OFF: {
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_X: {
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_Y: {
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_XY: {
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                    }
+                }
+
+                deformX1 += (CHUNK_SIZE * 2);
+                deformX2 += (CHUNK_SIZE * 2);
+                if (++chunkTileX < 8) {
+                    gfxIndex++;
                 }
                 else {
-                    flag = false;
+                    if (++chunkPosX == layerWidth)
+                        chunkPosX = 0;
+
+                    chunkTileX = 0;
+                    gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
+                    gfxIndex += chunkTileX + (chunkTileY << 3);
                 }
+            }
+            deformY += CHUNK_SIZE;
+            parallaxLinePos = hParallax.linePos[lineScrollPtr[lineID]] - 16;
+
+            if (parallaxLinePos < 0)
+                parallaxLinePos += layerWidth << 7;
+            if (parallaxLinePos >= layerWidth << 7)
+                parallaxLinePos -= layerWidth << 7;
+
+            chunkPosX  = parallaxLinePos >> 7;
+            chunkTileX = (parallaxLinePos & 127) >> 4;
+            deformX1   = -((parallaxLinePos & 15) << 4);
+            deformX1 -= 0x100;
+            deformX2 = deformX1;
+            if (!hParallax.deform[lineScrollPtr[lineID]]) {
+                deformOffset += 8;
+                deformOffsetW += 8;
             }
             else {
-                flag = true;
+                deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+                deformOffset += 8;
+                deformOffsetW += 8;
+                deformX2 -= (deformY + 64) <= waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
             }
 
-            lineID -= 8;
-            if (flag) {
-                if (parallaxLinePos < 0)
-                    parallaxLinePos += layerWidth << 7;
-                if (parallaxLinePos >= layerWidth << 7)
-                    parallaxLinePos -= layerWidth << 7;
+            lineID += 8;
+            gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
+            gfxIndex += chunkTileX + (chunkTileY << 3);
+            for (int i = renderWidth; i > 0; i--) {
+                if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
+                    tileGFXPos = 0;
+                    switch (tiles128x128.direction[gfxIndex]) {
+                        case FLIP_OFF: {
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
 
-                chunkPosX  = parallaxLinePos >> 7;
-                chunkTileX = (parallaxLinePos & 0x7F) >> 4;
-                deformX1   = -((parallaxLinePos & 0xF) << 4);
-                deformX1 -= 0x100;
-                deformX2 = deformX1;
-                if (hParallax.deform[lineScrollPtr[lineID]]) {
-                    deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                    deformOffset += 8;
-                    deformOffsetW += 8;
-                    deformX2 -= (deformY + 64) <= waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_X: {
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_Y: {
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_XY: {
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                    }
+                }
+
+                deformX1 += (CHUNK_SIZE * 2);
+                deformX2 += (CHUNK_SIZE * 2);
+
+                if (++chunkTileX < 8) {
+                    gfxIndex++;
                 }
                 else {
-                    deformOffset += 8;
-                    deformOffsetW += 8;
+                    if (++chunkPosX == layerWidth) {
+                        chunkPosX = 0;
+                    }
+                    chunkTileX = 0;
+                    gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
+                    gfxIndex += chunkTileX + (chunkTileY << 3);
                 }
-                lineID += 8;
-
-                gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
-                gfxIndex += chunkTileX + (chunkTileY << 3);
-                for (int i = renderWidth; i > 0; i--) {
-                    if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
-                        tileGFXPos = 0;
-                        switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_OFF: {
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_X: {
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_Y: {
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_XY: {
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                        }
-                    }
-
-                    deformX1 += (CHUNK_SIZE * 2);
-                    deformX2 += (CHUNK_SIZE * 2);
-                    if (++chunkTileX < 8) {
-                        gfxIndex++;
-                    }
-                    else {
-                        if (++chunkPosX == layerWidth)
-                            chunkPosX = 0;
-
-                        chunkTileX = 0;
-                        gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
-                        gfxIndex += chunkTileX + (chunkTileY << 3);
-                    }
-                }
-                deformY += CHUNK_SIZE;
-                parallaxLinePos = hParallax.linePos[lineScrollPtr[lineID]] - 16;
-
-                if (parallaxLinePos < 0)
-                    parallaxLinePos += layerWidth << 7;
-                if (parallaxLinePos >= layerWidth << 7)
-                    parallaxLinePos -= layerWidth << 7;
-
-                chunkPosX  = parallaxLinePos >> 7;
-                chunkTileX = (parallaxLinePos & 127) >> 4;
-                deformX1   = -((parallaxLinePos & 15) << 4);
-                deformX1 -= 0x100;
-                deformX2 = deformX1;
-                if (!hParallax.deform[lineScrollPtr[lineID]]) {
-                    deformOffset += 8;
-                    deformOffsetW += 8;
-                }
-                else {
-                    deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                    deformOffset += 8;
-                    deformOffsetW += 8;
-                    deformX2 -= (deformY + 64) <= waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                }
-
-                lineID += 8;
-                gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
-                gfxIndex += chunkTileX + (chunkTileY << 3);
-                for (int i = renderWidth; i > 0; i--) {
-                    if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
-                        tileGFXPos = 0;
-                        switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_OFF: {
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_X: {
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] + 8;
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_Y: {
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_XY: {
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + CHUNK_SIZE;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos] - 8;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                        }
-                    }
-
-                    deformX1 += (CHUNK_SIZE * 2);
-                    deformX2 += (CHUNK_SIZE * 2);
-
-                    if (++chunkTileX < 8) {
-                        gfxIndex++;
-                    }
-                    else {
-                        if (++chunkPosX == layerWidth) {
-                            chunkPosX = 0;
-                        }
-                        chunkTileX = 0;
-                        gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
-                        gfxIndex += chunkTileX + (chunkTileY << 3);
-                    }
-                }
-                deformY += CHUNK_SIZE;
             }
-            else {
-                if (parallaxLinePos < 0)
-                    parallaxLinePos += layerWidth << 7;
-                if (parallaxLinePos >= layerWidth << 7)
-                    parallaxLinePos -= layerWidth << 7;
-
-                chunkPosX  = parallaxLinePos >> 7;
-                chunkTileX = (parallaxLinePos & 0x7F) >> 4;
-                deformX1   = -((parallaxLinePos & 0xF) << 4);
-                deformX1 -= 0x100;
-                deformX2 = deformX1;
-
-                if (hParallax.deform[lineScrollPtr[lineID]]) {
-                    deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                    deformOffset += 16;
-                    deformOffsetW += 16;
-                    deformX2 -= (deformY + CHUNK_SIZE <= waterDrawPos) ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
-                }
-                else {
-                    deformOffset += 16;
-                    deformOffsetW += 16;
-                }
-                lineID += 16;
-
-                gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
-                gfxIndex += chunkTileX + (chunkTileY << 3);
-                for (int i = renderWidth; i > 0; i--) {
-                    if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
-                        tileGFXPos = 0;
-                        switch (tiles128x128.direction[gfxIndex]) {
-                            case FLIP_OFF: {
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_X: {
-                                gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX1;
-                                gfxPolyList[gfxVertexSize].y = deformY;
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX2;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_Y: {
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                            case FLIP_XY: {
-                                gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x = deformX2;
-                                gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                tileGFXPos++;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
-                                gfxPolyList[gfxVertexSize].y        = deformY;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxPolyList[gfxVertexSize].x        = deformX1;
-                                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                                gfxVertexSize++;
-
-                                gfxIndexSize += 6;
-                                break;
-                            }
-                        }
-                    }
-
-                    deformX1 += (CHUNK_SIZE * 2);
-                    deformX2 += (CHUNK_SIZE * 2);
-                    if (++chunkTileX < 8) {
-                        gfxIndex++;
-                    }
-                    else {
-                        if (++chunkPosX == layerWidth)
-                            chunkPosX = 0;
-
-                        chunkTileX = 0;
-                        gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
-                        gfxIndex += chunkTileX + (chunkTileY << 3);
-                    }
-                }
-                deformY += CHUNK_SIZE * 2;
-            }
-
-            if (++chunkTileY > 7) {
-                if (++chunkPosY == layerHeight) {
-                    chunkPosY = 0;
-                    lineID -= (layerHeight << 7);
-                }
-                chunkTileY = 0;
-            }
+            deformY += CHUNK_SIZE;
         }
-        waterDrawPos >>= 4;
+        else {
+            if (parallaxLinePos < 0)
+                parallaxLinePos += layerWidth << 7;
+            if (parallaxLinePos >= layerWidth << 7)
+                parallaxLinePos -= layerWidth << 7;
+
+            chunkPosX  = parallaxLinePos >> 7;
+            chunkTileX = (parallaxLinePos & 0x7F) >> 4;
+            deformX1   = -((parallaxLinePos & 0xF) << 4);
+            deformX1 -= 0x100;
+            deformX2 = deformX1;
+
+            if (hParallax.deform[lineScrollPtr[lineID]]) {
+                deformX1 -= deformY < waterDrawPos ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+                deformOffset += 16;
+                deformOffsetW += 16;
+                deformX2 -= (deformY + CHUNK_SIZE <= waterDrawPos) ? deformationData[deformOffset] : deformationDataW[deformOffsetW];
+            }
+            else {
+                deformOffset += 16;
+                deformOffsetW += 16;
+            }
+            lineID += 16;
+
+            gfxIndex = (chunkPosX > -1 && chunkPosY > -1) ? (layer->tiles[chunkPosX + (chunkPosY << 8)] << 6) : 0;
+            gfxIndex += chunkTileX + (chunkTileY << 3);
+            for (int i = renderWidth; i > 0; i--) {
+                if (tiles128x128.visualPlane[gfxIndex] == highPlane && tiles128x128.gfxDataPos[gfxIndex] > 0) {
+                    tileGFXPos = 0;
+                    switch (tiles128x128.direction[gfxIndex]) {
+                        case FLIP_OFF: {
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_X: {
+                            gfxPolyList[gfxVertexSize].x = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX1;
+                            gfxPolyList[gfxVertexSize].y = deformY;
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX2;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_Y: {
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                        case FLIP_XY: {
+                            gfxPolyList[gfxVertexSize].x = deformX2 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x = deformX2;
+                            gfxPolyList[gfxVertexSize].y = deformY + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].u = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            tileGFXPos++;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1 + (CHUNK_SIZE * 2);
+                            gfxPolyList[gfxVertexSize].y        = deformY;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = tileUVArray[tiles128x128.gfxDataPos[gfxIndex] + tileGFXPos];
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxPolyList[gfxVertexSize].x        = deformX1;
+                            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                            gfxVertexSize++;
+
+                            gfxIndexSize += 6;
+                            break;
+                        }
+                    }
+                }
+
+                deformX1 += (CHUNK_SIZE * 2);
+                deformX2 += (CHUNK_SIZE * 2);
+                if (++chunkTileX < 8) {
+                    gfxIndex++;
+                }
+                else {
+                    if (++chunkPosX == layerWidth)
+                        chunkPosX = 0;
+
+                    chunkTileX = 0;
+                    gfxIndex   = layer->tiles[chunkPosX + (chunkPosY << 8)] << 6;
+                    gfxIndex += chunkTileX + (chunkTileY << 3);
+                }
+            }
+            deformY += CHUNK_SIZE * 2;
+        }
+
+        if (++chunkTileY > 7) {
+            if (++chunkPosY == layerHeight) {
+                chunkPosY = 0;
+                lineID -= (layerHeight << 7);
+            }
+            chunkTileY = 0;
+        }
     }
+    waterDrawPos >>= 4;
 }
+
 void DrawVLineScrollLayer(int layerID)
 {
-    if (renderType == RENDER_SW) {
-        TileLayer *layer = &stageLayouts[activeTileLayers[layerID]];
-        if (!layer->xsize || !layer->ysize)
-            return;
-
-        int layerwidth     = layer->xsize;
-        int layerheight    = layer->ysize;
-        bool aboveMidPoint = layerID >= tLayerMidPoint;
-
-        byte *lineScroll;
-        int *deformationData;
-
-        int xscrollOffset = 0;
-        if (activeTileLayers[layerID]) { // BG Layer
-            int xScroll        = xScrollOffset * layer->parallaxFactor >> 8;
-            int fullLayerwidth = layerwidth << 7;
-            layer->scrollPos += layer->scrollSpeed;
-            if (layer->scrollPos > fullLayerwidth << 16)
-                layer->scrollPos -= fullLayerwidth << 16;
-            xscrollOffset   = (xScroll + (layer->scrollPos >> 16)) % fullLayerwidth;
-            layerwidth      = fullLayerwidth >> 7;
-            lineScroll      = layer->lineScroll;
-            deformationData = &bgDeformationData2[(byte)(xscrollOffset + layer->deformationOffset)];
-        }
-        else { // FG Layer
-            lastYSize            = layer->ysize;
-            xscrollOffset        = xScrollOffset;
-            lineScroll           = layer->lineScroll;
-            vParallax.linePos[0] = yScrollOffset;
-            vParallax.deform[0]  = true;
-            deformationData      = &bgDeformationData0[(byte)(xScrollOffset + layer->deformationOffset)];
-        }
-
-        if (layer->type == LAYER_VSCROLL) {
-            if (lastYSize != layerheight) {
-                int fullLayerheight = layerheight << 7;
-                for (int i = 0; i < vParallax.entryCount; ++i) {
-                    vParallax.linePos[i] = yScrollOffset * vParallax.parallaxFactor[i] >> 8;
-
-                    vParallax.scrollPos[i] += vParallax.scrollPos[i] << 16;
-                    if (vParallax.scrollPos[i] > fullLayerheight << 16)
-                        vParallax.scrollPos[i] -= fullLayerheight << 16;
-
-                    vParallax.linePos[i] += vParallax.scrollPos[i] >> 16;
-                    vParallax.linePos[i] %= fullLayerheight;
-                }
-                layerheight = fullLayerheight >> 7;
-            }
-            lastYSize = layerheight;
-        }
-
-        ushort *frameBufferPtr = Engine.frameBuffer;
-        activePalette          = fullPalette[gfxLineBuffer[0]];
-        activePalette32        = fullPalette32[gfxLineBuffer[0]];
-        int tileXPos           = xscrollOffset % (layerheight << 7);
-        if (tileXPos < 0)
-            tileXPos += layerheight << 7;
-        byte *scrollIndex = &lineScroll[tileXPos];
-        int chunkX        = tileXPos >> 7;
-        int tileX16       = tileXPos & 0xF;
-        int tileX         = (tileXPos & 0x7F) >> 4;
-
-        // Draw Above Water (if applicable)
-        int drawableLines = GFX_LINESIZE;
-        while (drawableLines--) {
-            int chunkY = vParallax.linePos[*scrollIndex];
-            if (vParallax.deform[*scrollIndex])
-                chunkY += *deformationData;
-            ++deformationData;
-            ++scrollIndex;
-
-            int fullLayerHeight = layerheight << 7;
-            if (chunkY < 0)
-                chunkY += fullLayerHeight;
-            if (chunkY >= fullLayerHeight)
-                chunkY -= fullLayerHeight;
-
-            int chunkYPos         = chunkY >> 7;
-            int tileY             = chunkY & 0xF;
-            int tileYPxRemain     = TILE_SIZE - tileY;
-            int chunk             = (layer->tiles[chunkX + (chunkY >> 7 << 8)] << 6) + tileX + 8 * ((chunkY & 0x7F) >> 4);
-            int tileOffsetXFlipX  = 0xF - tileX16;
-            int tileOffsetXFlipY  = tileX16 + SCREEN_YSIZE;
-            int tileOffsetXFlipXY = 0xFF - tileX16;
-            int lineRemain        = SCREEN_YSIZE;
-
-            byte *gfxDataPtr  = NULL;
-            int tilePxLineCnt = tileYPxRemain;
-
-            // Draw the first tile to the left
-            if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                lineRemain -= tilePxLineCnt;
-                switch (tiles128x128.direction[chunk]) {
-                    case FLIP_OFF:
-                        gfxDataPtr = &tilesetGFXData[TILE_SIZE * tileY + tileX16 + tiles128x128.gfxDataPos[chunk]];
-                        while (tilePxLineCnt--) {
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-                        }
-                        break;
-
-                    case FLIP_X:
-                        gfxDataPtr = &tilesetGFXData[TILE_SIZE * tileY + tileOffsetXFlipX + tiles128x128.gfxDataPos[chunk]];
-                        while (tilePxLineCnt--) {
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-                        }
-                        break;
-
-                    case FLIP_Y:
-                        gfxDataPtr = &tilesetGFXData[tileOffsetXFlipY + tiles128x128.gfxDataPos[chunk] - TILE_SIZE * tileY];
-                        while (tilePxLineCnt--) {
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-                        }
-                        break;
-
-                    case FLIP_XY:
-                        gfxDataPtr = &tilesetGFXData[tileOffsetXFlipXY + tiles128x128.gfxDataPos[chunk] - TILE_SIZE * tileY];
-                        while (tilePxLineCnt--) {
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-                        }
-                        break;
-
-                    default: break;
-                }
-            }
-            else {
-                frameBufferPtr += GFX_LINESIZE * tileYPxRemain;
-                lineRemain -= tilePxLineCnt;
-            }
-
-            // Draw the bulk of the tiles
-            int chunkTileY   = ((chunkY & 0x7F) >> 4) + 1;
-            int tilesPerLine = (SCREEN_YSIZE >> 4) - 1;
-
-            while (tilesPerLine--) {
-                if (chunkTileY < 8) {
-                    chunk += 8;
-                }
-                else {
-                    if (++chunkYPos == layerheight)
-                        chunkYPos = 0;
-
-                    chunkTileY = 0;
-                    chunk      = (layer->tiles[chunkX + (chunkYPos << 8)] << 6) + tileX;
-                }
-                lineRemain -= TILE_SIZE;
-
-                // Loop Unrolling (faster but messier code)
-                if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                    switch (tiles128x128.direction[chunk]) {
-                        case FLIP_OFF:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileX16];
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            break;
-
-                        case FLIP_X:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipX];
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr += TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            break;
-
-                        case FLIP_Y:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipY];
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            break;
-
-                        case FLIP_XY:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipXY];
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            gfxDataPtr -= TILE_SIZE;
-
-                            if (*gfxDataPtr > 0)
-                                *frameBufferPtr = activePalette[*gfxDataPtr];
-                            frameBufferPtr += GFX_LINESIZE;
-                            break;
-                    }
-                }
-                else {
-                    frameBufferPtr += GFX_LINESIZE * TILE_SIZE;
-                }
-                ++chunkTileY;
-            }
-
-            // Draw any remaining tiles
-            while (lineRemain > 0) {
-                if (chunkTileY < 8) {
-                    chunk += 8;
-                }
-                else {
-                    if (++chunkYPos == layerheight)
-                        chunkYPos = 0;
-
-                    chunkTileY = 0;
-                    chunk      = (layer->tiles[chunkX + (chunkYPos << 8)] << 6) + tileX;
-                }
-
-                tilePxLineCnt = lineRemain >= TILE_SIZE ? TILE_SIZE : lineRemain;
-                lineRemain -= tilePxLineCnt;
-
-                if (tiles128x128.visualPlane[chunk] == (byte)aboveMidPoint) {
-                    switch (tiles128x128.direction[chunk]) {
-                        case FLIP_OFF:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileX16];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                frameBufferPtr += GFX_LINESIZE;
-                                gfxDataPtr += TILE_SIZE;
-                            }
-                            break;
-
-                        case FLIP_X:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipX];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                frameBufferPtr += GFX_LINESIZE;
-                                gfxDataPtr += TILE_SIZE;
-                            }
-                            break;
-
-                        case FLIP_Y:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipY];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                frameBufferPtr += GFX_LINESIZE;
-                                gfxDataPtr -= TILE_SIZE;
-                            }
-                            break;
-
-                        case FLIP_XY:
-                            gfxDataPtr = &tilesetGFXData[tiles128x128.gfxDataPos[chunk] + tileOffsetXFlipXY];
-                            while (tilePxLineCnt--) {
-                                if (*gfxDataPtr > 0)
-                                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                                frameBufferPtr += GFX_LINESIZE;
-                                gfxDataPtr -= TILE_SIZE;
-                            }
-                            break;
-
-                        default: break;
-                    }
-                }
-                else {
-                    frameBufferPtr += GFX_LINESIZE * tilePxLineCnt;
-                }
-                chunkTileY++;
-            }
-
-            if (++tileX16 >= TILE_SIZE) {
-                tileX16 = 0;
-                ++tileX;
-            }
-
-            if (tileX >= 8) {
-                if (++chunkX == layerwidth) {
-                    chunkX = 0;
-                    scrollIndex -= 0x80 * layerwidth;
-                }
-                tileX = 0;
-            }
-
-            frameBufferPtr -= GFX_FBUFFERMINUSONE;
-        }
-    }
     // Not avaliable in HW Render mode
 }
+
 void Draw3DFloorLayer(int layerID)
 {
     TileLayer *layer = &stageLayouts[activeTileLayers[layerID]];
     if (!layer->xsize || !layer->ysize)
         return;
 
-    if (renderType == RENDER_SW) {
-        int layerWidth         = layer->xsize << 7;
-        int layerHeight        = layer->ysize << 7;
-        int layerYPos          = layer->YPos;
-        int layerZPos          = layer->ZPos;
-        int sinValue           = sinMLookupTable[layer->angle];
-        int cosValue           = cosMLookupTable[layer->angle];
-        byte *gfxLineBufferPtr = &gfxLineBuffer[((SCREEN_YSIZE / 2) + 12)];
-        ushort *frameBufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-        int layerXPos          = layer->XPos >> 4;
-        int ZBuffer            = layerZPos >> 4;
-        for (int i = 4; i < ((SCREEN_YSIZE / 2) - 8); ++i) {
-            if (!(i & 1)) {
-                activePalette   = fullPalette[*gfxLineBufferPtr];
-                activePalette32 = fullPalette32[*gfxLineBufferPtr];
-                gfxLineBufferPtr++;
-            }
-            int XBuffer    = layerYPos / (i << 9) * -cosValue >> 8;
-            int YBuffer    = sinValue * (layerYPos / (i << 9)) >> 8;
-            int XPos       = layerXPos + (3 * sinValue * (layerYPos / (i << 9)) >> 2) - XBuffer * SCREEN_CENTERX;
-            int YPos       = ZBuffer + (3 * cosValue * (layerYPos / (i << 9)) >> 2) - YBuffer * SCREEN_CENTERX;
-            int lineBuffer = 0;
-            while (lineBuffer < GFX_LINESIZE) {
-                int tileX = XPos >> 12;
-                int tileY = YPos >> 12;
-                if (tileX > -1 && tileX < layerWidth && tileY > -1 && tileY < layerHeight) {
-                    int chunk       = tile3DFloorBuffer[(YPos >> 16 << 8) + (XPos >> 16)];
-                    byte *tilePixel = &tilesetGFXData[tiles128x128.gfxDataPos[chunk]];
-                    switch (tiles128x128.direction[chunk]) {
-                        case FLIP_OFF: tilePixel += 16 * (tileY & 0xF) + (tileX & 0xF); break;
-                        case FLIP_X: tilePixel += 16 * (tileY & 0xF) + 15 - (tileX & 0xF); break;
-                        case FLIP_Y: tilePixel += (tileX & 0xF) + SCREEN_YSIZE - 16 * (tileY & 0xF); break;
-                        case FLIP_XY: tilePixel += 15 - (tileX & 0xF) + SCREEN_YSIZE - 16 * (tileY & 0xF); break;
-                        default: break;
-                    }
+    int tileOffset, tileX, tileY, tileSinBlock, tileCosBlock;
+    int sinValue512, cosValue512;
+    int layerWidth         = layer->xsize << 7;
+    int layerHeight        = layer->ysize << 7;
+    ushort *currentTileMap = layer->tiles;
+    vertexSize3D           = 0;
+    indexSize3D            = 0;
 
-                    if (*tilePixel > 0)
-                        *frameBufferPtr = activePalette[*tilePixel];
-                }
-                ++frameBufferPtr;
-                ++lineBuffer;
-                XPos += XBuffer;
-                YPos += YBuffer;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        int tileOffset, tileX, tileY, tileSinBlock, tileCosBlock;
-        int sinValue512, cosValue512;
-        int layerWidth         = layer->xsize << 7;
-        int layerHeight        = layer->ysize << 7;
-        ushort *currentTileMap = layer->tiles;
-        vertexSize3D           = 0;
-        indexSize3D            = 0;
+    // low quality render
+    polyList3D[vertexSize3D].x        = 0.0f;
+    polyList3D[vertexSize3D].y        = 0.0f;
+    polyList3D[vertexSize3D].z        = 0.0f;
+    polyList3D[vertexSize3D].u        = 512;
+    polyList3D[vertexSize3D].v        = 0;
+    polyList3D[vertexSize3D].colour.r = 0xFF;
+    polyList3D[vertexSize3D].colour.g = 0xFF;
+    polyList3D[vertexSize3D].colour.b = 0xFF;
+    polyList3D[vertexSize3D].colour.a = 0xFF;
+    vertexSize3D++;
 
-        // low quality render
-        polyList3D[vertexSize3D].x        = 0.0f;
-        polyList3D[vertexSize3D].y        = 0.0f;
-        polyList3D[vertexSize3D].z        = 0.0f;
-        polyList3D[vertexSize3D].u        = 512;
-        polyList3D[vertexSize3D].v        = 0;
-        polyList3D[vertexSize3D].colour.r = 0xFF;
-        polyList3D[vertexSize3D].colour.g = 0xFF;
-        polyList3D[vertexSize3D].colour.b = 0xFF;
-        polyList3D[vertexSize3D].colour.a = 0xFF;
-        vertexSize3D++;
+    polyList3D[vertexSize3D].x        = 4096.0f;
+    polyList3D[vertexSize3D].y        = 0.0f;
+    polyList3D[vertexSize3D].z        = 0.0f;
+    polyList3D[vertexSize3D].u        = 1024;
+    polyList3D[vertexSize3D].v        = 0;
+    polyList3D[vertexSize3D].colour.r = 0xFF;
+    polyList3D[vertexSize3D].colour.g = 0xFF;
+    polyList3D[vertexSize3D].colour.b = 0xFF;
+    polyList3D[vertexSize3D].colour.a = 0xFF;
+    vertexSize3D++;
 
-        polyList3D[vertexSize3D].x        = 4096.0f;
-        polyList3D[vertexSize3D].y        = 0.0f;
-        polyList3D[vertexSize3D].z        = 0.0f;
-        polyList3D[vertexSize3D].u        = 1024;
-        polyList3D[vertexSize3D].v        = 0;
-        polyList3D[vertexSize3D].colour.r = 0xFF;
-        polyList3D[vertexSize3D].colour.g = 0xFF;
-        polyList3D[vertexSize3D].colour.b = 0xFF;
-        polyList3D[vertexSize3D].colour.a = 0xFF;
-        vertexSize3D++;
+    polyList3D[vertexSize3D].x        = 0.0f;
+    polyList3D[vertexSize3D].y        = 0.0f;
+    polyList3D[vertexSize3D].z        = 4096.0f;
+    polyList3D[vertexSize3D].u        = 512;
+    polyList3D[vertexSize3D].v        = 512;
+    polyList3D[vertexSize3D].colour.r = 0xFF;
+    polyList3D[vertexSize3D].colour.g = 0xFF;
+    polyList3D[vertexSize3D].colour.b = 0xFF;
+    polyList3D[vertexSize3D].colour.a = 0xFF;
+    vertexSize3D++;
 
-        polyList3D[vertexSize3D].x        = 0.0f;
-        polyList3D[vertexSize3D].y        = 0.0f;
-        polyList3D[vertexSize3D].z        = 4096.0f;
-        polyList3D[vertexSize3D].u        = 512;
-        polyList3D[vertexSize3D].v        = 512;
-        polyList3D[vertexSize3D].colour.r = 0xFF;
-        polyList3D[vertexSize3D].colour.g = 0xFF;
-        polyList3D[vertexSize3D].colour.b = 0xFF;
-        polyList3D[vertexSize3D].colour.a = 0xFF;
-        vertexSize3D++;
+    polyList3D[vertexSize3D].x        = 4096.0f;
+    polyList3D[vertexSize3D].y        = 0.0f;
+    polyList3D[vertexSize3D].z        = 4096.0f;
+    polyList3D[vertexSize3D].u        = 1024;
+    polyList3D[vertexSize3D].v        = 512;
+    polyList3D[vertexSize3D].colour.r = 0xFF;
+    polyList3D[vertexSize3D].colour.g = 0xFF;
+    polyList3D[vertexSize3D].colour.b = 0xFF;
+    polyList3D[vertexSize3D].colour.a = 0xFF;
+    vertexSize3D++;
 
-        polyList3D[vertexSize3D].x        = 4096.0f;
-        polyList3D[vertexSize3D].y        = 0.0f;
-        polyList3D[vertexSize3D].z        = 4096.0f;
-        polyList3D[vertexSize3D].u        = 1024;
-        polyList3D[vertexSize3D].v        = 512;
-        polyList3D[vertexSize3D].colour.r = 0xFF;
-        polyList3D[vertexSize3D].colour.g = 0xFF;
-        polyList3D[vertexSize3D].colour.b = 0xFF;
-        polyList3D[vertexSize3D].colour.a = 0xFF;
-        vertexSize3D++;
+    indexSize3D += 6;
+    if (hq3DFloorEnabled) {
+        sinValue512 = (layer->XPos >> 16) - 0x100;
+        sinValue512 += (sin512LookupTable[layer->angle] >> 1);
+        sinValue512 = sinValue512 >> 4 << 4;
 
-        indexSize3D += 6;
-        if (hq3DFloorEnabled) {
-            sinValue512 = (layer->XPos >> 16) - 0x100;
-            sinValue512 += (sin512LookupTable[layer->angle] >> 1);
-            sinValue512 = sinValue512 >> 4 << 4;
+        cosValue512 = (layer->ZPos >> 16) - 0x100;
+        cosValue512 += (cos512LookupTable[layer->angle] >> 1);
+        cosValue512 = cosValue512 >> 4 << 4;
+        for (int i = 32; i > 0; i--) {
+            for (int j = 32; j > 0; j--) {
+                if (sinValue512 > -1 && sinValue512 < layerWidth && cosValue512 > -1 && cosValue512 < layerHeight) {
+                    tileX         = sinValue512 >> 7;
+                    tileY         = cosValue512 >> 7;
+                    tileSinBlock  = (sinValue512 & 127) >> 4;
+                    tileCosBlock  = (cosValue512 & 127) >> 4;
+                    int tileIndex = currentTileMap[tileX + (tileY << 8)] << 6;
+                    tileIndex     = tileIndex + tileSinBlock + (tileCosBlock << 3);
+                    if (tiles128x128.gfxDataPos[tileIndex] > 0) {
+                        tileOffset = 0;
+                        switch (tiles128x128.direction[tileIndex]) {
+                            case FLIP_OFF: {
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-            cosValue512 = (layer->ZPos >> 16) - 0x100;
-            cosValue512 += (cos512LookupTable[layer->angle] >> 1);
-            cosValue512 = cosValue512 >> 4 << 4;
-            for (int i = 32; i > 0; i--) {
-                for (int j = 32; j > 0; j--) {
-                    if (sinValue512 > -1 && sinValue512 < layerWidth && cosValue512 > -1 && cosValue512 < layerHeight) {
-                        tileX         = sinValue512 >> 7;
-                        tileY         = cosValue512 >> 7;
-                        tileSinBlock  = (sinValue512 & 127) >> 4;
-                        tileCosBlock  = (cosValue512 & 127) >> 4;
-                        int tileIndex = currentTileMap[tileX + (tileY << 8)] << 6;
-                        tileIndex     = tileIndex + tileSinBlock + (tileCosBlock << 3);
-                        if (tiles128x128.gfxDataPos[tileIndex] > 0) {
-                            tileOffset = 0;
-                            switch (tiles128x128.direction[tileIndex]) {
-                                case FLIP_OFF: {
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_X: {
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_X: {
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_Y: {
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_Y: {
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_XY: {
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_XY: {
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
-
-                                    indexSize3D += 6;
-                                    break;
-                                }
+                                indexSize3D += 6;
+                                break;
                             }
                         }
                     }
-                    sinValue512 += 16;
                 }
-                sinValue512 -= 0x200;
-                cosValue512 += 16;
+                sinValue512 += 16;
             }
+            sinValue512 -= 0x200;
+            cosValue512 += 16;
         }
-        else {
-            sinValue512 = (layer->XPos >> 16) - 0xA0;
-            sinValue512 += sin512LookupTable[layer->angle] / 3;
-            sinValue512 = sinValue512 >> 4 << 4;
+    }
+    else {
+        sinValue512 = (layer->XPos >> 16) - 0xA0;
+        sinValue512 += sin512LookupTable[layer->angle] / 3;
+        sinValue512 = sinValue512 >> 4 << 4;
 
-            cosValue512 = (layer->ZPos >> 16) - 0xA0;
-            cosValue512 += cos512LookupTable[layer->angle] / 3;
-            cosValue512 = cosValue512 >> 4 << 4;
-            for (int i = 20; i > 0; i--) {
-                for (int j = 20; j > 0; j--) {
-                    if (sinValue512 > -1 && sinValue512 < layerWidth && cosValue512 > -1 && cosValue512 < layerHeight) {
-                        tileX         = sinValue512 >> 7;
-                        tileY         = cosValue512 >> 7;
-                        tileSinBlock  = (sinValue512 & 127) >> 4;
-                        tileCosBlock  = (cosValue512 & 127) >> 4;
-                        int tileIndex = currentTileMap[tileX + (tileY << 8)] << 6;
-                        tileIndex     = tileIndex + tileSinBlock + (tileCosBlock << 3);
-                        if (tiles128x128.gfxDataPos[tileIndex] > 0) {
-                            tileOffset = 0;
-                            switch (tiles128x128.direction[tileIndex]) {
-                                case FLIP_OFF: {
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+        cosValue512 = (layer->ZPos >> 16) - 0xA0;
+        cosValue512 += cos512LookupTable[layer->angle] / 3;
+        cosValue512 = cosValue512 >> 4 << 4;
+        for (int i = 20; i > 0; i--) {
+            for (int j = 20; j > 0; j--) {
+                if (sinValue512 > -1 && sinValue512 < layerWidth && cosValue512 > -1 && cosValue512 < layerHeight) {
+                    tileX         = sinValue512 >> 7;
+                    tileY         = cosValue512 >> 7;
+                    tileSinBlock  = (sinValue512 & 127) >> 4;
+                    tileCosBlock  = (cosValue512 & 127) >> 4;
+                    int tileIndex = currentTileMap[tileX + (tileY << 8)] << 6;
+                    tileIndex     = tileIndex + tileSinBlock + (tileCosBlock << 3);
+                    if (tiles128x128.gfxDataPos[tileIndex] > 0) {
+                        tileOffset = 0;
+                        switch (tiles128x128.direction[tileIndex]) {
+                            case FLIP_OFF: {
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_X: {
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_X: {
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_Y: {
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_Y: {
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
-                                case FLIP_XY: {
-                                    polyList3D[vertexSize3D].x = sinValue512 + 16;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = cosValue512 + 16;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                indexSize3D += 6;
+                                break;
+                            }
+                            case FLIP_XY: {
+                                polyList3D[vertexSize3D].x = sinValue512 + 16;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = cosValue512 + 16;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x = sinValue512;
-                                    polyList3D[vertexSize3D].y = 0.0f;
-                                    polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    tileOffset++;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x = sinValue512;
+                                polyList3D[vertexSize3D].y = 0.0f;
+                                polyList3D[vertexSize3D].z = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                tileOffset++;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = cosValue512;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = cosValue512;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = tileUVArray[tiles128x128.gfxDataPos[tileIndex] + tileOffset];
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
-                                    polyList3D[vertexSize3D].y        = 0.0f;
-                                    polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
-                                    polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
-                                    polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
-                                    polyList3D[vertexSize3D].colour.r = 0xFF;
-                                    polyList3D[vertexSize3D].colour.g = 0xFF;
-                                    polyList3D[vertexSize3D].colour.b = 0xFF;
-                                    polyList3D[vertexSize3D].colour.a = 0xFF;
-                                    vertexSize3D++;
+                                polyList3D[vertexSize3D].x        = polyList3D[vertexSize3D - 2].x;
+                                polyList3D[vertexSize3D].y        = 0.0f;
+                                polyList3D[vertexSize3D].z        = polyList3D[vertexSize3D - 1].z;
+                                polyList3D[vertexSize3D].u        = polyList3D[vertexSize3D - 2].u;
+                                polyList3D[vertexSize3D].v        = polyList3D[vertexSize3D - 1].v;
+                                polyList3D[vertexSize3D].colour.r = 0xFF;
+                                polyList3D[vertexSize3D].colour.g = 0xFF;
+                                polyList3D[vertexSize3D].colour.b = 0xFF;
+                                polyList3D[vertexSize3D].colour.a = 0xFF;
+                                vertexSize3D++;
 
-                                    indexSize3D += 6;
-                                    break;
-                                }
+                                indexSize3D += 6;
+                                break;
                             }
                         }
                     }
-                    sinValue512 += 16;
                 }
-                sinValue512 -= 0x140;
-                cosValue512 += 16;
+                sinValue512 += 16;
             }
+            sinValue512 -= 0x140;
+            cosValue512 += 16;
         }
-        floor3DXPos     = (layer->XPos >> 8) * -(1.0f / 256.0f);
-        floor3DYPos     = (layer->YPos >> 8) * (1.0f / 256.0f);
-        floor3DZPos     = (layer->ZPos >> 8) * -(1.0f / 256.0f);
-        floor3DAngle    = layer->angle / 512.0f * -360.0f;
-        render3DEnabled = true;
     }
+    floor3DXPos     = (layer->XPos >> 8) * -(1.0f / 256.0f);
+    floor3DYPos     = (layer->YPos >> 8) * (1.0f / 256.0f);
+    floor3DZPos     = (layer->ZPos >> 8) * -(1.0f / 256.0f);
+    floor3DAngle    = layer->angle / 512.0f * -360.0f;
+    render3DEnabled = true;
 }
 void Draw3DSkyLayer(int layerID)
 {
     TileLayer *layer = &stageLayouts[activeTileLayers[layerID]];
     if (!layer->xsize || !layer->ysize)
         return;
-
-    if (renderType == RENDER_SW) {
-        int layerWidth         = layer->xsize << 7;
-        int layerHeight        = layer->ysize << 7;
-        int layerYPos          = layer->YPos;
-        int sinValue           = sinMLookupTable[layer->angle & 0x1FF];
-        int cosValue           = cosMLookupTable[layer->angle & 0x1FF];
-        ushort *frameBufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-        ushort *bufferPtr      = Engine.frameBuffer2x;
-        if (!drawStageGFXHQ)
-            bufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-        byte *gfxLineBufferPtr = &gfxLineBuffer[((SCREEN_YSIZE / 2) + 12)];
-        int layerXPos          = layer->XPos >> 4;
-        int layerZPos          = layer->ZPos >> 4;
-        for (int i = TILE_SIZE / 2; i < SCREEN_YSIZE - TILE_SIZE; ++i) {
-            if (!(i & 1)) {
-                activePalette   = fullPalette[*gfxLineBufferPtr];
-                activePalette32 = fullPalette32[*gfxLineBufferPtr];
-                gfxLineBufferPtr++;
-            }
-            int xBuffer    = layerYPos / (i << 8) * -cosValue >> 9;
-            int yBuffer    = sinValue * (layerYPos / (i << 8)) >> 9;
-            int XPos       = layerXPos + (3 * sinValue * (layerYPos / (i << 8)) >> 2) - xBuffer * GFX_LINESIZE;
-            int YPos       = layerZPos + (3 * cosValue * (layerYPos / (i << 8)) >> 2) - yBuffer * GFX_LINESIZE;
-            int lineBuffer = 0;
-            while (lineBuffer < GFX_LINESIZE * 2) {
-                int tileX = XPos >> 12;
-                int tileY = YPos >> 12;
-                if (tileX > -1 && tileX < layerWidth && tileY > -1 && tileY < layerHeight) {
-                    int chunk       = tile3DFloorBuffer[(YPos >> 16 << 8) + (XPos >> 16)];
-                    byte *tilePixel = &tilesetGFXData[tiles128x128.gfxDataPos[chunk]];
-                    switch (tiles128x128.direction[chunk]) {
-                        case FLIP_OFF: tilePixel += TILE_SIZE * (tileY & 0xF) + (tileX & 0xF); break;
-                        case FLIP_X: tilePixel += TILE_SIZE * (tileY & 0xF) + 0xF - (tileX & 0xF); break;
-                        case FLIP_Y: tilePixel += (tileX & 0xF) + SCREEN_YSIZE - TILE_SIZE * (tileY & 0xF); break;
-                        case FLIP_XY: tilePixel += 0xF - (tileX & 0xF) + SCREEN_YSIZE - TILE_SIZE * (tileY & 0xF); break;
-                        default: break;
-                    }
-
-                    if (*tilePixel > 0)
-                        *bufferPtr = activePalette[*tilePixel];
-                    else if (drawStageGFXHQ)
-                        *bufferPtr = *frameBufferPtr;
-                }
-                else if (drawStageGFXHQ) {
-                    *bufferPtr = *frameBufferPtr;
-                }
-
-                if (lineBuffer & 1)
-                    ++frameBufferPtr;
-
-                if (drawStageGFXHQ)
-                    bufferPtr++;
-                else if (lineBuffer & 1)
-                    ++bufferPtr;
-
-                lineBuffer++;
-                XPos += xBuffer;
-                YPos += yBuffer;
-            }
-
-            if (!(i & 1))
-                frameBufferPtr -= GFX_LINESIZE;
-
-            if (!(i & 1) && !drawStageGFXHQ)
-                bufferPtr -= GFX_LINESIZE;
-        }
-
-        if (drawStageGFXHQ) {
-            frameBufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-            int cnt        = ((SCREEN_YSIZE / 2) - 12) * GFX_LINESIZE;
-            while (cnt--) *frameBufferPtr++ = 0xF81F; // Magenta
-        }
-    }
 
     // Not avaliable in HW Render mode
 }
@@ -3880,100 +2608,48 @@ void DrawRectangle(int XPos, int YPos, int width, int height, int R, int G, int 
 {
     if (A > 0xFF)
         A = 0xFF;
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            width += XPos;
-            XPos = 0;
-        }
+    
+    if (gfxVertexSize < VERTEX_COUNT) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = R;
+        gfxPolyList[gfxVertexSize].colour.g = G;
+        gfxPolyList[gfxVertexSize].colour.b = B;
+        gfxPolyList[gfxVertexSize].colour.a = A;
+        gfxPolyList[gfxVertexSize].u        = 0;
+        gfxPolyList[gfxVertexSize].v        = 0;
+        gfxVertexSize++;
 
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0 || A <= 0)
-            return;
-        int pitch              = GFX_LINESIZE - width;
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-        ushort clr             = 0;
-        PACK_RGB888(clr, R, G, B);
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = R;
+        gfxPolyList[gfxVertexSize].colour.g = G;
+        gfxPolyList[gfxVertexSize].colour.b = B;
+        gfxPolyList[gfxVertexSize].colour.a = A;
+        gfxPolyList[gfxVertexSize].u        = 0;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-        if (A == 0xFF) {
-            int h = height;
-            while (h--) {
-                int w = width;
-                while (w--) {
-                    *frameBufferPtr = clr;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-            }
-        }
-        else {
-            ushort *fbufferBlend = &blendLookupTable[0x20 * (0xFF - A)];
-            ushort *pixelBlend   = &blendLookupTable[0x20 * A];
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = R;
+        gfxPolyList[gfxVertexSize].colour.g = G;
+        gfxPolyList[gfxVertexSize].colour.b = B;
+        gfxPolyList[gfxVertexSize].colour.a = A;
+        gfxPolyList[gfxVertexSize].u        = 0;
+        gfxPolyList[gfxVertexSize].v        = 0;
+        gfxVertexSize++;
 
-            int h = height;
-            while (h--) {
-                int w = width;
-                while (w--) {
-                    int R = (fbufferBlend[(*frameBufferPtr & 0xF800) >> 11] + pixelBlend[(clr & 0xF800) >> 11]) << 11;
-                    int G = (fbufferBlend[(*frameBufferPtr & 0x7E0) >> 6] + pixelBlend[(clr & 0x7E0) >> 6]) << 6;
-                    int B = fbufferBlend[*frameBufferPtr & 0x1F] + pixelBlend[clr & 0x1F];
-
-                    *frameBufferPtr = R | G | B;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        if (gfxVertexSize < VERTEX_COUNT) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = R;
-            gfxPolyList[gfxVertexSize].colour.g = G;
-            gfxPolyList[gfxVertexSize].colour.b = B;
-            gfxPolyList[gfxVertexSize].colour.a = A;
-            gfxPolyList[gfxVertexSize].u        = 0;
-            gfxPolyList[gfxVertexSize].v        = 0;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = R;
-            gfxPolyList[gfxVertexSize].colour.g = G;
-            gfxPolyList[gfxVertexSize].colour.b = B;
-            gfxPolyList[gfxVertexSize].colour.a = A;
-            gfxPolyList[gfxVertexSize].u        = 0;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = R;
-            gfxPolyList[gfxVertexSize].colour.g = G;
-            gfxPolyList[gfxVertexSize].colour.b = B;
-            gfxPolyList[gfxVertexSize].colour.a = A;
-            gfxPolyList[gfxVertexSize].u        = 0;
-            gfxPolyList[gfxVertexSize].v        = 0;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = R;
-            gfxPolyList[gfxVertexSize].colour.g = G;
-            gfxPolyList[gfxVertexSize].colour.b = B;
-            gfxPolyList[gfxVertexSize].colour.a = A;
-            gfxPolyList[gfxVertexSize].u        = 0;
-            gfxPolyList[gfxVertexSize].v        = 0;
-            gfxVertexSize++;
-            gfxIndexSize += 6;
-        }
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = R;
+        gfxPolyList[gfxVertexSize].colour.g = G;
+        gfxPolyList[gfxVertexSize].colour.b = B;
+        gfxPolyList[gfxVertexSize].colour.a = A;
+        gfxPolyList[gfxVertexSize].u        = 0;
+        gfxPolyList[gfxVertexSize].v        = 0;
+        gfxVertexSize++;
+        gfxIndexSize += 6;
     }
 }
 
@@ -3983,177 +2659,17 @@ void SetFadeHQ(int R, int G, int B, int A)
         return;
     if (A > 0xFF)
         A = 0xFF;
-    if (renderType == RENDER_SW) {
-        int pitch              = GFX_LINESIZE_DOUBLE;
-        ushort *frameBufferPtr = Engine.frameBuffer2x;
-        ushort clr             = 0;
-        PACK_RGB888(clr, R, G, B);
-        if (A == 0xFF) {
-            int h = SCREEN_YSIZE;
-            while (h--) {
-                int w = pitch;
-                while (w--) {
-                    *frameBufferPtr = clr;
-                    ++frameBufferPtr;
-                }
-            }
-        }
-        else {
-            ushort *fbufferBlend = &blendLookupTable[0x20 * (0xFF - A)];
-            ushort *pixelBlend   = &blendLookupTable[0x20 * A];
-
-            int h = SCREEN_YSIZE;
-            while (h--) {
-                int w = pitch;
-                while (w--) {
-                    int R = (fbufferBlend[(*frameBufferPtr & 0xF800) >> 11] + pixelBlend[(clr & 0xF800) >> 11]) << 11;
-                    int G = (fbufferBlend[(*frameBufferPtr & 0x7E0) >> 6] + pixelBlend[(clr & 0x7E0) >> 6]) << 6;
-                    int B = fbufferBlend[*frameBufferPtr & 0x1F] + pixelBlend[clr & 0x1F];
-
-                    *frameBufferPtr = R | G | B;
-                    ++frameBufferPtr;
-                }
-            }
-        }
-    }
 
     // Not Avaliable in HW mode
 }
 
 void DrawTintRectangle(int XPos, int YPos, int width, int height)
 {
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            width += XPos;
-            XPos = 0;
-        }
-
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0)
-            return;
-
-        int yOffset = GFX_LINESIZE - width;
-        for (ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];; frameBufferPtr += yOffset) {
-            height--;
-            if (!height)
-                break;
-
-            int w = width;
-            while (w--) {
-                *frameBufferPtr = tintLookupTable[*frameBufferPtr];
-                ++frameBufferPtr;
-            }
-        }
-    }
-
     // Not avaliable in HW Render mode
 }
-void DrawScaledTintMask(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY,
-                        int sheetID)
+
+void DrawScaledTintMask(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        int roundedYPos = 0;
-        int roundedXPos = 0;
-        int truescaleX  = 4 * scaleX;
-        int truescaleY  = 4 * scaleY;
-        int widthM1     = width - 1;
-        int trueXPos    = XPos - (truescaleX * pivotX >> 11);
-        width           = truescaleX * width >> 11;
-        int trueYPos    = YPos - (truescaleY * pivotY >> 11);
-        height          = truescaleY * height >> 11;
-        int finalscaleX = (signed int)(float)((float)(2048.0 / (float)truescaleX) * 2048.0);
-        int finalscaleY = (signed int)(float)((float)(2048.0 / (float)truescaleY) * 2048.0);
-        if (width + trueXPos > GFX_LINESIZE) {
-            width = GFX_LINESIZE - trueXPos;
-        }
-
-        if (direction) {
-            if (trueXPos < 0) {
-                widthM1 -= trueXPos * -finalscaleX >> 11;
-                roundedXPos = (ushort)trueXPos * -(short)finalscaleX & 0x7FF;
-                width += trueXPos;
-                trueXPos = 0;
-            }
-        }
-        else if (trueXPos < 0) {
-            sprX += trueXPos * -finalscaleX >> 11;
-            roundedXPos = (ushort)trueXPos * -(short)finalscaleX & 0x7FF;
-            width += trueXPos;
-            trueXPos = 0;
-        }
-
-        if (height + trueYPos > SCREEN_YSIZE) {
-            height = SCREEN_YSIZE - trueYPos;
-        }
-        if (trueYPos < 0) {
-            sprY += trueYPos * -finalscaleY >> 11;
-            roundedYPos = (ushort)trueYPos * -(short)finalscaleY & 0x7FF;
-            height += trueYPos;
-            trueYPos = 0;
-        }
-
-        if (width <= 0 || height <= 0)
-            return;
-
-        GFXSurface *surface = &gfxSurface[sheetID];
-        int pitch           = GFX_LINESIZE - width;
-        int gfxwidth        = surface->width;
-        // byte *lineBuffer       = &gfxLineBuffer[trueYPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[trueXPos + GFX_LINESIZE * trueYPos];
-        if (direction == FLIP_X) {
-            byte *gfxDataPtr = &gfxData[widthM1];
-            int gfxPitch     = 0;
-            while (height--) {
-                int roundXPos = roundedXPos;
-                int w         = width;
-                while (w--) {
-                    if (*gfxDataPtr > 0)
-                        *frameBufferPtr = tintLookupTable[*frameBufferPtr];
-                    int offsetX = finalscaleX + roundXPos;
-                    gfxDataPtr -= offsetX >> 11;
-                    gfxPitch += offsetX >> 11;
-                    roundXPos = offsetX & 0x7FF;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                int offsetY = finalscaleY + roundedYPos;
-                gfxDataPtr += gfxPitch + (offsetY >> 11) * gfxwidth;
-                roundedYPos = offsetY & 0x7FF;
-                gfxPitch    = 0;
-            }
-        }
-        else {
-            int gfxPitch = 0;
-            int h        = height;
-            while (h--) {
-                int roundXPos = roundedXPos;
-                int w         = width;
-                while (w--) {
-                    if (*gfxData > 0)
-                        *frameBufferPtr = tintLookupTable[*frameBufferPtr];
-                    int offsetX = finalscaleX + roundXPos;
-                    gfxData += offsetX >> 11;
-                    gfxPitch += offsetX >> 11;
-                    roundXPos = offsetX & 0x7FF;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                int offsetY = finalscaleY + roundedYPos;
-                gfxData += (offsetY >> 11) * gfxwidth - gfxPitch;
-                roundedYPos = offsetY & 0x7FF;
-                gfxPitch    = 0;
-            }
-        }
-    }
-
     // Not avaliable in HW Render mode
 }
 
@@ -4164,503 +2680,58 @@ void DrawSprite(int XPos, int YPos, int width, int height, int sprX, int sprY, i
             return;
     }
 
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+        gfxVertexSize++;
 
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxPitch           = surface->width - width;
-        byte *lineBuffer       = &gfxLineBuffer[YPos];
-        byte *gfxDataPtr       = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-        while (height--) {
-            activePalette   = fullPalette[*lineBuffer];
-            activePalette32 = fullPalette32[*lineBuffer];
-            lineBuffer++;
-            int w = width;
-            while (w--) {
-                if (*gfxDataPtr > 0)
-                    *frameBufferPtr = activePalette[*gfxDataPtr];
-                ++gfxDataPtr;
-                ++frameBufferPtr;
-            }
-            frameBufferPtr += pitch;
-            gfxDataPtr += gfxPitch;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
 
 void DrawSpriteFlipped(int XPos, int YPos, int width, int height, int sprX, int sprY, int direction, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        int widthFlip  = width;
-        int heightFlip = height;
-
-        if (width + XPos > GFX_LINESIZE) {
-            width = GFX_LINESIZE - XPos;
-        }
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            widthFlip += XPos + XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE) {
-            height = SCREEN_YSIZE - YPos;
-        }
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            heightFlip += YPos + YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0)
-            return;
-
-        GFXSurface *surface = &gfxSurface[sheetID];
-        int pitch;
-        int gfxPitch;
-        byte *lineBuffer;
-        byte *gfxData;
-        ushort *frameBufferPtr;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
         switch (direction) {
             case FLIP_OFF:
-                pitch          = GFX_LINESIZE - width;
-                gfxPitch       = surface->width - width;
-                lineBuffer     = &gfxLineBuffer[YPos];
-                gfxData        = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-                frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-
-                while (height--) {
-                    activePalette   = fullPalette[*lineBuffer];
-                    activePalette32 = fullPalette32[*lineBuffer];
-                    lineBuffer++;
-                    int w = width;
-                    while (w--) {
-                        if (*gfxData > 0)
-                            *frameBufferPtr = activePalette[*gfxData];
-                        ++gfxData;
-                        ++frameBufferPtr;
-                    }
-                    frameBufferPtr += pitch;
-                    gfxData += gfxPitch;
-                }
-                break;
-            case FLIP_X:
-                pitch          = GFX_LINESIZE - width;
-                gfxPitch       = width + surface->width;
-                lineBuffer     = &gfxLineBuffer[YPos];
-                gfxData        = &graphicData[widthFlip - 1 + sprX + surface->width * sprY + surface->dataPosition];
-                frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-                while (height--) {
-                    activePalette   = fullPalette[*lineBuffer];
-                    activePalette32 = fullPalette32[*lineBuffer];
-                    lineBuffer++;
-                    int w = width;
-                    while (w--) {
-                        if (*gfxData > 0)
-                            *frameBufferPtr = activePalette[*gfxData];
-                        --gfxData;
-                        ++frameBufferPtr;
-                    }
-                    frameBufferPtr += pitch;
-                    gfxData += gfxPitch;
-                }
-                break;
-            case FLIP_Y:
-                pitch          = GFX_LINESIZE - width;
-                gfxPitch       = width + surface->width;
-                lineBuffer     = &gfxLineBuffer[YPos];
-                gfxData        = &gfxLineBuffer[YPos];
-                gfxData        = &graphicData[sprX + surface->width * (sprY + heightFlip - 1) + surface->dataPosition];
-                frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-                while (height--) {
-                    activePalette   = fullPalette[*lineBuffer];
-                    activePalette32 = fullPalette32[*lineBuffer];
-                    lineBuffer++;
-                    int w = width;
-                    while (w--) {
-                        if (*gfxData > 0)
-                            *frameBufferPtr = activePalette[*gfxData];
-                        ++gfxData;
-                        ++frameBufferPtr;
-                    }
-                    frameBufferPtr += pitch;
-                    gfxData -= gfxPitch;
-                }
-                break;
-            case FLIP_XY:
-                pitch          = GFX_LINESIZE - width;
-                gfxPitch       = surface->width - width;
-                lineBuffer     = &gfxLineBuffer[YPos];
-                gfxData        = &graphicData[widthFlip - 1 + sprX + surface->width * (sprY + heightFlip - 1) + surface->dataPosition];
-                frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-                while (height--) {
-                    activePalette   = fullPalette[*lineBuffer];
-                    activePalette32 = fullPalette32[*lineBuffer];
-                    lineBuffer++;
-                    int w = width;
-                    while (w--) {
-                        if (*gfxData > 0)
-                            *frameBufferPtr = activePalette[*gfxData];
-                        --gfxData;
-                        ++frameBufferPtr;
-                    }
-                    frameBufferPtr += pitch;
-                    gfxData -= gfxPitch;
-                }
-                break;
-            default: break;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            switch (direction) {
-                case FLIP_OFF:
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-                    gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-                    break;
-                case FLIP_X:
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-                    gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-                    break;
-                case FLIP_Y:
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-                    gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-                    break;
-                case FLIP_XY:
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-                    gfxPolyList[gfxVertexSize].y        = YPos << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                    gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                    gfxVertexSize++;
-
-                    gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-                    gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-                    gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                    gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                    gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                    gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                    gfxVertexSize++;
-                    break;
-            }
-            gfxIndexSize += 6;
-        }
-    }
-}
-void DrawSpriteScaled(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY,
-                      int sheetID)
-{
-    if (renderType == RENDER_SW) {
-        int roundedYPos = 0;
-        int roundedXPos = 0;
-        int truescaleX  = 4 * scaleX;
-        int truescaleY  = 4 * scaleY;
-        int widthM1     = width - 1;
-        int trueXPos    = XPos - (truescaleX * pivotX >> 11);
-        width           = truescaleX * width >> 11;
-        int trueYPos    = YPos - (truescaleY * pivotY >> 11);
-        height          = truescaleY * height >> 11;
-        int finalscaleX = (signed int)(float)((float)(2048.0 / (float)truescaleX) * 2048.0);
-        int finalscaleY = (signed int)(float)((float)(2048.0 / (float)truescaleY) * 2048.0);
-        if (width + trueXPos > GFX_LINESIZE) {
-            width = GFX_LINESIZE - trueXPos;
-        }
-
-        if (direction) {
-            if (trueXPos < 0) {
-                widthM1 -= trueXPos * -finalscaleX >> 11;
-                roundedXPos = (ushort)trueXPos * -(short)finalscaleX & 0x7FF;
-                width += trueXPos;
-                trueXPos = 0;
-            }
-        }
-        else if (trueXPos < 0) {
-            sprX += trueXPos * -finalscaleX >> 11;
-            roundedXPos = (ushort)trueXPos * -(short)finalscaleX & 0x7FF;
-            width += trueXPos;
-            trueXPos = 0;
-        }
-
-        if (height + trueYPos > SCREEN_YSIZE) {
-            height = SCREEN_YSIZE - trueYPos;
-        }
-        if (trueYPos < 0) {
-            sprY += trueYPos * -finalscaleY >> 11;
-            roundedYPos = (ushort)trueYPos * -(short)finalscaleY & 0x7FF;
-            height += trueYPos;
-            trueYPos = 0;
-        }
-
-        if (width <= 0 || height <= 0)
-            return;
-
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxwidth           = surface->width;
-        byte *lineBuffer       = &gfxLineBuffer[trueYPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[trueXPos + GFX_LINESIZE * trueYPos];
-        if (direction == FLIP_X) {
-            byte *gfxDataPtr = &gfxData[widthM1];
-            int gfxPitch     = 0;
-            while (height--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int roundXPos = roundedXPos;
-                int w         = width;
-                while (w--) {
-                    if (*gfxDataPtr > 0)
-                        *frameBufferPtr = activePalette[*gfxDataPtr];
-                    int offsetX = finalscaleX + roundXPos;
-                    gfxDataPtr -= offsetX >> 11;
-                    gfxPitch += offsetX >> 11;
-                    roundXPos = offsetX & 0x7FF;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                int offsetY = finalscaleY + roundedYPos;
-                gfxDataPtr += gfxPitch + (offsetY >> 11) * gfxwidth;
-                roundedYPos = offsetY & 0x7FF;
-                gfxPitch    = 0;
-            }
-        }
-        else {
-            int gfxPitch = 0;
-            int h        = height;
-            while (h--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int roundXPos = roundedXPos;
-                int w         = width;
-                while (w--) {
-                    if (*gfxData > 0)
-                        *frameBufferPtr = activePalette[*gfxData];
-                    int offsetX = finalscaleX + roundXPos;
-                    gfxData += offsetX >> 11;
-                    gfxPitch += offsetX >> 11;
-                    roundXPos = offsetX & 0x7FF;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                int offsetY = finalscaleY + roundedYPos;
-                gfxData += (offsetY >> 11) * gfxwidth - gfxPitch;
-                roundedYPos = offsetY & 0x7FF;
-                gfxPitch    = 0;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        if (gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            scaleX <<= 2;
-            scaleY <<= 2;
-            XPos -= pivotX * scaleX >> 11;
-            scaleX = width * scaleX >> 11;
-            YPos -= pivotY * scaleY >> 11;
-            scaleY              = height * scaleY >> 11;
-            GFXSurface *surface = &gfxSurface[sheetID];
-            if (surface->texStartX > -1) {
                 gfxPolyList[gfxVertexSize].x        = XPos << 4;
                 gfxPolyList[gfxVertexSize].y        = YPos << 4;
                 gfxPolyList[gfxVertexSize].colour.r = 0xFF;
@@ -4671,7 +2742,7 @@ void DrawSpriteScaled(int direction, int XPos, int YPos, int pivotX, int pivotY,
                 gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
                 gfxVertexSize++;
 
-                gfxPolyList[gfxVertexSize].x        = (XPos + scaleX) << 4;
+                gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
                 gfxPolyList[gfxVertexSize].y        = YPos << 4;
                 gfxPolyList[gfxVertexSize].colour.r = 0xFF;
                 gfxPolyList[gfxVertexSize].colour.g = 0xFF;
@@ -4682,7 +2753,7 @@ void DrawSpriteScaled(int direction, int XPos, int YPos, int pivotX, int pivotY,
                 gfxVertexSize++;
 
                 gfxPolyList[gfxVertexSize].x        = XPos << 4;
-                gfxPolyList[gfxVertexSize].y        = (YPos + scaleY) << 4;
+                gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
                 gfxPolyList[gfxVertexSize].colour.r = 0xFF;
                 gfxPolyList[gfxVertexSize].colour.g = 0xFF;
                 gfxPolyList[gfxVertexSize].colour.b = 0xFF;
@@ -4700,14 +2771,190 @@ void DrawSpriteScaled(int direction, int XPos, int YPos, int pivotX, int pivotY,
                 gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
                 gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
                 gfxVertexSize++;
-                gfxIndexSize += 6;
-            }
+                break;
+            case FLIP_X:
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+                break;
+            case FLIP_Y:
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+                break;
+            case FLIP_XY:
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+                gfxPolyList[gfxVertexSize].y        = YPos << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = XPos << 4;
+                gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+                gfxVertexSize++;
+
+                gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+                gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+                gfxVertexSize++;
+                break;
+        }
+        gfxIndexSize += 6;
+    }
+}
+void DrawSpriteScaled(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY, int sheetID)
+{
+    if (gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        scaleX <<= 2;
+        scaleY <<= 2;
+        XPos -= pivotX * scaleX >> 11;
+        scaleX = width * scaleX >> 11;
+        YPos -= pivotY * scaleY >> 11;
+        scaleY              = height * scaleY >> 11;
+        GFXSurface *surface = &gfxSurface[sheetID];
+        if (surface->texStartX > -1) {
+            gfxPolyList[gfxVertexSize].x        = XPos << 4;
+            gfxPolyList[gfxVertexSize].y        = YPos << 4;
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+            gfxVertexSize++;
+
+            gfxPolyList[gfxVertexSize].x        = (XPos + scaleX) << 4;
+            gfxPolyList[gfxVertexSize].y        = YPos << 4;
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+
+            gfxPolyList[gfxVertexSize].x        = XPos << 4;
+            gfxPolyList[gfxVertexSize].y        = (YPos + scaleY) << 4;
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+            gfxVertexSize++;
+
+            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+            gfxIndexSize += 6;
         }
     }
 }
 
-void DrawScaledChar(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY,
-                    int sheetID)
+void DrawScaledChar(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY, int sheetID)
 {
     // Not avaliable in SW Render mode
 
@@ -4764,627 +3011,292 @@ void DrawScaledChar(int direction, int XPos, int YPos, int pivotX, int pivotY, i
     }
 }
 
-void DrawSpriteRotated(int direction, int XPos, int YPos, int pivotX, int pivotY, int sprX, int sprY, int width, int height, int rotation,
-                       int sheetID)
+void DrawSpriteRotated(int direction, int XPos, int YPos, int pivotX, int pivotY, int sprX, int sprY, int width, int height, int rotation, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        int sprXPos    = (pivotX + sprX) << 9;
-        int sprYPos    = (pivotY + sprY) << 9;
-        int fullwidth  = width + sprX;
-        int fullheight = height + sprY;
-        int angle      = rotation & 0x1FF;
-        if (angle < 0)
-            angle += 0x200;
-        if (angle)
-            angle = 0x200 - angle;
-        int sine   = sin512LookupTable[angle];
-        int cosine = cos512LookupTable[angle];
-        int XPositions[4];
-        int YPositions[4];
-
-        if (direction == FLIP_X) {
-            XPositions[0] = XPos + ((sine * (-pivotY - 2) + cosine * (pivotX + 2)) >> 9);
-            YPositions[0] = YPos + ((cosine * (-pivotY - 2) - sine * (pivotX + 2)) >> 9);
-            XPositions[1] = XPos + ((sine * (-pivotY - 2) + cosine * (pivotX - width - 2)) >> 9);
-            YPositions[1] = YPos + ((cosine * (-pivotY - 2) - sine * (pivotX - width - 2)) >> 9);
-            XPositions[2] = XPos + ((sine * (height - pivotY + 2) + cosine * (pivotX + 2)) >> 9);
-            YPositions[2] = YPos + ((cosine * (height - pivotY + 2) - sine * (pivotX + 2)) >> 9);
-            int a         = pivotX - width - 2;
-            int b         = height - pivotY + 2;
-            XPositions[3] = XPos + ((sine * b + cosine * a) >> 9);
-            YPositions[3] = YPos + ((cosine * b - sine * a) >> 9);
-        }
-        else {
-            XPositions[0] = XPos + ((sine * (-pivotY - 2) + cosine * (-pivotX - 2)) >> 9);
-            YPositions[0] = YPos + ((cosine * (-pivotY - 2) - sine * (-pivotX - 2)) >> 9);
-            XPositions[1] = XPos + ((sine * (-pivotY - 2) + cosine * (width - pivotX + 2)) >> 9);
-            YPositions[1] = YPos + ((cosine * (-pivotY - 2) - sine * (width - pivotX + 2)) >> 9);
-            XPositions[2] = XPos + ((sine * (height - pivotY + 2) + cosine * (-pivotX - 2)) >> 9);
-            YPositions[2] = YPos + ((cosine * (height - pivotY + 2) - sine * (-pivotX - 2)) >> 9);
-            int a         = width - pivotX + 2;
-            int b         = height - pivotY + 2;
-            XPositions[3] = XPos + ((sine * b + cosine * a) >> 9);
-            YPositions[3] = YPos + ((cosine * b - sine * a) >> 9);
-        }
-
-        int left = GFX_LINESIZE;
-        for (int i = 0; i < 4; ++i) {
-            if (XPositions[i] < left)
-                left = XPositions[i];
-        }
-        if (left < 0)
-            left = 0;
-
-        int right = 0;
-        for (int i = 0; i < 4; ++i) {
-            if (XPositions[i] > right)
-                right = XPositions[i];
-        }
-        if (right > GFX_LINESIZE)
-            right = GFX_LINESIZE;
-        int maxX = right - left;
-
-        int top = SCREEN_YSIZE;
-        for (int i = 0; i < 4; ++i) {
-            if (YPositions[i] < top)
-                top = YPositions[i];
-        }
-        if (top < 0)
-            top = 0;
-
-        int bottom = 0;
-        for (int i = 0; i < 4; ++i) {
-            if (YPositions[i] > bottom)
-                bottom = YPositions[i];
-        }
-        if (bottom > SCREEN_YSIZE)
-            bottom = SCREEN_YSIZE;
-        int maxY = bottom - top;
-
-        if (maxX <= 0 || maxY <= 0)
-            return;
-
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - maxX;
-        int lineSize           = surface->widthShifted;
-        ushort *frameBufferPtr = &Engine.frameBuffer[left + GFX_LINESIZE * top];
-        byte *lineBuffer       = &gfxLineBuffer[top];
-        int startX             = left - XPos;
-        int startY             = top - YPos;
-        int shiftPivot         = (sprX << 9) - 1;
-        fullwidth <<= 9;
-        int shiftheight = (sprY << 9) - 1;
-        fullheight <<= 9;
-        byte *gfxData = &graphicData[surface->dataPosition];
-        if (cosine < 0 || sine < 0)
-            sprYPos += sine + cosine;
-
-        if (direction == FLIP_X) {
-            int drawX = sprXPos - (cosine * startX - sine * startY) - 0x100;
-            int drawY = cosine * startY + sprYPos + sine * startX;
-            while (maxY--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int finalX = drawX;
-                int finalY = drawY;
-                int w      = maxX;
-                while (w--) {
-                    if (finalX > shiftPivot && finalX < fullwidth && finalY > shiftheight && finalY < fullheight) {
-                        byte index = gfxData[(finalY >> 9 << lineSize) + (finalX >> 9)];
-                        if (index > 0)
-                            *frameBufferPtr = activePalette[index];
-                    }
-                    ++frameBufferPtr;
-                    finalX -= cosine;
-                    finalY += sine;
-                }
-                drawX += sine;
-                drawY += cosine;
-                frameBufferPtr += pitch;
-            }
-        }
-        else {
-            int drawX = sprXPos + cosine * startX - sine * startY;
-            int drawY = cosine * startY + sprYPos + sine * startX;
-            while (maxY--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int finalX = drawX;
-                int finalY = drawY;
-                int w      = maxX;
-                while (w--) {
-                    if (finalX > shiftPivot && finalX < fullwidth && finalY > shiftheight && finalY < fullheight) {
-                        byte index = gfxData[(finalY >> 9 << lineSize) + (finalX >> 9)];
-                        if (index > 0)
-                            *frameBufferPtr = activePalette[index];
-                    }
-                    ++frameBufferPtr;
-                    finalX += cosine;
-                    finalY += sine;
-                }
-                drawX -= sine;
-                drawY += cosine;
-                frameBufferPtr += pitch;
-            }
-        }
+    GFXSurface *surface = &gfxSurface[sheetID];
+    XPos <<= 4;
+    YPos <<= 4;
+    rotation -= rotation >> 9 << 9;
+    if (rotation < 0) {
+        rotation += 0x200;
     }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        XPos <<= 4;
-        YPos <<= 4;
-        rotation -= rotation >> 9 << 9;
-        if (rotation < 0) {
-            rotation += 0x200;
+    if (rotation != 0) {
+        rotation = 0x200 - rotation;
+    }
+    int sin = sin512LookupTable[rotation];
+    int cos = cos512LookupTable[rotation];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
+        if (direction == FLIP_OFF) {
+            int x                               = -pivotX;
+            int y                               = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+            gfxVertexSize++;
+
+            x                                   = width - pivotX;
+            y                                   = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+
+            x                                   = -pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+            gfxVertexSize++;
+
+            x                                   = width - pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+            gfxIndexSize += 6;
         }
-        if (rotation != 0) {
-            rotation = 0x200 - rotation;
-        }
-        int sin = sin512LookupTable[rotation];
-        int cos = cos512LookupTable[rotation];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
-            if (direction == FLIP_OFF) {
-                int x                               = -pivotX;
-                int y                               = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                gfxVertexSize++;
+        else {
+            int x                               = pivotX;
+            int y                               = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+            gfxVertexSize++;
 
-                x                                   = width - pivotX;
-                y                                   = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
+            x                                   = pivotX - width;
+            y                                   = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
 
-                x                                   = -pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                gfxVertexSize++;
+            x                                   = pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+            gfxVertexSize++;
 
-                x                                   = width - pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-                gfxIndexSize += 6;
-            }
-            else {
-                int x                               = pivotX;
-                int y                               = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                gfxVertexSize++;
-
-                x                                   = pivotX - width;
-                y                                   = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-
-                x                                   = pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                gfxVertexSize++;
-
-                x                                   = pivotX - width;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-                gfxIndexSize += 6;
-            }
+            x                                   = pivotX - width;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+            gfxIndexSize += 6;
         }
     }
 }
 
-void DrawSpriteRotozoom(int direction, int XPos, int YPos, int pivotX, int pivotY, int sprX, int sprY, int width, int height, int rotation, int scale,
-                        int sheetID)
+void DrawSpriteRotozoom(int direction, int XPos, int YPos, int pivotX, int pivotY, int sprX, int sprY, int width, int height, int rotation, int scale, int sheetID)
 {
     if (scale == 0)
         return;
 
-    if (renderType == RENDER_SW) {
-        int sprXPos    = (pivotX + sprX) << 9;
-        int sprYPos    = (pivotY + sprY) << 9;
-        int fullwidth  = width + sprX;
-        int fullheight = height + sprY;
-        int angle      = rotation & 0x1FF;
-        if (angle < 0)
-            angle += 0x200;
-        if (angle)
-            angle = 0x200 - angle;
-        int sine   = scale * sin512LookupTable[angle] >> 9;
-        int cosine = scale * cos512LookupTable[angle] >> 9;
-        int XPositions[4];
-        int YPositions[4];
+    GFXSurface *surface = &gfxSurface[sheetID];
+    XPos <<= 4;
+    YPos <<= 4;
+    rotation -= rotation >> 9 << 9;
+    if (rotation < 0)
+        rotation += 0x200;
+    if (rotation != 0)
+        rotation = 0x200 - rotation;
 
-        if (direction == FLIP_X) {
-            XPositions[0] = XPos + ((sine * (-pivotY - 2) + cosine * (pivotX + 2)) >> 9);
-            YPositions[0] = YPos + ((cosine * (-pivotY - 2) - sine * (pivotX + 2)) >> 9);
-            XPositions[1] = XPos + ((sine * (-pivotY - 2) + cosine * (pivotX - width - 2)) >> 9);
-            YPositions[1] = YPos + ((cosine * (-pivotY - 2) - sine * (pivotX - width - 2)) >> 9);
-            XPositions[2] = XPos + ((sine * (height - pivotY + 2) + cosine * (pivotX + 2)) >> 9);
-            YPositions[2] = YPos + ((cosine * (height - pivotY + 2) - sine * (pivotX + 2)) >> 9);
-            int a         = pivotX - width - 2;
-            int b         = height - pivotY + 2;
-            XPositions[3] = XPos + ((sine * b + cosine * a) >> 9);
-            YPositions[3] = YPos + ((cosine * b - sine * a) >> 9);
+    int sin = sin512LookupTable[rotation] * scale >> 9;
+    int cos = cos512LookupTable[rotation] * scale >> 9;
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
+        if (direction == FLIP_OFF) {
+            int x                               = -pivotX;
+            int y                               = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+            gfxVertexSize++;
+
+            x                                   = width - pivotX;
+            y                                   = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+
+            x                                   = -pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+            gfxVertexSize++;
+
+            x                                   = width - pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+            gfxIndexSize += 6;
         }
         else {
-            XPositions[0] = XPos + ((sine * (-pivotY - 2) + cosine * (-pivotX - 2)) >> 9);
-            YPositions[0] = YPos + ((cosine * (-pivotY - 2) - sine * (-pivotX - 2)) >> 9);
-            XPositions[1] = XPos + ((sine * (-pivotY - 2) + cosine * (width - pivotX + 2)) >> 9);
-            YPositions[1] = YPos + ((cosine * (-pivotY - 2) - sine * (width - pivotX + 2)) >> 9);
-            XPositions[2] = XPos + ((sine * (height - pivotY + 2) + cosine * (-pivotX - 2)) >> 9);
-            YPositions[2] = YPos + ((cosine * (height - pivotY + 2) - sine * (-pivotX - 2)) >> 9);
-            int a         = width - pivotX + 2;
-            int b         = height - pivotY + 2;
-            XPositions[3] = XPos + ((sine * b + cosine * a) >> 9);
-            YPositions[3] = YPos + ((cosine * b - sine * a) >> 9);
-        }
-        int truescale = (signed int)(float)((float)(512.0 / (float)scale) * 512.0);
-        sine          = truescale * sin512LookupTable[angle] >> 9;
-        cosine        = truescale * cos512LookupTable[angle] >> 9;
+            int x                               = pivotX;
+            int y                               = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+            gfxVertexSize++;
 
-        int left = GFX_LINESIZE;
-        for (int i = 0; i < 4; ++i) {
-            if (XPositions[i] < left)
-                left = XPositions[i];
-        }
-        if (left < 0)
-            left = 0;
+            x                                   = pivotX - width;
+            y                                   = -pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
 
-        int right = 0;
-        for (int i = 0; i < 4; ++i) {
-            if (XPositions[i] > right)
-                right = XPositions[i];
-        }
-        if (right > GFX_LINESIZE)
-            right = GFX_LINESIZE;
-        int maxX = right - left;
+            x                                   = pivotX;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+            gfxVertexSize++;
 
-        int top = SCREEN_YSIZE;
-        for (int i = 0; i < 4; ++i) {
-            if (YPositions[i] < top)
-                top = YPositions[i];
-        }
-        if (top < 0)
-            top = 0;
-
-        int bottom = 0;
-        for (int i = 0; i < 4; ++i) {
-            if (YPositions[i] > bottom)
-                bottom = YPositions[i];
-        }
-        if (bottom > SCREEN_YSIZE)
-            bottom = SCREEN_YSIZE;
-        int maxY = bottom - top;
-
-        if (maxX <= 0 || maxY <= 0)
-            return;
-
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - maxX;
-        int lineSize           = surface->widthShifted;
-        ushort *frameBufferPtr = &Engine.frameBuffer[left + GFX_LINESIZE * top];
-        byte *lineBuffer       = &gfxLineBuffer[top];
-        int startX             = left - XPos;
-        int startY             = top - YPos;
-        int shiftPivot         = (sprX << 9) - 1;
-        fullwidth <<= 9;
-        int shiftheight = (sprY << 9) - 1;
-        fullheight <<= 9;
-        byte *gfxData = &graphicData[surface->dataPosition];
-        if (cosine < 0 || sine < 0)
-            sprYPos += sine + cosine;
-
-        if (direction == FLIP_X) {
-            int drawX = sprXPos - (cosine * startX - sine * startY) - (truescale >> 1);
-            int drawY = cosine * startY + sprYPos + sine * startX;
-            while (maxY--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int finalX = drawX;
-                int finalY = drawY;
-                int w      = maxX;
-                while (w--) {
-                    if (finalX > shiftPivot && finalX < fullwidth && finalY > shiftheight && finalY < fullheight) {
-                        byte index = gfxData[(finalY >> 9 << lineSize) + (finalX >> 9)];
-                        if (index > 0)
-                            *frameBufferPtr = activePalette[index];
-                    }
-                    ++frameBufferPtr;
-                    finalX -= cosine;
-                    finalY += sine;
-                }
-                drawX += sine;
-                drawY += cosine;
-                frameBufferPtr += pitch;
-            }
-        }
-        else {
-            int drawX = sprXPos + cosine * startX - sine * startY;
-            int drawY = cosine * startY + sprYPos + sine * startX;
-            while (maxY--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int finalX = drawX;
-                int finalY = drawY;
-                int w      = maxX;
-                while (w--) {
-                    if (finalX > shiftPivot && finalX < fullwidth && finalY > shiftheight && finalY < fullheight) {
-                        byte index = gfxData[(finalY >> 9 << lineSize) + (finalX >> 9)];
-                        if (index > 0)
-                            *frameBufferPtr = activePalette[index];
-                    }
-                    ++frameBufferPtr;
-                    finalX += cosine;
-                    finalY += sine;
-                }
-                drawX -= sine;
-                drawY += cosine;
-                frameBufferPtr += pitch;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        XPos <<= 4;
-        YPos <<= 4;
-        rotation -= rotation >> 9 << 9;
-        if (rotation < 0)
-            rotation += 0x200;
-        if (rotation != 0)
-            rotation = 0x200 - rotation;
-
-        int sin = sin512LookupTable[rotation] * scale >> 9;
-        int cos = cos512LookupTable[rotation] * scale >> 9;
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -8192 && XPos < 13952 && YPos > -8192 && YPos < 12032) {
-            if (direction == FLIP_OFF) {
-                int x                               = -pivotX;
-                int y                               = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                gfxVertexSize++;
-
-                x                                   = width - pivotX;
-                y                                   = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-
-                x                                   = -pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                gfxVertexSize++;
-
-                x                                   = width - pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-                gfxIndexSize += 6;
-            }
-            else {
-                int x                               = pivotX;
-                int y                               = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-                gfxVertexSize++;
-
-                x                                   = pivotX - width;
-                y                                   = -pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-
-                x                                   = pivotX;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-                gfxVertexSize++;
-
-                x                                   = pivotX - width;
-                y                                   = height - pivotY;
-                gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
-                gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
-                gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-                gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-                gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-                gfxVertexSize++;
-                gfxIndexSize += 6;
-            }
+            x                                   = pivotX - width;
+            y                                   = height - pivotY;
+            gfxPolyList[gfxVertexSize].x        = XPos + ((x * cos + y * sin) >> 5);
+            gfxPolyList[gfxVertexSize].y        = YPos + ((y * cos - x * sin) >> 5);
+            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+            gfxVertexSize++;
+            gfxIndexSize += 6;
         }
     }
 }
 
 void DrawBlendedSprite(int XPos, int YPos, int width, int height, int sprX, int sprY, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0x80;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+        gfxVertexSize++;
 
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxPitch           = surface->width - width;
-        byte *lineBuffer       = &gfxLineBuffer[YPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-        while (height--) {
-            activePalette   = fullPalette[*lineBuffer];
-            activePalette32 = fullPalette32[*lineBuffer];
-            lineBuffer++;
-            int w = width;
-            while (w--) {
-                if (*gfxData > 0)
-                    *frameBufferPtr = ((activePalette[*gfxData] & 0xF7DE) >> 1) + ((*frameBufferPtr & 0xF7DE) >> 1);
-                ++gfxData;
-                ++frameBufferPtr;
-            }
-            frameBufferPtr += pitch;
-            gfxData += gfxPitch;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0x80;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0x80;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0x80;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0x80;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0x80;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-            gfxVertexSize++;
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0x80;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0x80;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
+
 void DrawAlphaBlendedSprite(int XPos, int YPos, int width, int height, int sprX, int sprY, int alpha, int sheetID)
 {
     if (disableTouchControls) {
@@ -5392,319 +3304,142 @@ void DrawAlphaBlendedSprite(int XPos, int YPos, int width, int height, int sprX,
             return;
     }
 
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0 || alpha <= 0)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+        gfxVertexSize++;
 
-        if (alpha > 0xFF)
-            alpha = 0xFF;
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxPitch           = surface->width - width;
-        byte *lineBuffer       = &gfxLineBuffer[YPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
-        if (alpha == 0xFF) {
-            while (height--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int w = width;
-                while (w--) {
-                    if (*gfxData > 0)
-                        *frameBufferPtr = activePalette[*gfxData];
-                    ++gfxData;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                gfxData += gfxPitch;
-            }
-        }
-        else {
-            ushort *fbufferBlend = &blendLookupTable[0x20 * (0xFF - alpha)];
-            ushort *pixelBlend   = &blendLookupTable[0x20 * alpha];
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-            while (height--) {
-                activePalette   = fullPalette[*lineBuffer];
-                activePalette32 = fullPalette32[*lineBuffer];
-                lineBuffer++;
-                int w = width;
-                while (w--) {
-                    if (*gfxData > 0) {
-                        ushort colour = activePalette[*gfxData];
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+        gfxVertexSize++;
 
-                        int R = (fbufferBlend[(*frameBufferPtr & 0xF800) >> 11] + pixelBlend[(colour & 0xF800) >> 11]) << 11;
-                        int G = (fbufferBlend[(*frameBufferPtr & 0x7E0) >> 6] + pixelBlend[(colour & 0x7E0) >> 6]) << 6;
-                        int B = fbufferBlend[*frameBufferPtr & 0x1F] + pixelBlend[colour & 0x1F];
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-                        *frameBufferPtr = R | G | B;
-                    }
-                    ++gfxData;
-                    ++frameBufferPtr;
-                }
-                frameBufferPtr += pitch;
-                gfxData += gfxPitch;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
 void DrawAdditiveBlendedSprite(int XPos, int YPos, int width, int height, int sprX, int sprY, int alpha, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0 || alpha <= 0)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+        gfxVertexSize++;
 
-        if (alpha > 0xFF)
-            alpha = 0xFF;
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-        ushort *blendTablePtr  = &blendLookupTable[0x20 * alpha];
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxPitch           = surface->width - width;
-        byte *lineBuffer       = &gfxLineBuffer[YPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+        gfxVertexSize++;
 
-        while (height--) {
-            activePalette   = fullPalette[*lineBuffer];
-            activePalette32 = fullPalette32[*lineBuffer];
-            lineBuffer++;
-            int w = width;
-            while (w--) {
-                if (*gfxData > 0) {
-                    ushort colour = activePalette[*gfxData];
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-                    int R = minVal((blendTablePtr[(colour & 0xF800) >> 11] << 11) + (*frameBufferPtr & 0xF800), 0xF800);
-                    int G = minVal((blendTablePtr[(colour & 0x7E0) >> 6] << 6) + (*frameBufferPtr & 0x7E0), 0x7E0);
-                    int B = minVal(blendTablePtr[colour & 0x1F] + (*frameBufferPtr & 0x1F), 0x1F);
-
-                    *frameBufferPtr = R | G | B;
-                }
-                ++gfxData;
-                ++frameBufferPtr;
-            }
-            frameBufferPtr += pitch;
-            gfxData += gfxPitch;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
 void DrawSubtractiveBlendedSprite(int XPos, int YPos, int width, int height, int sprX, int sprY, int alpha, int sheetID)
 {
-    if (renderType == RENDER_SW) {
-        if (width + XPos > GFX_LINESIZE)
-            width = GFX_LINESIZE - XPos;
-        if (XPos < 0) {
-            sprX -= XPos;
-            width += XPos;
-            XPos = 0;
-        }
-        if (height + YPos > SCREEN_YSIZE)
-            height = SCREEN_YSIZE - YPos;
-        if (YPos < 0) {
-            sprY -= YPos;
-            height += YPos;
-            YPos = 0;
-        }
-        if (width <= 0 || height <= 0 || alpha <= 0)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
+        gfxVertexSize++;
 
-        if (alpha > 0xFF)
-            alpha = 0xFF;
+        gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
+        gfxPolyList[gfxVertexSize].y        = YPos << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
 
-        ushort *subBlendTable  = &subtractLookupTable[0x20 * alpha];
-        GFXSurface *surface    = &gfxSurface[sheetID];
-        int pitch              = GFX_LINESIZE - width;
-        int gfxPitch           = surface->width - width;
-        byte *lineBuffer       = &gfxLineBuffer[YPos];
-        byte *gfxData          = &graphicData[sprX + surface->width * sprY + surface->dataPosition];
-        ushort *frameBufferPtr = &Engine.frameBuffer[XPos + GFX_LINESIZE * YPos];
+        gfxPolyList[gfxVertexSize].x        = XPos << 4;
+        gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
+        gfxVertexSize++;
 
-        while (height--) {
-            activePalette   = fullPalette[*lineBuffer];
-            activePalette32 = fullPalette32[*lineBuffer];
-            lineBuffer++;
-            int w = width;
-            while (w--) {
-                if (*gfxData > 0) {
-                    ushort colour = activePalette[*gfxData];
-
-                    int R = maxVal((*frameBufferPtr & 0xF800) - (subBlendTable[(colour & 0xF800) >> 11] << 11), 0);
-                    int G = maxVal((*frameBufferPtr & 0x7E0) - (subBlendTable[(colour & 0x7E0) >> 6] << 6), 0);
-                    int B = maxVal((*frameBufferPtr & 0x1F) - subBlendTable[colour & 0x1F], 0);
-
-                    *frameBufferPtr = R | G | B;
-                }
-                ++gfxData;
-                ++frameBufferPtr;
-            }
-            frameBufferPtr += pitch;
-            gfxData += gfxPitch;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (surface->texStartX > -1 && gfxVertexSize < VERTEX_COUNT && XPos > -512 && XPos < 872 && YPos > -512 && YPos < 752) {
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = (XPos + width) << 4;
-            gfxPolyList[gfxVertexSize].y        = YPos << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + sprX + width);
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos << 4;
-            gfxPolyList[gfxVertexSize].y        = (YPos + height) << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + sprY + height);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = alpha;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-            gfxIndexSize += 6;
-        }
+        gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
+        gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = alpha;
+        gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
+        gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
+        gfxVertexSize++;
+        gfxIndexSize += 6;
     }
 }
 
@@ -5817,357 +3552,103 @@ void DrawFace(void *v, uint colour)
 {
     Vertex *verts = (Vertex *)v;
 
-    if (renderType == RENDER_SW) {
-        int alpha = (colour & 0x7F000000) >> 23;
-        if (alpha < 1)
-            return;
-        if (alpha > 0xFF)
-            alpha = 0xFF;
-        if (verts[0].x < 0 && verts[1].x < 0 && verts[2].x < 0 && verts[3].x < 0)
-            return;
-        if (verts[0].x > GFX_LINESIZE && verts[1].x > GFX_LINESIZE && verts[2].x > GFX_LINESIZE && verts[3].x > GFX_LINESIZE)
-            return;
-        if (verts[0].y < 0 && verts[1].y < 0 && verts[2].y < 0 && verts[3].y < 0)
-            return;
-        if (verts[0].y > SCREEN_YSIZE && verts[1].y > SCREEN_YSIZE && verts[2].y > SCREEN_YSIZE && verts[3].y > SCREEN_YSIZE)
-            return;
-        if (verts[0].x == verts[1].x && verts[1].x == verts[2].x && verts[2].x == verts[3].x)
-            return;
-        if (verts[0].y == verts[1].y && verts[1].y == verts[2].y && verts[2].y == verts[3].y)
-            return;
+    if (gfxVertexSize < VERTEX_COUNT) {
+        gfxPolyList[gfxVertexSize].x        = verts[0].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[0].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = (byte)((uint)(colour >> 16) & 0xFF);
+        gfxPolyList[gfxVertexSize].colour.g = (byte)((uint)(colour >> 8) & 0xFF);
+        gfxPolyList[gfxVertexSize].colour.b = (byte)((uint)colour & 0xFF);
+        colour                              = (colour & 0x7F000000) >> 23;
 
-        int vertexA = 0;
-        int vertexB = 1;
-        int vertexC = 2;
-        int vertexD = 3;
-        if (verts[1].y < verts[0].y) {
-            vertexA = 1;
-            vertexB = 0;
-        }
-        if (verts[2].y < verts[vertexA].y) {
-            int temp = vertexA;
-            vertexA  = 2;
-            vertexC  = temp;
-        }
-        if (verts[3].y < verts[vertexA].y) {
-            int temp = vertexA;
-            vertexA  = 3;
-            vertexD  = temp;
-        }
-        if (verts[vertexC].y < verts[vertexB].y) {
-            int temp = vertexB;
-            vertexB  = vertexC;
-            vertexC  = temp;
-        }
-        if (verts[vertexD].y < verts[vertexB].y) {
-            int temp = vertexB;
-            vertexB  = vertexD;
-            vertexD  = temp;
-        }
-        if (verts[vertexD].y < verts[vertexC].y) {
-            int temp = vertexC;
-            vertexC  = vertexD;
-            vertexD  = temp;
-        }
+        if (colour == 0xFE)
+            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        else
+            gfxPolyList[gfxVertexSize].colour.a = colour;
 
-        int faceTop    = verts[vertexA].y;
-        int faceBottom = verts[vertexD].y;
-        if (faceTop < 0)
-            faceTop = 0;
-        if (faceBottom > SCREEN_YSIZE)
-            faceBottom = SCREEN_YSIZE;
-        for (int i = faceTop; i < faceBottom; ++i) {
-            faceLineStart[i] = 100000;
-            faceLineEnd[i]   = -100000;
-        }
+        gfxPolyList[gfxVertexSize].u = 2;
+        gfxPolyList[gfxVertexSize].v = 2;
+        gfxVertexSize++;
 
-        ProcessScanEdge(&verts[vertexA], &verts[vertexB]);
-        ProcessScanEdge(&verts[vertexA], &verts[vertexC]);
-        ProcessScanEdge(&verts[vertexA], &verts[vertexD]);
-        ProcessScanEdge(&verts[vertexB], &verts[vertexC]);
-        ProcessScanEdge(&verts[vertexC], &verts[vertexD]);
-        ProcessScanEdge(&verts[vertexB], &verts[vertexD]);
+        gfxPolyList[gfxVertexSize].x        = verts[1].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[1].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
+        gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
+        gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
+        gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
+        gfxPolyList[gfxVertexSize].u        = 2;
+        gfxPolyList[gfxVertexSize].v        = 2;
+        gfxVertexSize++;
 
-        ushort colour16 = 0;
-        PACK_RGB888(colour16, ((colour >> 16) & 0xFF), ((colour >> 8) & 0xFF), ((colour >> 0) & 0xFF));
+        gfxPolyList[gfxVertexSize].x        = verts[2].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[2].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
+        gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
+        gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
+        gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
+        gfxPolyList[gfxVertexSize].u        = 2;
+        gfxPolyList[gfxVertexSize].v        = 2;
+        gfxVertexSize++;
 
-        ushort *frameBufferPtr = &Engine.frameBuffer[GFX_LINESIZE * faceTop];
-        if (alpha == 255) {
-            while (faceTop < faceBottom) {
-                int startX = faceLineStart[faceTop];
-                int endX   = faceLineEnd[faceTop];
-                if (startX >= GFX_LINESIZE || endX <= 0) {
-                    frameBufferPtr += GFX_LINESIZE;
-                }
-                else {
-                    if (startX < 0)
-                        startX = 0;
-                    if (endX > GFX_LINESIZE - 1)
-                        endX = GFX_LINESIZE - 1;
-                    ushort *fbPtr = &frameBufferPtr[startX];
-                    frameBufferPtr += GFX_LINESIZE;
-                    int vertexwidth = endX - startX + 1;
-                    while (vertexwidth--) {
-                        *fbPtr = colour16;
-                        ++fbPtr;
-                    }
-                }
-                ++faceTop;
-            }
-        }
-        else {
-            ushort *fbufferBlend = &blendLookupTable[0x20 * (0xFF - alpha)];
-            ushort *pixelBlend   = &blendLookupTable[0x20 * alpha];
+        gfxPolyList[gfxVertexSize].x        = verts[3].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[3].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
+        gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
+        gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
+        gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
+        gfxPolyList[gfxVertexSize].u        = 2;
+        gfxPolyList[gfxVertexSize].v        = 2;
+        gfxVertexSize++;
 
-            while (faceTop < faceBottom) {
-                int startX = faceLineStart[faceTop];
-                int endX   = faceLineEnd[faceTop];
-                if (startX >= GFX_LINESIZE || endX <= 0) {
-                    frameBufferPtr += GFX_LINESIZE;
-                }
-                else {
-                    if (startX < 0)
-                        startX = 0;
-                    if (endX > GFX_LINESIZE - 1)
-                        endX = GFX_LINESIZE - 1;
-                    ushort *fbPtr = &frameBufferPtr[startX];
-                    frameBufferPtr += GFX_LINESIZE;
-                    int vertexwidth = endX - startX + 1;
-                    while (vertexwidth--) {
-                        int R = (fbufferBlend[(*fbPtr & 0xF800) >> 11] + pixelBlend[(colour16 & 0xF800) >> 11]) << 11;
-                        int G = (fbufferBlend[(*fbPtr & 0x7E0) >> 6] + pixelBlend[(colour16 & 0x7E0) >> 6]) << 6;
-                        int B = fbufferBlend[*fbPtr & 0x1F] + pixelBlend[colour16 & 0x1F];
-
-                        *fbPtr = R | G | B;
-                        ++fbPtr;
-                    }
-                }
-                ++faceTop;
-            }
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        if (gfxVertexSize < VERTEX_COUNT) {
-            gfxPolyList[gfxVertexSize].x        = verts[0].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[0].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = (byte)((uint)(colour >> 16) & 0xFF);
-            gfxPolyList[gfxVertexSize].colour.g = (byte)((uint)(colour >> 8) & 0xFF);
-            gfxPolyList[gfxVertexSize].colour.b = (byte)((uint)colour & 0xFF);
-            colour                              = (colour & 0x7F000000) >> 23;
-
-            if (colour == 0xFE)
-                gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            else
-                gfxPolyList[gfxVertexSize].colour.a = colour;
-
-            gfxPolyList[gfxVertexSize].u = 2;
-            gfxPolyList[gfxVertexSize].v = 2;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[1].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[1].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
-            gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
-            gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
-            gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
-            gfxPolyList[gfxVertexSize].u        = 2;
-            gfxPolyList[gfxVertexSize].v        = 2;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[2].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[2].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
-            gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
-            gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
-            gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
-            gfxPolyList[gfxVertexSize].u        = 2;
-            gfxPolyList[gfxVertexSize].v        = 2;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[3].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[3].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = gfxPolyList[gfxVertexSize - 1].colour.r;
-            gfxPolyList[gfxVertexSize].colour.g = gfxPolyList[gfxVertexSize - 1].colour.g;
-            gfxPolyList[gfxVertexSize].colour.b = gfxPolyList[gfxVertexSize - 1].colour.b;
-            gfxPolyList[gfxVertexSize].colour.a = gfxPolyList[gfxVertexSize - 1].colour.a;
-            gfxPolyList[gfxVertexSize].u        = 2;
-            gfxPolyList[gfxVertexSize].v        = 2;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
 void DrawTexturedFace(void *v, byte sheetID)
 {
     Vertex *verts = (Vertex *)v;
 
-    if (renderType == RENDER_SW) {
-        if (verts[0].x < 0 && verts[1].x < 0 && verts[2].x < 0 && verts[3].x < 0)
-            return;
-        if (verts[0].x > GFX_LINESIZE && verts[1].x > GFX_LINESIZE && verts[2].x > GFX_LINESIZE && verts[3].x > GFX_LINESIZE)
-            return;
-        if (verts[0].y < 0 && verts[1].y < 0 && verts[2].y < 0 && verts[3].y < 0)
-            return;
-        if (verts[0].y > SCREEN_YSIZE && verts[1].y > SCREEN_YSIZE && verts[2].y > SCREEN_YSIZE && verts[3].y > SCREEN_YSIZE)
-            return;
-        if (verts[0].x == verts[1].x && verts[1].x == verts[2].x && verts[2].x == verts[3].x)
-            return;
-        if (verts[0].y == verts[1].y && verts[1].y == verts[2].y && verts[2].y == verts[3].y)
-            return;
+    GFXSurface *surface = &gfxSurface[sheetID];
+    if (gfxVertexSize < VERTEX_COUNT) {
+        gfxPolyList[gfxVertexSize].x        = verts[0].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[0].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[0].u);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[0].v);
+        gfxVertexSize++;
 
-        int vertexA = 0;
-        int vertexB = 1;
-        int vertexC = 2;
-        int vertexD = 3;
-        if (verts[1].y < verts[0].y) {
-            vertexA = 1;
-            vertexB = 0;
-        }
-        if (verts[2].y < verts[vertexA].y) {
-            int temp = vertexA;
-            vertexA  = 2;
-            vertexC  = temp;
-        }
-        if (verts[3].y < verts[vertexA].y) {
-            int temp = vertexA;
-            vertexA  = 3;
-            vertexD  = temp;
-        }
-        if (verts[vertexC].y < verts[vertexB].y) {
-            int temp = vertexB;
-            vertexB  = vertexC;
-            vertexC  = temp;
-        }
-        if (verts[vertexD].y < verts[vertexB].y) {
-            int temp = vertexB;
-            vertexB  = vertexD;
-            vertexD  = temp;
-        }
-        if (verts[vertexD].y < verts[vertexC].y) {
-            int temp = vertexC;
-            vertexC  = vertexD;
-            vertexD  = temp;
-        }
+        gfxPolyList[gfxVertexSize].x        = verts[1].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[1].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[1].u);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[1].v);
+        gfxVertexSize++;
 
-        int faceTop    = verts[vertexA].y;
-        int faceBottom = verts[vertexD].y;
-        if (faceTop < 0)
-            faceTop = 0;
-        if (faceBottom > SCREEN_YSIZE)
-            faceBottom = SCREEN_YSIZE;
-        for (int i = faceTop; i < faceBottom; ++i) {
-            faceLineStart[i] = 100000;
-            faceLineEnd[i]   = -100000;
-        }
+        gfxPolyList[gfxVertexSize].x        = verts[2].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[2].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[2].u);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[2].v);
+        gfxVertexSize++;
 
-        ProcessScanEdgeUV(&verts[vertexA], &verts[vertexB]);
-        ProcessScanEdgeUV(&verts[vertexA], &verts[vertexC]);
-        ProcessScanEdgeUV(&verts[vertexA], &verts[vertexD]);
-        ProcessScanEdgeUV(&verts[vertexB], &verts[vertexC]);
-        ProcessScanEdgeUV(&verts[vertexC], &verts[vertexD]);
-        ProcessScanEdgeUV(&verts[vertexB], &verts[vertexD]);
+        gfxPolyList[gfxVertexSize].x        = verts[3].x << 4;
+        gfxPolyList[gfxVertexSize].y        = verts[3].y << 4;
+        gfxPolyList[gfxVertexSize].colour.r = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.g = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.b = 0xFF;
+        gfxPolyList[gfxVertexSize].colour.a = 0xFF;
+        gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[3].u);
+        gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[3].v);
+        gfxVertexSize++;
 
-        ushort *frameBufferPtr = &Engine.frameBuffer[GFX_LINESIZE * faceTop];
-        byte *sheetPtr         = &graphicData[gfxSurface[sheetID].dataPosition];
-        int shiftwidth         = gfxSurface[sheetID].widthShifted;
-        byte *lineBuffer       = &gfxLineBuffer[faceTop];
-        while (faceTop < faceBottom) {
-            activePalette   = fullPalette[*lineBuffer];
-            activePalette32 = fullPalette32[*lineBuffer];
-            lineBuffer++;
-            int startX = faceLineStart[faceTop];
-            int endX   = faceLineEnd[faceTop];
-            int UPos   = faceLineStartU[faceTop];
-            int VPos   = faceLineStartV[faceTop];
-            if (startX >= GFX_LINESIZE || endX <= 0) {
-                frameBufferPtr += GFX_LINESIZE;
-            }
-            else {
-                int posDifference = endX - startX;
-                int bufferedUPos  = 0;
-                int bufferedVPos  = 0;
-                if (endX == startX) {
-                    bufferedUPos = 0;
-                    bufferedVPos = 0;
-                }
-                else {
-                    bufferedUPos = (faceLineEndU[faceTop] - UPos) / posDifference;
-                    bufferedVPos = (faceLineEndV[faceTop] - VPos) / posDifference;
-                }
-                if (endX > GFX_LINESIZE_MINUSONE)
-                    posDifference = GFX_LINESIZE_MINUSONE - startX;
-
-                if (startX < 0) {
-                    posDifference += startX;
-                    UPos -= startX * bufferedUPos;
-                    VPos -= startX * bufferedVPos;
-                    startX = 0;
-                }
-                ushort *fbPtr = &frameBufferPtr[startX];
-                frameBufferPtr += GFX_LINESIZE;
-                int counter = posDifference + 1;
-                while (counter--) {
-                    if (UPos < 0)
-                        UPos = 0;
-                    if (VPos < 0)
-                        VPos = 0;
-                    ushort index = sheetPtr[(VPos >> 16 << shiftwidth) + (UPos >> 16)];
-                    if (index > 0)
-                        *fbPtr = activePalette[index];
-                    fbPtr++;
-                    UPos += bufferedUPos;
-                    VPos += bufferedVPos;
-                }
-            }
-            ++faceTop;
-        }
-    }
-    else if (renderType == RENDER_HW) {
-        GFXSurface *surface = &gfxSurface[sheetID];
-        if (gfxVertexSize < VERTEX_COUNT) {
-            gfxPolyList[gfxVertexSize].x        = verts[0].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[0].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[0].u);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[0].v);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[1].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[1].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[1].u);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[1].v);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[2].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[2].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[2].u);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[2].v);
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = verts[3].x << 4;
-            gfxPolyList[gfxVertexSize].y        = verts[3].y << 4;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = (surface->texStartX + verts[3].u);
-            gfxPolyList[gfxVertexSize].v        = (surface->texStartY + verts[3].v);
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
+        gfxIndexSize += 6;
     }
 }
 
@@ -6185,14 +3666,10 @@ void DrawBitmapText(void *menu, int XPos, int YPos, int scale, int spacing, int 
         for (int i = 0; i < tMenu->entrySize[rowStart]; ++i) {
             ushort c             = tMenu->textData[tMenu->entryStart[rowStart] + i];
             FontCharacter *fChar = &fontCharacterList[c];
-            if (renderType == RENDER_SW) {
-                DrawSpriteScaled(FLIP_OFF, X >> 9, Y >> 9, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
-                                 fChar->srcY, textMenuSurfaceNo);
-            }
-            else if (renderType == RENDER_HW) {
-                DrawScaledChar(FLIP_OFF, X >> 5, Y >> 5, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
-                               fChar->srcY, textMenuSurfaceNo);
-            }
+
+            DrawScaledChar(FLIP_OFF, X >> 5, Y >> 5, -fChar->pivotX, -fChar->pivotY, scale, scale, fChar->width, fChar->height, fChar->srcX,
+                            fChar->srcY, textMenuSurfaceNo);
+
             X += fChar->xAdvance * scale;
         }
         Y += spacing * scale;
