@@ -46,6 +46,9 @@ bool ProcessEvents()
         }
     }
 
+    // Update 3D depth slider value
+    Engine.s3d_depth = osGet3DSliderState() / 3;
+
     return aptMainLoop();
 }
 
@@ -182,9 +185,6 @@ void RetroEngine::Run()
 
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-        C3D_RenderTargetClear(Engine.rendertarget, C3D_CLEAR_ALL, 0x000000ff, 0);
-        C3D_FrameDrawOn(Engine.rendertarget);
-
         if (!(Engine.focusState & 1)) {
             for (int s = 0; s < gameSpeed; ++s) {
                 ProcessInput();
@@ -254,7 +254,16 @@ void RetroEngine::Run()
             }
         }
 
-        FlipScreen();
+        C3D_RenderTargetClear(Engine.rendertarget_l, C3D_CLEAR_ALL, 0x000000ff, 0);
+        C3D_FrameDrawOn(Engine.rendertarget_l);
+        FlipScreen(-Engine.s3d_depth);
+
+        if (Engine.s3d_depth > 0.0f) {
+            C3D_RenderTargetClear(Engine.rendertarget_r, C3D_CLEAR_ALL, 0x000000ff, 0);
+            C3D_FrameDrawOn(Engine.rendertarget_r);
+            FlipScreen(Engine.s3d_depth);
+        }
+
         C3D_FrameEnd(0);
         
         frameStep      = false;

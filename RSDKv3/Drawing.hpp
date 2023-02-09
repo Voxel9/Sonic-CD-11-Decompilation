@@ -121,8 +121,8 @@ extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];
 
 int InitRenderDevice();
-void FlipScreen();
-void FlipScreenNoFB();
+void FlipScreen(float iod);
+void FlipScreenNoFB(float iod);
 
 void FlipScreenVideo();
 

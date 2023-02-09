@@ -106,7 +106,7 @@ bool bilinearScaling = false;
 
 #define DISPLAY_TRANSFER_FLAGS \
     (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
-    GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
+    GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGB5A1) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB565) | \
     GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
 int InitRenderDevice()
@@ -116,14 +116,19 @@ int InitRenderDevice()
     sprintf(gameTitle, "%s%s", Engine.gameWindowText, Engine.usingDataFile_Config ? "" : " (Using Data Folder)");
 
     gfxInitDefault();
-	consoleInit(GFX_BOTTOM, NULL);
-	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+    gfxSetScreenFormat(GFX_TOP, GSP_RGB565_OES);
+    gfxSetScreenFormat(GFX_BOTTOM, GSP_RGB565_OES);
+    gfxSet3D(true); // Enable stereoscopic 3D
+    consoleInit(GFX_BOTTOM, NULL);
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     SCREEN_CENTERX = SCREEN_XSIZE / 2;
     viewOffsetX    = 0;
 
-    Engine.rendertarget = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
-    C3D_RenderTargetSetOutput(Engine.rendertarget, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    Engine.rendertarget_l = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
+    Engine.rendertarget_r = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA5551, GPU_RB_DEPTH16);
+    C3D_RenderTargetSetOutput(Engine.rendertarget_l, GFX_TOP, GFX_LEFT,  DISPLAY_TRANSFER_FLAGS);
+    C3D_RenderTargetSetOutput(Engine.rendertarget_r, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
 
     gfxPolyList = (DrawVertex*)linearAlloc(VERTEX_COUNT * sizeof(DrawVertex));
     gfxPolyListIndex = (short*)linearAlloc(INDEX_COUNT * sizeof(short));
@@ -198,7 +203,7 @@ int InitRenderDevice()
     return 1;
 }
 
-void FlipScreen()
+void FlipScreen(float iod)
 {
     if (Engine.gameMode == ENGINE_EXITGAME)
         return;
@@ -230,12 +235,12 @@ void FlipScreen()
     if (Engine.gameMode == ENGINE_VIDEOWAIT)
         FlipScreenVideo();
     else
-        FlipScreenNoFB();
+        FlipScreenNoFB(iod);
 
     Engine.useFBTexture = fb;
 }
 
-void FlipScreenNoFB()
+void FlipScreenNoFB(float iod)
 {
     Mtx_Identity(&p_mtx);
     Mtx_OrthoTilt(&p_mtx, 0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0, true);
@@ -278,7 +283,7 @@ void FlipScreenNoFB()
         // Init 3D Plane
         C3D_SetViewport(floor3DTop, viewOffsetX, floor3DBottom, viewWidth);
         Mtx_Identity(&p3d_mtx);
-        Mtx_PerspTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, false);
+        Mtx_PerspStereoTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, iod, 2.0f, false);
 
         C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p3d_mtx);
 
