@@ -260,6 +260,15 @@ void FlipScreenNoFB(float iod)
         BufInfo_Init(bufInfo);
         BufInfo_Add(bufInfo, gfxPolyList, sizeof(DrawVertex), 3, 0x210);
 
+        // Build stereo offset matrix
+        C3D_Mtx s3d_mtx;
+        Mtx_Identity(&s3d_mtx);
+        Mtx_Translate(&s3d_mtx, 0.0f, iod * -0.12f, 0.0f, true);
+
+        Mtx_Multiply(&s3d_mtx, &s3d_mtx, &p_mtx);
+
+        C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &s3d_mtx);
+
         // Non Blended rendering
         if(gfxIndexSizeOpaque >= 3)
             C3D_DrawElements(GPU_TRIANGLES, gfxIndexSizeOpaque, C3D_UNSIGNED_SHORT, gfxPolyListIndex);
@@ -269,7 +278,7 @@ void FlipScreenNoFB(float iod)
         // Init 3D Plane
         C3D_SetViewport(floor3DTop, viewOffsetX, floor3DBottom, viewWidth);
         Mtx_Identity(&p3d_mtx);
-        Mtx_PerspStereoTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, iod, 2.0f, false);
+        Mtx_PerspStereoTilt(&p3d_mtx, 1.8326f, viewAspect, 0.1f, 2000.0f, iod * 16.0f, 64.0f, false);
 
         C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(gfxshader_prog.vertexShader, "p"), &p3d_mtx);
 
@@ -1286,12 +1295,16 @@ void DrawHLineScrollLayer(int layerID)
         if (lastXSize != layerWidth) {
             layerWidth = layerWidth << 7;
             for (int i = 0; i < hParallax.entryCount; i++) {
-                hParallax.linePos[i]   = hParallax.parallaxFactor[i] * xScrollOffset >> 8;
+                // Stereo 3D stuff
+                int s3d_offset = (hParallax.parallaxFactor[i] * Engine.s3d_depth / 8);
+                int s3d_merge = 32.0f * Engine.s3d_depth;
+
+                hParallax.linePos[i]   = hParallax.parallaxFactor[i] * (xScrollOffset + s3d_offset) >> 8;
                 hParallax.scrollPos[i] = hParallax.scrollPos[i] + hParallax.scrollSpeed[i];
                 if (hParallax.scrollPos[i] > layerWidth << 16) {
                     hParallax.scrollPos[i] = hParallax.scrollPos[i] - (layerWidth << 16);
                 }
-                hParallax.linePos[i] = hParallax.linePos[i] + (hParallax.scrollPos[i] >> 16);
+                hParallax.linePos[i] = hParallax.linePos[i] + (hParallax.scrollPos[i] >> 16) - s3d_merge;
                 hParallax.linePos[i] = hParallax.linePos[i] % layerWidth;
             }
             layerWidth = layerWidth >> 7;

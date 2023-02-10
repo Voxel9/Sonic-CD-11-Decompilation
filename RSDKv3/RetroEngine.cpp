@@ -47,7 +47,7 @@ bool ProcessEvents()
     }
 
     // Update 3D depth slider value
-    Engine.s3d_depth = osGet3DSliderState() / 3;
+    Engine.s3d_depth = osGet3DSliderState();
 
     return aptMainLoop();
 }
