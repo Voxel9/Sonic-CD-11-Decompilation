@@ -21,6 +21,7 @@ It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among t
 ## Features
 * Built on the most recent decomp code base (as of Feb 2023)
 * **Runs full speed on both O3DS and N3DS!**
+* Stereoscopic 3D support
 * No laggy/slow special stages
 * (Hopefully) less crash-prone than the other existing 3DS port
 * Remappable (keyboard) keys in settings.ini (Uses [bitmasks](https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/services/hid.h) from libctru)
@@ -48,8 +49,5 @@ It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among t
 * Run `make`
 
 ## FAQ
-### Q: Is there stereoscopic 3D support?
-A: S3D currently isn't implemented yet, but is planned. If you'd like to play the game with some form of S3D support right now, SaturnSH2x2's [3DS port](https://github.com/SaturnSH2x2/Sonic-CD-11-3DS/releases) (HW version) supports it quite well (apart from special stages, which are broken in that version).
-
 ### Q: Can the D-Pad and Circle Pad both be mapped to movement at the same time?
 A: Not yet. For now, choose one you feel most comfortable with and modify the keyboard mappings in settings.ini, using the key button masks defined in libctru.
