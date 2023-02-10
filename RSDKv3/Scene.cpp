@@ -209,10 +209,12 @@ void ProcessStage(void)
                 }
 
                 UpdateHardwareTextures();
-                gfxIndexSize        = 0;
-                gfxVertexSize       = 0;
-                gfxIndexSizeOpaque  = 0;
-                gfxVertexSizeOpaque = 0;
+                for(int i = 0; i < 2; i++) {
+                    gfxIndexSize[i]        = 0;
+                    gfxVertexSize[i]       = 0;
+                    gfxIndexSizeOpaque[i]  = 0;
+                    gfxVertexSizeOpaque[i] = 0;
+                }
             }
             break;
 
@@ -290,10 +292,12 @@ void ProcessStage(void)
             ProcessPausedObjects();
 
             if (renderType == RENDER_HW) {
-                gfxIndexSize        = 0;
-                gfxVertexSize       = 0;
-                gfxIndexSizeOpaque  = 0;
-                gfxVertexSizeOpaque = 0;
+                for(int i = 0; i < 2; i++) {
+                    gfxIndexSize[i]        = 0;
+                    gfxVertexSize[i]       = 0;
+                    gfxIndexSizeOpaque[i]  = 0;
+                    gfxVertexSizeOpaque[i] = 0;
+                }
             }
 
             DrawObjectList(0);
