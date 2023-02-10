@@ -458,7 +458,9 @@ public:
     int windowXSize; // width of window/screen in the previous frame
     int windowYSize; // height of window/screen in the previous frame
 
-    C3D_RenderTarget *rendertarget;
+    C3D_RenderTarget *rendertargets[2];
+
+    float s3d_depth;
 };
 
 extern RetroEngine Engine;

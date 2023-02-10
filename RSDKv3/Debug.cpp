@@ -653,7 +653,9 @@ void ProcessStageSelect()
     }
 
     if (renderType == RENDER_HW) {
-        gfxIndexSizeOpaque  = gfxIndexSize;
-        gfxVertexSizeOpaque = gfxVertexSize;
+        for(int i = 0; i < 2; i++) {
+            gfxIndexSizeOpaque[i]  = gfxIndexSize[i];
+            gfxVertexSizeOpaque[i] = gfxVertexSize[i];
+        }
     }
 }

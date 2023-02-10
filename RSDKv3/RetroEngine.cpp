@@ -46,6 +46,9 @@ bool ProcessEvents()
         }
     }
 
+    // Update 3D depth slider value
+    Engine.s3d_depth = osGet3DSliderState();
+
     return aptMainLoop();
 }
 
@@ -182,9 +185,6 @@ void RetroEngine::Run()
 
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
-        C3D_RenderTargetClear(Engine.rendertarget, C3D_CLEAR_ALL, 0x000000ff, 0);
-        C3D_FrameDrawOn(Engine.rendertarget);
-
         if (!(Engine.focusState & 1)) {
             for (int s = 0; s < gameSpeed; ++s) {
                 ProcessInput();
@@ -193,20 +193,24 @@ void RetroEngine::Run()
                     switch (gameMode) {
                         case ENGINE_DEVMENU:
                             if (renderType == RENDER_HW) {
-                                gfxIndexSize        = 0;
-                                gfxVertexSize       = 0;
-                                gfxIndexSizeOpaque  = 0;
-                                gfxVertexSizeOpaque = 0;
+                                for(int i = 0; i < 2; i++) {
+                                    gfxIndexSize[i]        = 0;
+                                    gfxVertexSize[i]       = 0;
+                                    gfxIndexSizeOpaque[i]  = 0;
+                                    gfxVertexSizeOpaque[i] = 0;
+                                }
                             }
                             ProcessStageSelect();
                             break;
 
                         case ENGINE_MAINGAME:
                             if (renderType == RENDER_HW) {
-                                gfxIndexSize        = 0;
-                                gfxVertexSize       = 0;
-                                gfxIndexSizeOpaque  = 0;
-                                gfxVertexSizeOpaque = 0;
+                                for(int i = 0; i < 2; i++) {
+                                    gfxIndexSize[i]        = 0;
+                                    gfxVertexSize[i]       = 0;
+                                    gfxIndexSizeOpaque[i]  = 0;
+                                    gfxVertexSizeOpaque[i] = 0;
+                                }
                                 vertexSize3D        = 0;
                                 indexSize3D         = 0;
                                 render3DEnabled     = false;

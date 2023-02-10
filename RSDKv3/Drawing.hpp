@@ -77,24 +77,16 @@ struct DrawVertex3D {
     Colour colour;
 };
 
-extern DrawVertex *gfxPolyList;
-extern short *gfxPolyListIndex;
-extern ushort gfxVertexSize;
-extern ushort gfxVertexSizeOpaque;
-extern ushort gfxIndexSize;
-extern ushort gfxIndexSizeOpaque;
-
-extern DrawVertex3D *polyList3D;
+extern ushort gfxVertexSize[2];
+extern ushort gfxVertexSizeOpaque[2];
+extern ushort gfxIndexSize[2];
+extern ushort gfxIndexSizeOpaque[2];
 
 extern ushort vertexSize3D;
 extern ushort indexSize3D;
+
 extern ushort tileUVArray[TILEUV_SIZE];
-extern float floor3DXPos;
-extern float floor3DYPos;
-extern float floor3DZPos;
-extern float floor3DAngle;
 extern bool render3DEnabled;
-extern bool hq3DFloorEnabled;
 
 extern ushort texBuffer[HW_TEXBUFFER_SIZE];
 extern byte texBufferMode;
