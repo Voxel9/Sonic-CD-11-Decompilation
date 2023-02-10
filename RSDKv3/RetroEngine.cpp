@@ -49,7 +49,7 @@ bool ProcessEvents()
     // Update 3D depth slider value
     Engine.s3d_depth = osGet3DSliderState();
 
-    return aptMainLoop();
+    return true;
 }
 
 void RetroEngine::Init()
@@ -159,7 +159,7 @@ void RetroEngine::Run()
     unsigned long long curTicks   = 0;
     unsigned long long prevTicks  = 0;
 
-    while (running) {
+    while (running && aptMainLoop()) {
 #if !RETRO_USE_ORIGINAL_CODE
         /* if (!vsync) {
             curTicks = osGetTimeRef().value_tick;
