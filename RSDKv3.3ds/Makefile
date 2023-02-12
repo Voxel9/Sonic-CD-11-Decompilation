@@ -60,12 +60,12 @@ CFLAGS	:=	-g -O3 -mword-relocations \
 			-ffunction-sections -ffast-math \
 			$(ARCH) $(INCLUDE) -D__3DS__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=c++11
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=	-lSDL -ltheoradec -lvorbisidec -logg -lcitro3d -lctru -lm
+LIBS	:=	-lSDL -ltheoradec -lvorbisidec -logg -ltinyxml2 -lcitro3d -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

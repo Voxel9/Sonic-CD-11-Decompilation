@@ -8,7 +8,7 @@
 // be set to true only for preservation purposes
 #define RETRO_USE_ORIGINAL_CODE (0)
 
-#define RETRO_USE_MOD_LOADER (!RETRO_USE_ORIGINAL_CODE && 0)
+#define RETRO_USE_MOD_LOADER (!RETRO_USE_ORIGINAL_CODE && 1)
 
 // ================
 // STANDARD LIBS
@@ -89,7 +89,7 @@ typedef unsigned int uint;
 #define DEFAULT_SCREEN_XSIZE 424
 #define DEFAULT_FULLSCREEN   false
 #elif RETRO_PLATFORM == RETRO_3DS
-#define BASE_PATH            "sdmc:/3ds/SonicCD/"
+#define BASE_PATH            ""
 #define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
 #else

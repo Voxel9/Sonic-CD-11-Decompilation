@@ -4,7 +4,7 @@
 #include <winrt/Windows.Storage.h>
 #endif
 
-#if RETRO_PLATFORM == RETRO_ANDROID
+#if RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_3DS
 #include <unistd.h>
 #endif
 
@@ -59,6 +59,8 @@ void RetroEngine::Init()
 
 	if(isN3DS)
 		osSetSpeedupEnable(true);
+    
+    chdir("sdmc:/3ds/SonicCD/");
 
     CalculateTrigAngles();
     GenerateBlendLookupTable();
