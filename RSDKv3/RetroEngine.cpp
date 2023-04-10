@@ -59,8 +59,6 @@ void RetroEngine::Init()
 
 	if(isN3DS)
 		osSetSpeedupEnable(true);
-    
-    chdir("sdmc:/3ds/SonicCD/");
 
     CalculateTrigAngles();
     GenerateBlendLookupTable();
