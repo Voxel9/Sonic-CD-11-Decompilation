@@ -334,10 +334,10 @@ void InitUserdata()
 
         ini.SetComment("Keyboard 1", "IK1Comment",
                        "Keyboard Mappings for P1");
-        ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = KEY_CPAD_UP);
-        ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = KEY_CPAD_DOWN);
-        ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = KEY_CPAD_LEFT);
-        ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = KEY_CPAD_RIGHT);
+        ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = KEY_CPAD_UP | KEY_DUP);
+        ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = KEY_CPAD_DOWN | KEY_DDOWN);
+        ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = KEY_CPAD_LEFT | KEY_DLEFT);
+        ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = KEY_CPAD_RIGHT | KEY_DRIGHT);
         ini.SetInteger("Keyboard 1", "A", inputDevice[INPUT_BUTTONA].keyMappings = KEY_A);
         ini.SetInteger("Keyboard 1", "B", inputDevice[INPUT_BUTTONB].keyMappings = KEY_B);
         ini.SetInteger("Keyboard 1", "C", inputDevice[INPUT_BUTTONC].keyMappings = KEY_Y);
@@ -461,13 +461,13 @@ void InitUserdata()
             sfxVolume = 0;
 
         if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))
-            inputDevice[0].keyMappings = KEY_CPAD_UP;
+            inputDevice[0].keyMappings = KEY_CPAD_UP | KEY_DUP;
         if (!ini.GetInteger("Keyboard 1", "Down", &inputDevice[INPUT_DOWN].keyMappings))
-            inputDevice[1].keyMappings = KEY_CPAD_DOWN;
+            inputDevice[1].keyMappings = KEY_CPAD_DOWN | KEY_DDOWN;
         if (!ini.GetInteger("Keyboard 1", "Left", &inputDevice[INPUT_LEFT].keyMappings))
-            inputDevice[2].keyMappings = KEY_CPAD_LEFT;
+            inputDevice[2].keyMappings = KEY_CPAD_LEFT | KEY_DLEFT;
         if (!ini.GetInteger("Keyboard 1", "Right", &inputDevice[INPUT_RIGHT].keyMappings))
-            inputDevice[3].keyMappings = KEY_CPAD_RIGHT;
+            inputDevice[3].keyMappings = KEY_CPAD_RIGHT | KEY_DRIGHT;
         if (!ini.GetInteger("Keyboard 1", "A", &inputDevice[INPUT_BUTTONA].keyMappings))
             inputDevice[4].keyMappings = KEY_A;
         if (!ini.GetInteger("Keyboard 1", "B", &inputDevice[INPUT_BUTTONB].keyMappings))
