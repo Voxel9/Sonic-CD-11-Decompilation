@@ -43,7 +43,7 @@ It uses Citro3D for the graphics backend, SDL 1.2 for the audio backend, among t
 ## How to build (via Windows)
 * Install and setup [msys2](https://www.msys2.org/)
 * Add the [devkitpro repositories](https://devkitpro.org/wiki/devkitPro_pacman) to pacman
-* Run `pacman -S git 3ds-dev 3ds-sdl 3ds-libogg 3ds-libvorbisidec 3ds-libtheora` and install all the packages
+* Run `pacman -S git 3ds-dev 3ds-sdl 3ds-libogg 3ds-libvorbisidec 3ds-libtheora 3ds-tinyxml2` and install all the packages
 * `git clone` this repository
 * `cd` to the `RSDKv3.3ds` folder
 * Run `make`
