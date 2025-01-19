@@ -18,7 +18,7 @@ static void dofile(const char *fname, const THEORAPLAY_VideoFormat vidfmt)
     const THEORAPLAY_AudioPacket *audio = NULL;
 
     printf("Trying file '%s' ...\n", fname);
-    decoder = THEORAPLAY_startDecodeFile(fname, 20, vidfmt);
+    decoder = THEORAPLAY_startDecodeFile(fname, 20, vidfmt, NULL, 1);
     while (THEORAPLAY_isDecoding(decoder))
     {
         video = THEORAPLAY_getVideo(decoder);
@@ -58,6 +58,10 @@ int main(int argc, char **argv)
             vidfmt = THEORAPLAY_VIDFMT_RGB;
         else if (strcmp(argv[i], "--rgba") == 0)
             vidfmt = THEORAPLAY_VIDFMT_RGBA;
+        else if (strcmp(argv[i], "--bgra") == 0)
+            vidfmt = THEORAPLAY_VIDFMT_BGRA;
+        else if (strcmp(argv[i], "--rgb565") == 0)
+            vidfmt = THEORAPLAY_VIDFMT_RGB565;
         else if (strcmp(argv[i], "--yv12") == 0)
             vidfmt = THEORAPLAY_VIDFMT_YV12;
         else

@@ -156,6 +156,8 @@ static void setcaption(const char *fname, const int opengl,
     {
         case THEORAPLAY_VIDFMT_RGB:  fmtstr = "RGB";  break;
         case THEORAPLAY_VIDFMT_RGBA: fmtstr = "RGBA"; break;
+        case THEORAPLAY_VIDFMT_BGRA: fmtstr = "BGRA";  break;
+        case THEORAPLAY_VIDFMT_RGB565: fmtstr = "RGB565";  break;
         case THEORAPLAY_VIDFMT_YV12: fmtstr = "YV12"; break;
         case THEORAPLAY_VIDFMT_IYUV: fmtstr = "IYUV"; break;
         default: assert(0 && "Unexpected video format!"); break;
@@ -241,6 +243,8 @@ static int init_shaders(const THEORAPLAY_VideoFormat vidfmt)
     {
         case THEORAPLAY_VIDFMT_RGB:
         case THEORAPLAY_VIDFMT_RGBA:
+        case THEORAPLAY_VIDFMT_BGRA:
+        case THEORAPLAY_VIDFMT_RGB565:
             fragmentsrc = glsl_rgba_fragment;
             break;
         case THEORAPLAY_VIDFMT_YV12:
@@ -318,14 +322,14 @@ static void prep_texture(GLuint *texture, const int idx)
 
 
 static void init_textures(const THEORAPLAY_VideoFrame *video,
-                          const GLenum glfmt, const GLenum gltype,
+                          const GLenum glinternalfmt, const GLenum glfmt, const GLenum gltype,
                           GLuint *texture)
 {
     const int planar = (sdlyuvfmt(video->format) != 0);
 
     glGenTextures(planar ? 3 : 1, texture);
     prep_texture(texture, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, glfmt, video->width, video->height, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, glinternalfmt, video->width, video->height, 0,
                  glfmt, gltype, NULL);
 
     if (planar)
@@ -340,20 +344,33 @@ static void init_textures(const THEORAPLAY_VideoFrame *video,
 } // init_textures
 
 static void openglfmt(const THEORAPLAY_VideoFrame *video,
-                      GLenum *glfmt, GLenum *gltype)
+                      GLenum *glinternalfmt, GLenum *glfmt, GLenum *gltype)
 {
     switch (video->format)
     {
         case THEORAPLAY_VIDFMT_RGB:
+            *glinternalfmt = GL_RGB;
             *glfmt = GL_RGB;
             *gltype = GL_UNSIGNED_BYTE;
             break;
+        case THEORAPLAY_VIDFMT_RGB565:
+            *glinternalfmt = GL_RGB;
+            *glfmt = GL_RGB;
+            *gltype = GL_UNSIGNED_SHORT_5_6_5;
+            break;
         case THEORAPLAY_VIDFMT_RGBA:
+            *glinternalfmt = GL_RGBA;
             *glfmt = GL_RGBA;
             *gltype = GL_UNSIGNED_INT_8_8_8_8_REV;
             break;
+        case THEORAPLAY_VIDFMT_BGRA:
+            *glinternalfmt = GL_RGBA;
+            *glfmt = GL_BGRA;
+            *gltype = GL_UNSIGNED_BYTE;
+            break;
         case THEORAPLAY_VIDFMT_YV12:
         case THEORAPLAY_VIDFMT_IYUV:
+            *glinternalfmt = GL_LUMINANCE;
             *glfmt = GL_LUMINANCE;
             *gltype = GL_UNSIGNED_BYTE;
             break;
@@ -392,6 +409,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
     int has_video = 0;
     Uint32 sdlinitflags = 0;
     #if SUPPORT_OPENGL
+    GLenum glinternalfmt = GL_NONE;
     GLenum glfmt = GL_NONE;
     GLenum gltype = GL_NONE;
     GLuint texture[3] = { 0, 0, 0 };
@@ -405,7 +423,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
 
     printf("Trying file '%s' ...\n", fname);
 
-    decoder = THEORAPLAY_startDecodeFile(fname, MAX_FRAMES, vidfmt);
+    decoder = THEORAPLAY_startDecodeFile(fname, MAX_FRAMES, vidfmt, NULL, 1);
     if (!decoder)
     {
         fprintf(stderr, "Failed to start decoding '%s'!\n", fname);
@@ -416,7 +434,10 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
     //  file. In a video game, you could choose not to block on this, and
     //  instead do something else until the file is ready.
     while (!THEORAPLAY_isInitialized(decoder))
+    {
         SDL_Delay(10);
+        THEORAPLAY_pumpDecode(decoder, 5);
+    } // while
 
     // Once we're initialized, we can tell if this file has audio and/or video.
     has_audio = THEORAPLAY_hasAudioStream(decoder);
@@ -437,7 +458,10 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
     if (has_video)
     {
         while ((video = THEORAPLAY_getVideo(decoder)) == NULL)
+        {
             SDL_Delay(10);
+            THEORAPLAY_pumpDecode(decoder, 5);
+        } // while
     } // if
 
     if (has_audio)
@@ -447,6 +471,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
             if ((has_video) && (THEORAPLAY_availableVideo(decoder) >= MAX_FRAMES))
                 break;  // we'll never progress, there's no audio yet but we've prebuffered as much as we plan to.
             SDL_Delay(10);
+            THEORAPLAY_pumpDecode(decoder, 5);
         } // while
     } // if
 
@@ -497,7 +522,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
             glClear(GL_COLOR_BUFFER_BIT);
             SDL_GL_SwapBuffers();
 
-            openglfmt(video, &glfmt, &gltype);
+            openglfmt(video, &glinternalfmt, &glfmt, &gltype);
 
             initfailed = quit = (initfailed || !init_shaders(vidfmt));
             if (!initfailed)
@@ -513,7 +538,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
                 glDisable(GL_BLEND);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-                init_textures(video, glfmt, gltype, texture);
+                init_textures(video, glinternalfmt, glfmt, gltype, texture);
             } // if
         } // else if
         #endif
@@ -528,19 +553,48 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
             {
                 overlay = SDL_CreateYUVOverlay(video->width, video->height,
                                                overlayfmt, screen);
-
                 if (!overlay)
                     fprintf(stderr, "YUV Overlay failed: %s\n", SDL_GetError());
                 initfailed = quit = (initfailed || !overlay);
             } // if
             else
             {
-                const int alpha = (vidfmt == THEORAPLAY_VIDFMT_RGBA);
-                const int bits = 24 + (alpha * 8);
-                const Uint32 rmask = SDL_SwapLE32(0xFF0000FF);
-                const Uint32 gmask = SDL_SwapLE32(0x0000FF00);
-                const Uint32 bmask = SDL_SwapLE32(0x00FF0000);
-                const Uint32 amask = 0x00000000;
+                Uint32 rmask, gmask, bmask, amask;
+                int bits;
+
+                switch (vidfmt)
+                {
+                    case THEORAPLAY_VIDFMT_RGB:
+                    case THEORAPLAY_VIDFMT_RGBA:
+                        bits = (vidfmt == THEORAPLAY_VIDFMT_RGBA) ? 32 : 24;
+                        rmask = SDL_SwapLE32(0x000000FF);
+                        gmask = SDL_SwapLE32(0x0000FF00);
+                        bmask = SDL_SwapLE32(0x00FF0000);
+                        amask = 0x00000000;
+                        break;
+
+                    case THEORAPLAY_VIDFMT_BGRA:
+                        bits = 32;
+                        rmask = SDL_SwapLE32(0x00FF0000);
+                        gmask = SDL_SwapLE32(0x0000FF00);
+                        bmask = SDL_SwapLE32(0x000000FF);
+                        amask = 0x00000000;
+                        break;
+
+                    case THEORAPLAY_VIDFMT_RGB565:
+                        bits = 16;
+                        rmask = SDL_SwapLE32(0x0000F800);
+                        gmask = SDL_SwapLE32(0x000007E0);
+                        bmask = SDL_SwapLE32(0x00FF001F);
+                        amask = 0x00000000;
+                        break;
+
+                    case THEORAPLAY_VIDFMT_IYUV:
+                    case THEORAPLAY_VIDFMT_YV12:
+                        assert(!"Shouldn't hit this case here");
+                        break;
+                }
+
                 shadow = SDL_CreateRGBSurface(SDL_SWSURFACE,
                                               video->width, video->height,
                                               bits, rmask, gmask, bmask, amask);
@@ -558,7 +612,11 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
 
     while (!quit && THEORAPLAY_isDecoding(decoder))
     {
-        const Uint32 now = SDL_GetTicks() - baseticks;
+        Uint32 now;
+
+        THEORAPLAY_pumpDecode(decoder, 5);
+
+        now = SDL_GetTicks() - baseticks;
 
         // Open the audio device as soon as we know what it should be.
         if ((has_audio) && (!opened_audio))
@@ -604,6 +662,7 @@ static void playfile(const char *fname, const THEORAPLAY_VideoFormat vidfmt,
                 while ((video = THEORAPLAY_getVideo(decoder)) != NULL)
                 {
                     THEORAPLAY_freeVideo(last);
+                    THEORAPLAY_pumpDecode(decoder, 5);
                     last = video;
                     if ((now - video->playms) < framems)
                         break;
@@ -802,6 +861,10 @@ int main(int argc, char **argv)
             vidfmt = THEORAPLAY_VIDFMT_RGB;
         else if (strcmp(argv[i], "--rgba") == 0)
             vidfmt = THEORAPLAY_VIDFMT_RGBA;
+        else if (strcmp(argv[i], "--bgra") == 0)
+            vidfmt = THEORAPLAY_VIDFMT_BGRA;
+        else if (strcmp(argv[i], "--rgb565") == 0)
+            vidfmt = THEORAPLAY_VIDFMT_RGB565;
         else if (strcmp(argv[i], "--yv12") == 0)
             vidfmt = THEORAPLAY_VIDFMT_YV12;
         else if (strcmp(argv[i], "--iyuv") == 0)

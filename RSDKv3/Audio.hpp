@@ -3,9 +3,13 @@
 
 #include <stdlib.h>
 
+#if RETRO_PLATFORM == RETRO_3DS
+#include <tremor/ivorbisfile.h>
+#else
 #include <vorbis/vorbisfile.h>
+#endif
 
-#if RETRO_PLATFORM != RETRO_VITA && RETRO_PLATFORM != RETRO_OSX
+#if RETRO_PLATFORM != RETRO_3DS && RETRO_PLATFORM != RETRO_3DSSIM && RETRO_PLATFORM != RETRO_VITA && RETRO_PLATFORM != RETRO_OSX
 #include "SDL.h"
 #endif
 
@@ -45,7 +49,7 @@ struct StreamInfo {
 #if RETRO_USING_SDL2
     SDL_AudioStream *stream;
 #endif
-    Sint16 buffer[MIX_BUFFER_SAMPLES];
+    short buffer[MIX_BUFFER_SAMPLES];
     bool trackLoop;
     uint loopPoint;
     bool loaded;
@@ -53,14 +57,14 @@ struct StreamInfo {
 
 struct SFXInfo {
     char name[0x40];
-    Sint16 *buffer;
+    short *buffer;
     size_t length;
     bool loaded;
 };
 
 struct ChannelInfo {
     size_t sampleLength;
-    Sint16 *samplePtr;
+    short *samplePtr;
     int sfxID;
     byte loopSFX;
     sbyte pan;
@@ -110,10 +114,9 @@ extern SDL_AudioSpec audioDeviceFormat;
 int InitAudioPlayback();
 void LoadGlobalSfx();
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
-void ProcessMusicStream(void *data, Sint16 *stream, int len);
-void ProcessAudioPlayback(void *data, Uint8 *stream, int len);
-void ProcessAudioMixing(Sint32 *dst, const Sint16 *src, int len, int volume, sbyte pan);
+void ProcessMusicStream(int *stream, size_t bytes_wanted);
+void ProcessAudioPlayback(void *userdata, unsigned char *stream, int len);
+void ProcessAudioMixing(int *dst, const short *src, int len, int volume, char pan);
 
 inline void FreeMusInfo()
 {
@@ -133,13 +136,6 @@ inline void FreeMusInfo()
 
     UnlockAudioDevice();
 }
-#else
-void ProcessMusicStream() {}
-void ProcessAudioPlayback() {}
-void ProcessAudioMixing() {}
-
-inline void FreeMusInfo() { ov_clear(&streamInfo[currentStreamIndex].vorbisFile); }
-#endif
 
 #if RETRO_USE_MOD_LOADER
 extern char globalSfxNames[SFX_COUNT][0x40];

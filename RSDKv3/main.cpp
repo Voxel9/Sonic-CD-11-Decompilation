@@ -50,6 +50,10 @@ void parseArguments(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+#if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+    SDL_StartTicks();
+#endif
+
 #if !RETRO_USE_ORIGINAL_CODE
     parseArguments(argc, argv);
 #endif

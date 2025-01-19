@@ -3,6 +3,13 @@
 #include <algorithm>
 #include <vector>
 
+#if RETRO_PLATFORM == RETRO_3DS
+// TODO
+#elif RETRO_PLATFORM == RETRO_3DSSIM
+#define WIN32_MEAN_AND_LEAN
+#include <windows.h>
+#endif
+
 InputData keyPress = InputData();
 InputData keyDown  = InputData();
 
@@ -327,7 +334,6 @@ bool getControllerButton(byte buttonID)
 
     return pressed;
 }
-#endif //! RETRO_USING_SDL2
 
 void ControllerInit(byte controllerID)
 {
@@ -350,9 +356,45 @@ void ControllerClose(byte controllerID)
         inputType = 0;
     }
 }
+#endif //! RETRO_USING_SDL2
 
 void ProcessInput()
 {
+#if RETRO_PLATFORM == RETRO_3DS
+    // TODO: ctrulib
+#elif RETRO_PLATFORM == RETRO_3DSSIM
+    byte keyState[256];
+    GetKeyboardState((PBYTE)keyState);
+
+    for(int i = 0; i < 256; i++)
+        keyState[i] &= 0x80;
+
+    for (int i = 0; i < INPUT_ANY; i++) {
+        if (keyState[inputDevice[i].keyMappings]) {
+            inputDevice[i].setHeld();
+            if (!inputDevice[INPUT_ANY].hold)
+                inputDevice[INPUT_ANY].setHeld();
+        }
+        else if (inputDevice[i].hold)
+            inputDevice[i].setReleased();
+    }
+
+    bool isPressed = false;
+    for (int i = 0; i < INPUT_BUTTONCOUNT; i++) {
+        if (keyState[inputDevice[i].keyMappings]) {
+            isPressed = true;
+            break;
+        }
+    }
+    if (!isPressed)
+        inputDevice[INPUT_ANY].setReleased();
+
+    if (inputDevice[INPUT_ANY].press || inputDevice[INPUT_ANY].hold || touches > 1)
+        Engine.dimTimer = 0;
+    else if (Engine.dimTimer < Engine.dimLimit && !Engine.masterPaused)
+        ++Engine.dimTimer;
+#endif
+
 #if RETRO_USING_SDL2
     int length           = 0;
     const byte *keyState = SDL_GetKeyboardState(&length);

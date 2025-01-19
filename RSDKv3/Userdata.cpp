@@ -63,6 +63,11 @@ LeaderboardEntry leaderboards[LEADERBOARD_COUNT];
 #if RETRO_PLATFORM == RETRO_OSX || RETRO_PLATFORM == RETRO_LINUX
 #include <sys/stat.h>
 #include <sys/types.h>
+#elif RETRO_PLATFORM == RETRO_3DS
+// TODO: Key bindings
+#elif RETRO_PLATFORM == RETRO_3DSSIM
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
 
 int controlMode              = -1;
@@ -338,7 +343,7 @@ void InitUserdata()
     FileIO *file = fOpen(buffer, "rb");
     IniParser ini;
     if (!file) {
-        ini.SetBool("Dev", "DevMenu", Engine.devMenu = false);
+        ini.SetBool("Dev", "DevMenu", Engine.devMenu = true);
         ini.SetBool("Dev", "EngineDebugMode", engineDebugMode = false);
         ini.SetBool("Dev", "TxtScripts", forceUseScripts = false);
         forceUseScripts_Config = forceUseScripts;
@@ -364,19 +369,36 @@ void InitUserdata()
 
         ini.SetBool("Window", "FullScreen", Engine.startFullScreen = DEFAULT_FULLSCREEN);
         ini.SetBool("Window", "Borderless", Engine.borderless = false);
-        ini.SetBool("Window", "VSync", Engine.vsync = false);
+        ini.SetBool("Window", "VSync", Engine.vsync = true);
         ini.SetInteger("Window", "ScalingMode", Engine.scalingMode = 0);
-        ini.SetInteger("Window", "WindowScale", Engine.windowScale = 2);
+        ini.SetInteger("Window", "WindowScale", Engine.windowScale = 1);
         ini.SetInteger("Window", "ScreenWidth", SCREEN_XSIZE = DEFAULT_SCREEN_XSIZE);
         SCREEN_XSIZE_CONFIG = SCREEN_XSIZE;
         ini.SetInteger("Window", "RefreshRate", Engine.refreshRate = 60);
         ini.SetInteger("Window", "DimLimit", Engine.dimLimit = 300);
         Engine.dimLimit *= Engine.refreshRate;
-        renderType = RENDER_SW;
-        ini.SetBool("Window", "HardwareRenderer", false);
+        renderType = RENDER_HW;
+        ini.SetBool("Window", "HardwareRenderer", true);
 
         ini.SetFloat("Audio", "BGMVolume", bgmVolume / (float)MAX_VOLUME);
         ini.SetFloat("Audio", "SFXVolume", sfxVolume / (float)MAX_VOLUME);
+
+#if RETRO_PLATFORM == RETRO_3DS
+    // TODO: Input mappings
+#endif
+
+#if RETRO_PLATFORM == RETRO_3DSSIM
+    ini.SetComment("Keyboard 1", "IK1Comment",
+                   "Keyboard Mappings for P1 (Based on: https://github.com/libsdl-org/sdlwiki/blob/main/SDL2/SDLScancodeLookup.mediawiki)");
+    ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = VK_UP);
+    ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = VK_DOWN);
+    ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = VK_LEFT);
+    ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = VK_RIGHT);
+    ini.SetInteger("Keyboard 1", "A", inputDevice[INPUT_BUTTONA].keyMappings = 'Z');
+    ini.SetInteger("Keyboard 1", "B", inputDevice[INPUT_BUTTONB].keyMappings = 'X');
+    ini.SetInteger("Keyboard 1", "C", inputDevice[INPUT_BUTTONC].keyMappings = 'C');
+    ini.SetInteger("Keyboard 1", "Start", inputDevice[INPUT_START].keyMappings = VK_RETURN);
+#endif
 
 #if RETRO_USING_SDL2
         ini.SetComment("Keyboard 1", "IK1Comment",
@@ -442,7 +464,7 @@ void InitUserdata()
         ini = IniParser(buffer, false);
 
         if (!ini.GetBool("Dev", "DevMenu", &Engine.devMenu))
-            Engine.devMenu = false;
+            Engine.devMenu = true;
         if (!ini.GetBool("Dev", "EngineDebugMode", &engineDebugMode))
             engineDebugMode = false;
         if (!ini.GetBool("Dev", "TxtScripts", &forceUseScripts))
@@ -495,11 +517,11 @@ void InitUserdata()
         if (!ini.GetBool("Window", "Borderless", &Engine.borderless))
             Engine.borderless = false;
         if (!ini.GetBool("Window", "VSync", &Engine.vsync))
-            Engine.vsync = false;
+            Engine.vsync = true;
         if (!ini.GetInteger("Window", "ScalingMode", &Engine.scalingMode))
             Engine.scalingMode = 0;
         if (!ini.GetInteger("Window", "WindowScale", &Engine.windowScale))
-            Engine.windowScale = 2;
+            Engine.windowScale = 1;
         if (!ini.GetInteger("Window", "ScreenWidth", &SCREEN_XSIZE))
             SCREEN_XSIZE = DEFAULT_SCREEN_XSIZE;
         SCREEN_XSIZE_CONFIG = SCREEN_XSIZE;
@@ -509,7 +531,7 @@ void InitUserdata()
             Engine.dimLimit = 300; // 5 mins
         if (Engine.dimLimit >= 0)
             Engine.dimLimit *= Engine.refreshRate;
-        bool hwRender = false;
+        bool hwRender = true;
         ini.GetBool("Window", "HardwareRenderer", &hwRender);
         if (hwRender)
             renderType = RENDER_HW;
@@ -535,6 +557,29 @@ void InitUserdata()
             sfxVolume = MAX_VOLUME;
         if (sfxVolume < 0)
             sfxVolume = 0;
+
+#if RETRO_PLATFORM == RETRO_3DS
+        // TODO: Input mappings
+#endif
+
+#if RETRO_PLATFORM == RETRO_3DSSIM
+        if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))
+            inputDevice[0].keyMappings = VK_UP;
+        if (!ini.GetInteger("Keyboard 1", "Down", &inputDevice[INPUT_DOWN].keyMappings))
+            inputDevice[1].keyMappings = VK_DOWN;
+        if (!ini.GetInteger("Keyboard 1", "Left", &inputDevice[INPUT_LEFT].keyMappings))
+            inputDevice[2].keyMappings = VK_LEFT;
+        if (!ini.GetInteger("Keyboard 1", "Right", &inputDevice[INPUT_RIGHT].keyMappings))
+            inputDevice[3].keyMappings = VK_RIGHT;
+        if (!ini.GetInteger("Keyboard 1", "A", &inputDevice[INPUT_BUTTONA].keyMappings))
+            inputDevice[4].keyMappings = 'Z';
+        if (!ini.GetInteger("Keyboard 1", "B", &inputDevice[INPUT_BUTTONB].keyMappings))
+            inputDevice[5].keyMappings = 'X';
+        if (!ini.GetInteger("Keyboard 1", "C", &inputDevice[INPUT_BUTTONC].keyMappings))
+            inputDevice[6].keyMappings = 'C';
+        if (!ini.GetInteger("Keyboard 1", "Start", &inputDevice[INPUT_START].keyMappings))
+            inputDevice[7].keyMappings = VK_RETURN;
+#endif
 
 #if RETRO_USING_SDL2
         if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))

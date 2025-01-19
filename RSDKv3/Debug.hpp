@@ -1,6 +1,8 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <cstdarg>
+
 #if RETRO_PLATFORM == RETRO_ANDROID
 #include <android/log.h>
 #endif

@@ -110,7 +110,7 @@ void PlayVideoFile(char *filePath)
 #endif
 
 #if RETRO_USING_OPENGL
-        videoDecoder = THEORAPLAY_startDecode(&callbacks, /*FPS*/ 30, THEORAPLAY_VIDFMT_RGBA, GetGlobalVariableByName("Options.Soundtrack") ? 1 : 0);
+        videoDecoder = THEORAPLAY_startDecode(&callbacks, /*FPS*/ 30, THEORAPLAY_VIDFMT_RGBA, NULL, 0);
 #endif
 
         if (!videoDecoder) {
@@ -118,6 +118,8 @@ void PlayVideoFile(char *filePath)
             return;
         }
         while (!videoVidData) {
+            THEORAPLAY_pumpDecode(videoDecoder, 5);
+
             if (!videoVidData)
                 videoVidData = THEORAPLAY_getVideo(videoDecoder);
         }
@@ -133,7 +135,7 @@ void PlayVideoFile(char *filePath)
 
         SetupVideoBuffer(videoWidth, videoHeight);
         vidBaseticks = SDL_GetTicks();
-        vidFrameMS   = (videoVidData->fps == 0.0) ? 0 : ((Uint32)(1000.0 / videoVidData->fps));
+        vidFrameMS   = (videoVidData->fps == 0.0) ? 0 : ((unsigned int)(1000.0 / videoVidData->fps));
         videoPlaying = 1; // playing ogv
         trackID      = TRACK_COUNT - 1;
 
@@ -224,7 +226,9 @@ int ProcessVideo()
 
         // Don't pause or it'll go wild
         if (videoPlaying == 1) {
-            const Uint32 now = (SDL_GetTicks() - vidBaseticks);
+            THEORAPLAY_pumpDecode(videoDecoder, 5);
+
+            const unsigned int now = (SDL_GetTicks() - vidBaseticks);
 
             if (!videoVidData)
                 videoVidData = THEORAPLAY_getVideo(videoDecoder);
@@ -241,6 +245,7 @@ int ProcessVideo()
                     const THEORAPLAY_VideoFrame *last = videoVidData;
                     while ((videoVidData = THEORAPLAY_getVideo(videoDecoder)) != NULL) {
                         THEORAPLAY_freeVideo(last);
+                        THEORAPLAY_pumpDecode(videoDecoder, 5);
                         last = videoVidData;
                         if ((now - videoVidData->playms) < vidFrameMS)
                             break;
@@ -256,9 +261,8 @@ int ProcessVideo()
                 }
 
 #if RETRO_USING_OPENGL
-                glBindTexture(GL_TEXTURE_2D, videoBuffer);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoVidData->width, videoVidData->height, GL_RGBA, GL_UNSIGNED_BYTE, videoVidData->pixels);
-                glBindTexture(GL_TEXTURE_2D, 0);
+                Gfx_TextureBind(videoBuffer);
+                Gfx_TextureUpload(videoBuffer, videoVidData->pixels);
 #elif RETRO_USING_SDL2
                 int half_w     = videoVidData->width / 2;
                 const Uint8 *y = (const Uint8 *)videoVidData->pixels;
@@ -287,7 +291,9 @@ void StopVideoPlayback()
         // `videoPlaying` and `videoDecoder` are read by
         // the audio thread, so lock it to prevent a race
         // condition that results in invalid memory accesses.
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2
         SDL_LockAudio();
+#endif
 
         if (videoSkipped && fadeMode >= 0xFF)
             fadeMode = 0;
@@ -304,28 +310,22 @@ void StopVideoPlayback()
         CloseVideoBuffer();
         videoPlaying = 0;
 
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2
         SDL_UnlockAudio();
+#endif
     }
 }
 
 void SetupVideoBuffer(int width, int height)
 {
 #if RETRO_USING_OPENGL
-    if (videoBuffer > 0) {
-        glDeleteTextures(1, &videoBuffer);
+    if (videoBuffer) {
+        Gfx_TextureDestroy(videoBuffer);
         videoBuffer = 0;
     }
-    glGenTextures(1, &videoBuffer);
-    glBindTexture(GL_TEXTURE_2D, videoBuffer);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoVidData->width, videoVidData->height, GL_RGBA, GL_UNSIGNED_BYTE, videoVidData->pixels);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    videoBuffer = Gfx_TextureCreate(width, height, false);
+    Gfx_TextureUpload(videoBuffer, videoVidData->pixels);
+    Gfx_TextureSetFilter(videoBuffer, true);
 #elif RETRO_USING_SDL1
     Engine.videoBuffer = SDL_CreateRGBSurface(0, width, height, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
@@ -343,8 +343,8 @@ void CloseVideoBuffer()
 {
     if (videoPlaying == 1) {
 #if RETRO_USING_OPENGL
-        if (videoBuffer > 0) {
-            glDeleteTextures(1, &videoBuffer);
+        if (videoBuffer) {
+            Gfx_TextureDestroy(videoBuffer);
             videoBuffer = 0;
         }
 #elif RETRO_USING_SDL1

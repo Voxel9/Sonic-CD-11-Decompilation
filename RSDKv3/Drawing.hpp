@@ -115,12 +115,12 @@ extern float viewAngle;
 extern float viewAnglePos;
 
 #if RETRO_USING_OPENGL
-extern GLuint gfxTextureID[HW_TEXTURE_COUNT];
-extern GLuint framebufferHW;
-extern GLuint renderbufferHW;
-extern GLuint retroBuffer;
-extern GLuint retroBuffer2x;
-extern GLuint videoBuffer;
+extern GfxTexture* gfxTextureID[HW_TEXTURE_COUNT];
+extern GfxRenderTarget* framebufferHW;
+extern GfxTexture* renderbufferHW;
+extern GfxTexture* retroBuffer;
+extern GfxTexture* retroBuffer2x;
+extern GfxTexture* videoBuffer;
 #endif
 extern DrawVertex screenRect[4];
 extern DrawVertex retroScreenRect[4];
@@ -164,7 +164,6 @@ inline bool CheckSurfaceSize(int size)
 void UpdateHardwareTextures();
 void SetScreenDimensions(int width, int height, int winWidth, int winHeight);
 void ScaleViewport(int width, int height);
-void CalcPerspective(float fov, float aspectRatio, float nearPlane, float farPlane);
 
 void SetupPolygonLists();
 void UpdateTextureBufferWithTiles();

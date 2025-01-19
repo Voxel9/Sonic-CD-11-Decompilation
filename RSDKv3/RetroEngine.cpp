@@ -32,6 +32,26 @@ inline int GetLowerRate(int intendRate, int targetRate)
 
 bool ProcessEvents()
 {
+#if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+    if(Gfx_IsQuitTriggered(Engine.glContext)) {
+        Engine.gameMode = ENGINE_EXITGAME;
+        return false;
+    }
+
+    // Dev Menu
+    if(Gfx_IsDevMenuTriggered(Engine.glContext)) {
+        if (Engine.devMenu) {
+#if RETRO_USE_MOD_LOADER
+            // hacky patch because people can escape
+            if (Engine.gameMode == ENGINE_DEVMENU && stageMode == DEVMENU_MODMENU) {
+                RefreshEngine();
+            }
+#endif
+            Engine.gameMode = ENGINE_INITDEVMENU;
+        }
+    }
+#endif
+
 #if RETRO_USING_SDL1 || RETRO_USING_SDL2
     while (SDL_PollEvent(&Engine.sdlEvents)) {
         // Main Events
@@ -455,6 +475,8 @@ void RetroEngine::Run()
 
 #if RETRO_USING_OPENGL && RETRO_USING_SDL2
         SDL_GL_SwapWindow(Engine.window);
+#elif RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+        Gfx_SwapBuffers(Engine.glContext);
 #endif
         frameStep      = false;
         Engine.message = MESSAGE_NONE;

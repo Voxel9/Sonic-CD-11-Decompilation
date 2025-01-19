@@ -77,12 +77,12 @@ float viewAnglePos = 0;
 #endif
 
 #if RETRO_USING_OPENGL
-GLuint gfxTextureID[HW_TEXTURE_COUNT];
-GLuint framebufferHW  = 0;
-GLuint renderbufferHW = 0;
-GLuint retroBuffer    = 0;
-GLuint retroBuffer2x  = 0;
-GLuint videoBuffer    = 0;
+GfxTexture* gfxTextureID[HW_TEXTURE_COUNT];
+GfxRenderTarget* framebufferHW = 0;
+GfxTexture* renderbufferHW = 0;
+GfxTexture* retroBuffer = 0;
+GfxTexture* retroBuffer2x = 0;
+GfxTexture* videoBuffer = 0;
 #endif
 DrawVertex screenRect[4];
 DrawVertex retroScreenRect[4];
@@ -260,12 +260,24 @@ int InitRenderDevice()
 #endif
 
 #if RETRO_USING_OPENGL
+
+#if RETRO_USING_SDL2
     // Init GL
     Engine.glContext = SDL_GL_CreateContext(Engine.window);
 
     SDL_GL_SetSwapInterval(Engine.vsync ? 1 : 0);
+#endif
 
-#if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX
+#if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+    Engine.glContext = Gfx_Initialize(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, gameTitle);
+
+    Engine.screenRefreshRate = 60;
+    Engine.startFullScreen = false;
+    Engine.useHQModes = false;
+    Engine.borderless = false;
+#endif
+
+#if RETRO_PLATFORM != RETRO_ANDROID && RETRO_PLATFORM != RETRO_OSX && RETRO_PLATFORM != RETRO_3DS && RETRO_PLATFORM != RETRO_3DSSIM
     // glew Setup
     GLenum err = glewInit();
     if (err != GLEW_OK && err != GLEW_ERROR_NO_GLX_DISPLAY) {
@@ -275,69 +287,42 @@ int InitRenderDevice()
     }
 #endif
     Engine.highResMode = false;
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DITHER);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    Gfx_MatrixMode(MTX_MODE_MODELVIEW);
+    Gfx_LoadIdentity();
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     SetupPolygonLists();
 
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-
+    Gfx_MatrixMode(MTX_MODE_TEXTURE);
+    Gfx_LoadIdentity();
     // Allows for texture locations in pixels instead of from 0.0 to 1.0, saves us having to do this every time we set UVs
-    glScalef(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
-    glMatrixMode(GL_PROJECTION);
+    Gfx_Scale(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) {
-        glGenTextures(1, &gfxTextureID[i]);
-        glBindTexture(GL_TEXTURE_2D, gfxTextureID[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gfxTextureID[i] = Gfx_TextureCreate(HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, true);
+        Gfx_TextureUpload(gfxTextureID[i], texBuffer);
+        Gfx_TextureSetFilter(gfxTextureID[i], false);
     }
 
-    glGenFramebuffers(1, &framebufferHW);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
-    glGenTextures(1, &renderbufferHW);
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, 512, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbufferHW, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    renderbufferHW = Gfx_TextureCreate(256, 512, true);
+    Gfx_TextureSetFilter(renderbufferHW, Engine.scalingMode ? true : false);
+
+    framebufferHW = Gfx_RenderTargetCreateFromTexture(renderbufferHW);
+    Gfx_RenderTargetBind(framebufferHW);
+
+    Gfx_Clear();
+
+    Gfx_RenderTargetBind(nullptr);
 
     UpdateHardwareTextures();
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 
-    glGenTextures(1, &retroBuffer);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE, SCREEN_YSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    retroBuffer = Gfx_TextureCreate(SCREEN_XSIZE, SCREEN_YSIZE, false);
+    Gfx_TextureSetFilter(retroBuffer, Engine.scalingMode ? true : false);
 
-    glGenTextures(1, &retroBuffer2x);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    retroBuffer2x = Gfx_TextureCreate(SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, false);
+    Gfx_TextureSetFilter(retroBuffer2x, Engine.scalingMode ? true : false);
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
@@ -658,71 +643,63 @@ void FlipScreen()
 void FlipScreenFB()
 {
 #if RETRO_USING_OPENGL
-    glLoadIdentity();
-    glRotatef(-90.0, 0.0, 0.0, 1.0);
-    glOrtho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
-    glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
+    Gfx_RotateZ(-90.0);
+    Gfx_Ortho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
+    Gfx_SetViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
+    Gfx_RenderTargetBind(framebufferHW);
 
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glDisable(GL_BLEND);
+    Gfx_TextureBind(gfxTextureID[texPaletteNum]);
+
+    Gfx_SetBlend(false);
 
     if (render3DEnabled) {
         float floor3DTop    = 2.0;
         float floor3DBottom = SCREEN_YSIZE + 4.0;
 
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glEnable(GL_BLEND);
+        Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+        Gfx_DrawElements(gfxIndexSizeOpaque, gfxPolyListIndex);
+        Gfx_SetBlend(true);
 
         // Init 3D Plane
-        glViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
-        glPushMatrix();
-        glLoadIdentity();
-        CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
-        glRotatef(-90.0, 0.0, 0.0, 1.0);
+        Gfx_SetViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
+        Gfx_PushMatrix();
+        Gfx_LoadIdentity();
+        Gfx_PerspStereo(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
+        Gfx_RotateZ(-90.0);
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glScalef(1.20f, 0.98f, -1.0f);
-        glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
-        glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
+        Gfx_MatrixMode(MTX_MODE_MODELVIEW);
+        Gfx_LoadIdentity();
+        Gfx_Scale(1.20f, 0.98f, -1.0f);
+        Gfx_RotateY(floor3DAngle + 180.0f);
+        Gfx_Translate(floor3DXPos, floor3DYPos, floor3DZPos);
 
-        glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
-        glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glLoadIdentity();
+        Gfx_SetVertexBufs(sizeof(DrawVertex3D), polyList3D);
+        Gfx_DrawElements(indexSize3D, gfxPolyListIndex);
+        Gfx_LoadIdentity();
 
         // Return for blended rendering
-        glMatrixMode(GL_PROJECTION);
-        glViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
-        glPopMatrix();
+        Gfx_MatrixMode(MTX_MODE_PROJECTION);
+        Gfx_SetViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
+        Gfx_PopMatrix();
     }
     else {
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+        Gfx_DrawElements(gfxIndexSizeOpaque, gfxPolyListIndex);
 
-        glEnable(GL_BLEND);
+        Gfx_SetBlend(true);
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
-    glDisableClientState(GL_COLOR_ARRAY);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+    Gfx_DrawElements(blendedGfxCount, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    Gfx_RenderTargetBind(nullptr);
 #endif
     RenderFromTexture();
 }
@@ -730,18 +707,18 @@ void FlipScreenFB()
 void FlipScreenNoFB()
 {
 #if RETRO_USING_OPENGL
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 
-    glLoadIdentity();
-    glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
+    Gfx_Ortho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
+    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glDisable(GL_BLEND);
+    Gfx_TextureBind(gfxTextureID[texPaletteNum]);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
+    Gfx_SetBlend(false);
+
+    Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], Engine.scalingMode ? true : false);
 
     if (render3DEnabled) {
         float scale         = viewHeight / SCREEN_YSIZE;
@@ -749,55 +726,45 @@ void FlipScreenNoFB()
         float floor3DBottom = (viewHeight)-4.0 * scale;
 
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glEnable(GL_BLEND);
+        Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+        Gfx_DrawElements(gfxIndexSizeOpaque, gfxPolyListIndex);
+        Gfx_SetBlend(true);
 
         // Init 3D Plane
-        glViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
-        glPushMatrix();
-        glLoadIdentity();
-        CalcPerspective(1.8326f, viewAspect, 0.1f, 2000.0f);
+        Gfx_SetViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
+        Gfx_PushMatrix();
+        Gfx_LoadIdentity();
+        Gfx_PerspStereo(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glScalef(1.35f, -0.9f, -1.0f);
-        glRotatef(floor3DAngle + 180.0f, 0, 1.0f, 0);
-        glTranslatef(floor3DXPos, floor3DYPos, floor3DZPos);
+        Gfx_MatrixMode(MTX_MODE_MODELVIEW);
+        Gfx_LoadIdentity();
+        Gfx_Scale(1.35f, -0.9f, -1.0f);
+        Gfx_RotateY(floor3DAngle + 180.0f);
+        Gfx_Translate(floor3DXPos, floor3DYPos, floor3DZPos);
 
-        glVertexPointer(3, GL_FLOAT, sizeof(DrawVertex3D), &polyList3D[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &polyList3D[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex3D), &polyList3D[0].colour);
-        glDrawElements(GL_TRIANGLES, indexSize3D, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-        glLoadIdentity();
+        Gfx_SetVertexBufs(sizeof(DrawVertex3D), polyList3D);
+        Gfx_DrawElements(indexSize3D, gfxPolyListIndex);
+        Gfx_LoadIdentity();
 
         // Return for blended rendering
-        glMatrixMode(GL_PROJECTION);
-        glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-        glPopMatrix();
+        Gfx_MatrixMode(MTX_MODE_PROJECTION);
+        Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+        Gfx_PopMatrix();
     }
     else {
         // Non Blended rendering
-        glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-        glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-        glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
+        Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+        Gfx_DrawElements(gfxIndexSizeOpaque, gfxPolyListIndex);
 
-        glEnable(GL_BLEND);
+        Gfx_SetBlend(true);
     }
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+    Gfx_DrawElements(blendedGfxCount, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY);
+    Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], false);
 #endif
 }
 
@@ -805,74 +772,66 @@ void FlipScreenHRes()
 {
 #if RETRO_USING_OPENGL
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
             viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
+            Gfx_Clear();
         }
     }
     else if (viewAnglePos > 0.0) {
         viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
+        Gfx_Clear();
     }
 #endif
 
-    glLoadIdentity();
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
 
-    glOrtho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    glViewport(viewOffsetX, 0, bufferWidth, bufferHeight);
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[texPaletteNum]);
-    glDisable(GL_BLEND);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    Gfx_Ortho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
+    Gfx_SetViewport(viewOffsetX, 0, bufferWidth, bufferHeight);
+    Gfx_TextureBind(gfxTextureID[texPaletteNum]);
+    Gfx_SetBlend(false);
+    Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], true);
 
-    glEnableClientState(GL_COLOR_ARRAY);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+    Gfx_DrawElements(gfxIndexSizeOpaque, gfxPolyListIndex);
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, gfxIndexSizeOpaque, GL_UNSIGNED_SHORT, gfxPolyListIndex);
-
-    glEnable(GL_BLEND);
+    Gfx_SetBlend(true);
 
     int blendedGfxCount = gfxIndexSize - gfxIndexSizeOpaque;
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &gfxPolyList[0].u);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(DrawVertex), &gfxPolyList[0].colour);
-    glDrawElements(GL_TRIANGLES, blendedGfxCount, GL_UNSIGNED_SHORT, &gfxPolyListIndex[gfxIndexSizeOpaque]);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
+    Gfx_DrawElements(blendedGfxCount, &gfxPolyListIndex[gfxIndexSizeOpaque]);
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glDisableClientState(GL_COLOR_ARRAY);
+    Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], false);
 #endif
 }
 
 void RenderFromTexture()
 {
 #if RETRO_USING_OPENGL
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
+    Gfx_TextureBind(renderbufferHW);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
             viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
+            Gfx_Clear();
         }
     }
     else if (viewAnglePos > 0.0) {
         viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
+        Gfx_Clear();
     }
 #endif
-    glLoadIdentity();
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &screenRect[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
+    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), screenRect);
+    Gfx_SetBlend(false);
+    Gfx_DrawElements(6, &gfxPolyListIndex);
 #endif
 }
 
@@ -880,7 +839,7 @@ void RenderFromRetroBuffer()
 {
 #if RETRO_USING_OPENGL
     if (drawStageGFXHQ) {
-        glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
+        Gfx_TextureBind(retroBuffer2x);
 
         uint *texBufferPtr     = Engine.texBuffer2x;
         ushort *framebufferPtr = Engine.frameBuffer;
@@ -923,31 +882,31 @@ void RenderFromRetroBuffer()
             framebufferPtr += 2 * (GFX_LINESIZE - SCREEN_XSIZE);
         }
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer2x);
+        Gfx_TextureUpload(retroBuffer2x, Engine.texBuffer2x);
     }
 
-    glLoadIdentity();
-    glBindTexture(GL_TEXTURE_2D, drawStageGFXHQ ? retroBuffer2x : retroBuffer);
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
+    Gfx_TextureBind(drawStageGFXHQ ? retroBuffer2x : retroBuffer);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
             viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
+            Gfx_Clear();
         }
     }
     else if (viewAnglePos > 0.0) {
         viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
+        Gfx_Clear();
     }
 #endif
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
 
-    glVertexPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex), &retroScreenRect[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), retroScreenRect);
+    Gfx_SetBlend(false);
+    Gfx_DrawElements(6, &gfxPolyListIndex);
 #endif
 }
 
@@ -959,6 +918,10 @@ void FlipScreenVideo()
     for (int i = 0; i < 4; ++i) {
         screenVerts[i].u = retroScreenRect[i].u;
         screenVerts[i].v = retroScreenRect[i].v;
+        screenVerts[i].colour.r = 0xFF;
+        screenVerts[i].colour.g = 0xFF;
+        screenVerts[i].colour.b = 0xFF;
+        screenVerts[i].colour.a = 0xFF;
     }
 
     float best = minVal(viewWidth / (float)videoWidth, viewHeight / (float)videoHeight);
@@ -974,39 +937,43 @@ void FlipScreenVideo()
 
     screenVerts[0].x = x;
     screenVerts[0].y = y;
+    screenVerts[0].z = 0.0f;
 
     screenVerts[1].x = w + x;
     screenVerts[1].y = y;
+    screenVerts[1].z = 0.0f;
 
     screenVerts[2].x = x;
     screenVerts[2].y = h + y;
+    screenVerts[2].z = 0.0f;
 
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
+    screenVerts[3].z = 0.0f;
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 
-    glLoadIdentity();
-    glBindTexture(GL_TEXTURE_2D, videoBuffer);
+    Gfx_MatrixMode(MTX_MODE_PROJECTION);
+    Gfx_LoadIdentity();
+    Gfx_TextureBind(videoBuffer);
 #if DONT_USE_VIEW_ANGLE
-    glClear(GL_COLOR_BUFFER_BIT);
+    Gfx_Clear();
 #else
     if (viewAngle >= 180.0) {
         if (viewAnglePos < 180.0) {
             viewAnglePos += 7.5;
-            glClear(GL_COLOR_BUFFER_BIT);
+            Gfx_Clear();
         }
     }
     else if (viewAnglePos > 0.0) {
         viewAnglePos -= 7.5;
-        glClear(GL_COLOR_BUFFER_BIT);
+        Gfx_Clear();
     }
 #endif
-    glViewport(viewOffsetX, 0, viewWidth, viewHeight);
-    glVertexPointer(2, GL_FLOAT, sizeof(DrawVertex3D), &screenVerts[0].x);
-    glTexCoordPointer(2, GL_SHORT, sizeof(DrawVertex3D), &screenVerts[0].u);
-    glDisable(GL_BLEND);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, &gfxPolyListIndex);
+    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_SetVertexBufs(sizeof(DrawVertex3D), screenVerts);
+    Gfx_SetBlend(false);
+    Gfx_DrawElements(6, &gfxPolyListIndex);
 #endif
 }
 
@@ -1035,12 +1002,19 @@ void ReleaseRenderDevice()
 #endif
     }
 
-#if RETRO_USING_OPENGL
+#if RETRO_USING_OPENGL && RETRO_USING_SDL2
 	if (Engine.glContext) {
-		for (int i = 0; i < HW_TEXTURE_COUNT; i++) glDeleteTextures(1, &gfxTextureID[i]);
-#if RETRO_USING_SDL2
+		for (int i = 0; i < HW_TEXTURE_COUNT; i++)
+            glDeleteTextures(1, &gfxTextureID[i]);
+
 		SDL_GL_DeleteContext(Engine.glContext);
-#endif
+	}
+#elif RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+    if (Engine.glContext) {
+		for (int i = 0; i < HW_TEXTURE_COUNT; i++)
+            Gfx_TextureDestroy(gfxTextureID[i]);
+
+		Gfx_Finalize(Engine.glContext);
 	}
 #endif
 
@@ -1054,8 +1028,8 @@ void ReleaseRenderDevice()
 
 void SetFullScreen(bool fs)
 {
-
     if (fs) {
+#if RETRO_PLATFORM != RETRO_3DS && RETRO_PLATFORM != RETRO_3DSSIM
 #if RETRO_USING_SDL1
         Engine.windowSurface =
             SDL_SetVideoMode(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, 16, SDL_SWSURFACE | SDL_FULLSCREEN);
@@ -1104,6 +1078,7 @@ void SetFullScreen(bool fs)
 #endif
 
         SetScreenDimensions(SCREEN_XSIZE, SCREEN_YSIZE, width, h);
+#endif
     }
     else {
         viewOffsetX = 0;
@@ -1245,7 +1220,7 @@ void CopyFrameOverlay2x()
 void TransferRetroBuffer()
 {
 #if RETRO_USING_OPENGL
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
+    Gfx_TextureBind(retroBuffer);
 
     ushort *frameBufferPtr = Engine.frameBuffer;
     uint *texBufferPtr     = Engine.texBuffer;
@@ -1258,9 +1233,7 @@ void TransferRetroBuffer()
         frameBufferPtr += GFX_LINESIZE;
     }
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, GL_RGBA, GL_UNSIGNED_BYTE, Engine.texBuffer);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
+    Gfx_TextureUpload(retroBuffer, Engine.texBuffer);
 #endif
 }
 
@@ -1271,8 +1244,8 @@ void UpdateHardwareTextures()
     UpdateTextureBufferWithSortedSprites();
 
 #if RETRO_USING_OPENGL
-    glBindTexture(GL_TEXTURE_2D, gfxTextureID[0]);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+    Gfx_TextureBind(gfxTextureID[0]);
+    Gfx_TextureUpload(gfxTextureID[0], texBuffer);
 #endif
 
     for (byte b = 1; b < HW_TEXTURE_COUNT; ++b) {
@@ -1281,8 +1254,8 @@ void UpdateHardwareTextures()
         UpdateTextureBufferWithSprites();
 
 #if RETRO_USING_OPENGL
-        glBindTexture(GL_TEXTURE_2D, gfxTextureID[b]);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, texBuffer);
+        Gfx_TextureBind(gfxTextureID[b]);
+        Gfx_TextureUpload(gfxTextureID[b], texBuffer);
 #endif
     }
     SetActivePalette(0, 0, SCREEN_YSIZE);
@@ -1308,16 +1281,16 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     }
 #if RETRO_USING_OPENGL
     if (framebufferHW)
-        glDeleteFramebuffers(1, &framebufferHW);
+        Gfx_RenderTargetDestroy(framebufferHW);
 
     if (renderbufferHW)
-        glDeleteTextures(1, &renderbufferHW);
+        Gfx_TextureDestroy(renderbufferHW);
 
     if (retroBuffer)
-        glDeleteTextures(1, &retroBuffer);
+        Gfx_TextureDestroy(retroBuffer);
 
     if (retroBuffer2x)
-        glDeleteTextures(1, &retroBuffer2x);
+        Gfx_TextureDestroy(retroBuffer2x);
 
     // Setup framebuffer texture
 
@@ -1335,55 +1308,58 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     } while (val < SCREEN_YSIZE);
     bufferH--;
 
-    glGenFramebuffers(1, &framebufferHW);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebufferHW);
-    glGenTextures(1, &renderbufferHW);
-    glBindTexture(GL_TEXTURE_2D, renderbufferHW);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1 << bufferH, 1 << bufferW, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderbufferHW, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    renderbufferHW = Gfx_TextureCreate(1 << bufferH, 1 << bufferW, true);
+    Gfx_TextureSetFilter(renderbufferHW, Engine.scalingMode ? true : false);
 
-    glGenTextures(1, &retroBuffer);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE, SCREEN_YSIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    framebufferHW = Gfx_RenderTargetCreateFromTexture(renderbufferHW);
+    Gfx_RenderTargetBind(framebufferHW);
 
-    glGenTextures(1, &retroBuffer2x);
-    glBindTexture(GL_TEXTURE_2D, retroBuffer2x);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Engine.scalingMode ? GL_LINEAR : GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    Gfx_Clear();
+
+    Gfx_RenderTargetBind(nullptr);
+
+    retroBuffer = Gfx_TextureCreate(SCREEN_XSIZE, SCREEN_YSIZE, false);
+    Gfx_TextureSetFilter(retroBuffer, Engine.scalingMode ? true : false);
+
+    retroBuffer2x = Gfx_TextureCreate(SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, false);
+    Gfx_TextureSetFilter(retroBuffer2x, Engine.scalingMode ? true : false);
 #endif
 
     screenRect[0].x = -1;
     screenRect[0].y = 1;
     screenRect[0].u = 0;
     screenRect[0].v = SCREEN_XSIZE * 2;
+    screenRect[0].colour.r = 0xFF;
+    screenRect[0].colour.g = 0xFF;
+    screenRect[0].colour.b = 0xFF;
+    screenRect[0].colour.a = 0xFF;
 
     screenRect[1].x = 1;
     screenRect[1].y = 1;
     screenRect[1].u = 0;
     screenRect[1].v = 0;
+    screenRect[1].colour.r = 0xFF;
+    screenRect[1].colour.g = 0xFF;
+    screenRect[1].colour.b = 0xFF;
+    screenRect[1].colour.a = 0xFF;
 
     screenRect[2].x = -1;
     screenRect[2].y = -1;
     screenRect[2].u = (SCREEN_YSIZE - 0.5) * 4;
     screenRect[2].v = SCREEN_XSIZE * 2;
+    screenRect[2].colour.r = 0xFF;
+    screenRect[2].colour.g = 0xFF;
+    screenRect[2].colour.b = 0xFF;
+    screenRect[2].colour.a = 0xFF;
 
     screenRect[3].x = 1;
     screenRect[3].y = -1;
     screenRect[3].u = (SCREEN_YSIZE - 0.5) * 4;
     screenRect[3].v = 0;
+    screenRect[3].colour.r = 0xFF;
+    screenRect[3].colour.g = 0xFF;
+    screenRect[3].colour.b = 0xFF;
+    screenRect[3].colour.a = 0xFF;
 
     // HW_TEXTURE_SIZE == 1.0 due to the scaling we did on the Texture Matrix earlier
 
@@ -1391,21 +1367,37 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     retroScreenRect[0].y = 1;
     retroScreenRect[0].u = 0;
     retroScreenRect[0].v = 0;
+    retroScreenRect[0].colour.r = 0xFF;
+    retroScreenRect[0].colour.g = 0xFF;
+    retroScreenRect[0].colour.b = 0xFF;
+    retroScreenRect[0].colour.a = 0xFF;
 
     retroScreenRect[1].x = 1;
     retroScreenRect[1].y = 1;
     retroScreenRect[1].u = HW_TEXTURE_SIZE;
     retroScreenRect[1].v = 0;
+    retroScreenRect[1].colour.r = 0xFF;
+    retroScreenRect[1].colour.g = 0xFF;
+    retroScreenRect[1].colour.b = 0xFF;
+    retroScreenRect[1].colour.a = 0xFF;
 
     retroScreenRect[2].x = -1;
     retroScreenRect[2].y = -1;
     retroScreenRect[2].u = 0;
     retroScreenRect[2].v = HW_TEXTURE_SIZE;
+    retroScreenRect[2].colour.r = 0xFF;
+    retroScreenRect[2].colour.g = 0xFF;
+    retroScreenRect[2].colour.b = 0xFF;
+    retroScreenRect[2].colour.a = 0xFF;
 
     retroScreenRect[3].x = 1;
     retroScreenRect[3].y = -1;
     retroScreenRect[3].u = HW_TEXTURE_SIZE;
     retroScreenRect[3].v = HW_TEXTURE_SIZE;
+    retroScreenRect[3].colour.r = 0xFF;
+    retroScreenRect[3].colour.g = 0xFF;
+    retroScreenRect[3].colour.b = 0xFF;
+    retroScreenRect[3].colour.a = 0xFF;
 
     ScaleViewport(winWidth, winHeight);
 }
@@ -1426,38 +1418,6 @@ void ScaleViewport(int width, int height)
         virtualWidth = viewWidth * ((float)height / viewHeight);
         virtualX     = (width - virtualWidth) >> 1;
     }
-}
-
-void CalcPerspective(float fov, float aspectRatio, float nearPlane, float farPlane)
-{
-    float matrix[16];
-    float w = 1.0 / tanf(fov * 0.5f);
-    float h = 1.0 / (w * aspectRatio);
-    float q = (nearPlane + farPlane) / (farPlane - nearPlane);
-
-    matrix[0] = w;
-    matrix[1] = 0;
-    matrix[2] = 0;
-    matrix[3] = 0;
-
-    matrix[4] = 0;
-    matrix[5] = h / 2;
-    matrix[6] = 0;
-    matrix[7] = 0;
-
-    matrix[8]  = 0;
-    matrix[9]  = 0;
-    matrix[10] = q;
-    matrix[11] = 1.0;
-
-    matrix[12] = 0;
-    matrix[13] = 0;
-    matrix[14] = (((farPlane * -2.0f) * nearPlane) / (farPlane - nearPlane));
-    matrix[15] = 0;
-
-#if RETRO_USING_OPENGL
-    glMultMatrixf(matrix);
-#endif
 }
 
 void SetupPolygonLists()

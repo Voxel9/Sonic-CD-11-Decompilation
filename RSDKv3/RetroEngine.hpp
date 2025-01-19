@@ -49,6 +49,8 @@ typedef unsigned int uint;
 #define RETRO_VITA (7)
 #define RETRO_UWP  (8)
 #define RETRO_LINUX (9)
+#define RETRO_3DS (10)
+#define RETRO_3DSSIM (11)
 
 // Platform types (Game manages platform-specific code such as HUD position using this rather than the above)
 #define RETRO_STANDARD (0)
@@ -64,7 +66,7 @@ typedef unsigned int uint;
 #define RETRO_PLATFORM (RETRO_UWP)
 #endif
 #else
-#define RETRO_PLATFORM (RETRO_WIN)
+#define RETRO_PLATFORM (RETRO_3DSSIM)
 #endif
 #elif defined __APPLE__
 #define RETRO_USING_MOUSE
@@ -85,6 +87,8 @@ typedef unsigned int uint;
 #define RETRO_PLATFORM (RETRO_VITA)
 #elif defined __linux__
 #define RETRO_PLATFORM (RETRO_LINUX)
+#elif defined __3DS__
+#define RETRO_PLATFORM (RETRO_3DS)
 #else
 #define RETRO_PLATFORM (RETRO_WIN) // Default
 #endif
@@ -96,6 +100,14 @@ typedef unsigned int uint;
 #elif RETRO_PLATFORM == RETRO_UWP
 #define BASE_PATH            ""
 #define DEFAULT_SCREEN_XSIZE 424
+#define DEFAULT_FULLSCREEN   false
+#elif RETRO_PLATFORM == RETRO_3DS
+#define BASE_PATH            "sdmc:/3ds/SonicCD/"
+#define DEFAULT_SCREEN_XSIZE 400
+#define DEFAULT_FULLSCREEN   false
+#elif RETRO_PLATFORM == RETRO_3DSSIM
+#define BASE_PATH            ""
+#define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
 #else
 #ifndef BASE_PATH
@@ -185,6 +197,8 @@ typedef unsigned int uint;
 #define GL_FRAMEBUFFER         GL_FRAMEBUFFER_EXT
 #define GL_COLOR_ATTACHMENT0   GL_COLOR_ATTACHMENT0_EXT
 #define GL_FRAMEBUFFER_BINDING GL_FRAMEBUFFER_BINDING_EXT
+#elif RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+#include <platform/Graphics.hpp>
 #else
 #include <GL/glew.h>
 #endif
@@ -197,7 +211,7 @@ typedef unsigned int uint;
 #else
 
 // use *this* macro to determine what platform the game thinks its running on (since only the first 7 platforms are supported natively by scripts)
-#if RETRO_PLATFORM == RETRO_VITA
+#if RETRO_PLATFORM == RETRO_VITA || RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
 #define RETRO_GAMEPLATFORMID (RETRO_WIN)
 #elif RETRO_PLATFORM == RETRO_UWP
 #define RETRO_GAMEPLATFORMID (UAP_GetRetroGamePlatformId())
@@ -366,6 +380,16 @@ enum RetroBytecodeFormat {
 #include "cocoaHelpers.hpp"
 #elif RETRO_PLATFORM == RETRO_VITA
 #include <SDL2/SDL.h>
+#include <vorbis/vorbisfile.h>
+#include <theora/theora.h>
+#include <theoraplay.h>
+#elif RETRO_PLATFORM == RETRO_3DS
+#include <platform/Timing.hpp>
+#include <tremor/ivorbisfile.h>
+#include <theora/theora.h>
+#include <theoraplay.h>
+#elif RETRO_PLATFORM == RETRO_3DSSIM
+#include <platform/Timing.hpp>
 #include <vorbis/vorbisfile.h>
 #include <theora/theora.h>
 #include <theoraplay.h>
@@ -540,6 +564,10 @@ public:
 
     int windowXSize; // width of window/screen in the previous frame
     int windowYSize; // height of window/screen in the previous frame
+
+#if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
+    GfxContext* glContext;
+#endif
 
 #if RETRO_USING_SDL2
     SDL_Window *window = nullptr;
