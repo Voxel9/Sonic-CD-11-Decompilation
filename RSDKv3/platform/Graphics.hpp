@@ -1,6 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include <cstddef>
+
 typedef enum GfxMatrixMode {
     MTX_MODE_MODELVIEW,
     MTX_MODE_PROJECTION,
@@ -16,7 +18,8 @@ struct GfxRenderTarget;
 GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle);
 bool Gfx_IsQuitTriggered(GfxContext* ctx);
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx);
-void Gfx_SwapBuffers(GfxContext* ctx);
+void Gfx_FrameBegin();
+void Gfx_FrameEnd(GfxContext* ctx);
 void Gfx_Finalize(GfxContext* ctx);
 
 // Renderstate functions
@@ -49,5 +52,9 @@ void Gfx_Translate(float x, float y, float z);
 void Gfx_RotateY(float angle);
 void Gfx_RotateZ(float angle);
 void Gfx_Scale(float x, float y, float z);
+
+// GPU mem functions
+void* Gfx_LinearAlloc(size_t size);
+void Gfx_LinearFree(void* mem);
 
 #endif

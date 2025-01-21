@@ -402,6 +402,8 @@ void RetroEngine::Run()
             }
         }
 
+        Gfx_FrameBegin();
+
         if (!(Engine.focusState & 1)) {
             for (int s = 0; s < gameSpeed; ++s) {
                 ProcessInput();
@@ -476,7 +478,7 @@ void RetroEngine::Run()
 #if RETRO_USING_OPENGL && RETRO_USING_SDL2
         SDL_GL_SwapWindow(Engine.window);
 #elif RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
-        Gfx_SwapBuffers(Engine.glContext);
+        Gfx_FrameEnd(Engine.glContext);
 #endif
         frameStep      = false;
         Engine.message = MESSAGE_NONE;

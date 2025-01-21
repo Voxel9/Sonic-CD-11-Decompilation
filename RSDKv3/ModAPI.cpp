@@ -21,8 +21,8 @@ byte modObjCount = 0;
 char playerNames[PLAYERNAME_COUNT][0x20];
 byte playerCount = 0;
 
-#include <filesystem>
-#include <algorithm>
+#include <dirent.h>
+#include <sys/stat.h>
 
 int OpenModMenu()
 {
@@ -31,31 +31,73 @@ int OpenModMenu()
     return 1;
 }
 
-#if RETRO_PLATFORM == RETRO_ANDROID
-namespace fs = std::__fs::filesystem;
-#else
-namespace fs = std::filesystem;
-#endif
+std::string toLowerCase(const std::string &str) {
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    return result;
+}
 
-fs::path ResolvePath(fs::path given)
-{
-    if (given.is_relative())
-        given = fs::current_path() / given; // thanks for the weird syntax!
+std::string ResolvePath(const std::string &givenPath) {
+    std::string resolvedPath = givenPath;
 
-    for (auto &p : fs::directory_iterator{ given.parent_path() }) {
-        char pbuf[0x100];
-        char gbuf[0x100];
-        auto pf   = p.path().filename();
-        auto pstr = pf.string();
-        std::transform(pstr.begin(), pstr.end(), pstr.begin(), [](char c) { return std::tolower(c); });
-        auto gf   = given.filename();
-        auto gstr = gf.string();
-        std::transform(gstr.begin(), gstr.end(), gstr.begin(), [](char c) { return std::tolower(c); });
-        if (pstr == gstr) {
-            return p.path();
+    // Make path absolute if it is relative
+    if (givenPath.find(BASE_PATH) != 0) {
+        resolvedPath = BASE_PATH + givenPath;
+    }
+
+    // Extract parent directory and target filename
+    size_t lastSlashPos = resolvedPath.find_last_of('/');
+    std::string parentDir = resolvedPath.substr(0, lastSlashPos);
+    std::string targetFile = resolvedPath.substr(lastSlashPos + 1);
+
+    // Open the parent directory
+    DIR *dir = opendir(parentDir.c_str());
+    if (dir == NULL) {
+        // If the directory cannot be opened, return the original path
+        return resolvedPath;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Skip "." and ".." entries
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        // Case-insensitive comparison of filenames
+        std::string entryName = entry->d_name;
+        if (toLowerCase(entryName) == toLowerCase(targetFile)) {
+            // Construct the full path to the matched file
+            closedir(dir);
+            return parentDir + "/" + entryName;
         }
     }
-    return given; // might work might not!
+
+    closedir(dir);
+
+    // Return the original path if no match was found
+    return resolvedPath;
+}
+
+bool pathExists(const std::string &path) {
+    struct stat s;
+    return (stat(path.c_str(), &s) == 0);
+}
+
+bool isRegularFile(const std::string &path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
+        return true;
+    }
+    return false;
+}
+
+bool isDirectory(const std::string &path) {
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0 && S_ISDIR(s.st_mode)) {
+        return true;
+    }
+    return false;
 }
 
 void InitMods()
@@ -69,10 +111,10 @@ void InitMods()
 
     char modBuf[0x100];
     sprintf(modBuf, "%smods", modsPath);
-    fs::path modPath = ResolvePath(modBuf);
+    std::string modPath = ResolvePath(modBuf);
 
-    if (fs::exists(modPath) && fs::is_directory(modPath)) {
-        std::string mod_config = modPath.string() + "/modconfig.ini";
+    if (pathExists(modPath) && isDirectory(modPath)) {
+        std::string mod_config = modPath + "/modconfig.ini";
         FileIO *configFile     = fOpen(mod_config.c_str(), "r");
         if (configFile) {
             fClose(configFile);
@@ -82,41 +124,48 @@ void InitMods()
                 bool active = false;
                 ModInfo info;
                 modConfig.GetBool("mods", modConfig.items[m].key, &active);
-                if (LoadMod(&info, modPath.string(), modConfig.items[m].key, active))
+                if (LoadMod(&info, modPath, modConfig.items[m].key, active))
                     modList.push_back(info);
             }
         }
 
-        try {
-            auto rdi = fs::directory_iterator(modPath);
-            for (auto de : rdi) {
-                if (de.is_directory()) {
-                    fs::path modDirPath = de.path();
+        DIR *dir = opendir(modPath.c_str());
+        if (!dir) {
+            // Uh oh
+        }
 
-                    ModInfo info;
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            // Skip "." and ".."
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
 
-                    std::string modDir            = modDirPath.string().c_str();
-                    const std::string mod_inifile = modDir + "/mod.ini";
-                    std::string folder            = modDirPath.filename().string();
+            std::string fullPath = modPath + "/" + entry->d_name;
 
-                    bool flag = true;
-                    for (int m = 0; m < modList.size(); ++m) {
-                        if (modList[m].folder == folder) {
-                            flag = false;
-                            break;
-                        }
-                    }
+            if (isDirectory(fullPath)) {
+                ModInfo info;
 
-                    if (flag) {
-                        if (LoadMod(&info, modPath.string(), modDirPath.filename().string(), false))
-                            modList.push_back(info);
+                std::string modDir            = fullPath.c_str();
+                const std::string mod_inifile = modDir + "/mod.ini";
+                std::string folder            = entry->d_name;
+
+                bool flag = true;
+                for (int m = 0; m < modList.size(); ++m) {
+                    if (modList[m].folder == folder) {
+                        flag = false;
+                        break;
                     }
                 }
+
+                if (flag) {
+                    if (LoadMod(&info, modPath, entry->d_name, false))
+                        modList.push_back(info);
+                }
             }
-        } catch (fs::filesystem_error fe) {
-            PrintLog("Mods Folder Scanning Error: ");
-            PrintLog(fe.what());
         }
+
+        closedir(dir);
     }
 
     disableFocusPause = disableFocusPause_Config;
@@ -231,20 +280,42 @@ void ScanModFolder(ModInfo *info)
     char modBuf[0x100];
     sprintf(modBuf, "%smods", modsPath);
 
-    fs::path modPath = ResolvePath(modBuf);
+    std::string modPath = ResolvePath(modBuf);
 
-    const std::string modDir = modPath.string() + "/" + info->folder;
+    const std::string modDir = modPath + "/" + info->folder;
 
     // Check for Data/ replacements
-    fs::path dataPath = ResolvePath(modDir + "/Data");
+    std::string dataPath = ResolvePath(modDir + "/Data");
 
-    if (fs::exists(dataPath) && fs::is_directory(dataPath)) {
-        try {
-            auto data_rdi = fs::recursive_directory_iterator(dataPath);
-            for (auto data_de : data_rdi) {
-                if (data_de.is_regular_file()) {
+    if (pathExists(dataPath) && isDirectory(dataPath)) {
+        std::stack<std::string> dirs;
+
+        // Push the initial directory to the stack
+        dirs.push(dataPath);
+
+        while (!dirs.empty()) {
+            std::string currentDir = dirs.top();
+
+            // Pop the top directory from the stack
+            dirs.pop();
+
+            DIR *dir = opendir(currentDir.c_str());
+            if (!dir) {
+                continue;
+            }
+
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                // Skip "." and ".."
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                    continue;
+                }
+
+                std::string fullPath = currentDir + "/" + entry->d_name;
+
+                if (isRegularFile(fullPath)) {
                     char modBuf[0x100];
-                    StrCopy(modBuf, data_de.path().string().c_str());
+                    StrCopy(modBuf, fullPath.c_str());
                     char folderTest[4][0x10] = {
                         "Data/",
                         "Data\\",
@@ -276,23 +347,47 @@ void ScanModFolder(ModInfo *info)
                         info->fileMap.insert(std::pair<std::string, std::string>(pathLower, modBuf));
                     }
                 }
+                else if (isDirectory(fullPath)) {
+                    dirs.push(fullPath);
+                }
             }
-        } catch (fs::filesystem_error fe) {
-            PrintLog("Data Folder Scanning Error: ");
-            PrintLog(fe.what());
+
+            closedir(dir);
         }
     }
 
     // Check for Scripts/ replacements
-    fs::path scriptPath = ResolvePath(modDir + "/Scripts");
+    std::string scriptPath = ResolvePath(modDir + "/Scripts");
 
-    if (fs::exists(scriptPath) && fs::is_directory(scriptPath)) {
-        try {
-            auto data_rdi = fs::recursive_directory_iterator(scriptPath);
-            for (auto data_de : data_rdi) {
-                if (data_de.is_regular_file()) {
+    if (pathExists(scriptPath) && isDirectory(scriptPath)) {
+        std::stack<std::string> dirs;
+
+        // Push the initial directory to the stack
+        dirs.push(dataPath);
+
+        while (!dirs.empty()) {
+            std::string currentDir = dirs.top();
+
+            // Pop the top directory from the stack
+            dirs.pop();
+
+            DIR *dir = opendir(currentDir.c_str());
+            if (!dir) {
+                continue;
+            }
+
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                // Skip "." and ".."
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                    continue;
+                }
+
+                std::string fullPath = currentDir + "/" + entry->d_name;
+
+                if (isRegularFile(fullPath)) {
                     char modBuf[0x100];
-                    StrCopy(modBuf, data_de.path().string().c_str());
+                    StrCopy(modBuf, fullPath.c_str());
                     char folderTest[4][0x10] = {
                         "Scripts/",
                         "Scripts\\",
@@ -324,59 +419,85 @@ void ScanModFolder(ModInfo *info)
                         info->fileMap.insert(std::pair<std::string, std::string>(pathLower, modBuf));
                     }
                 }
+                else if (isDirectory(fullPath)) {
+                    dirs.push(fullPath);
+                }
             }
-        } catch (fs::filesystem_error fe) {
-            PrintLog("Script Folder Scanning Error: ");
-            PrintLog(fe.what());
+
+            closedir(dir);
         }
     }
 
     // Check for Videos/ replacements
-    fs::path videosPath = ResolvePath(modDir + "/Videos");
+    std::string videosPath = ResolvePath(modDir + "/Videos");
 
-    if (fs::exists(videosPath) && fs::is_directory(videosPath)) {
-        try {
-            auto data_rdi = fs::recursive_directory_iterator(videosPath);
-            for (auto data_de : data_rdi) {
-                if (data_de.is_regular_file()) {
-                    char modBuf[0x100];
-                    StrCopy(modBuf, data_de.path().string().c_str());
-                    char folderTest[4][0x10] = {
-                        "Videos/",
-                        "Videos\\",
-                        "videos/",
-                        "videos\\",
-                    };
-                    int tokenPos = -1;
-                    for (int i = 0; i < 4; ++i) {
-                        tokenPos = FindStringToken(modBuf, folderTest[i], 1);
-                        if (tokenPos >= 0)
-                            break;
+    if (pathExists(videosPath) && isDirectory(videosPath)) {
+        std::stack<std::string> dirs;
+
+            // Push the initial directory to the stack
+            dirs.push(dataPath);
+
+            while (!dirs.empty()) {
+                std::string currentDir = dirs.top();
+
+                // Pop the top directory from the stack
+                dirs.pop();
+
+                DIR *dir = opendir(currentDir.c_str());
+                if (!dir) {
+                    continue;
+                }
+
+                struct dirent *entry;
+                while ((entry = readdir(dir)) != NULL) {
+                    // Skip "." and ".."
+                    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                        continue;
                     }
 
-                    if (tokenPos >= 0) {
-                        char buffer[0x100];
-                        for (int i = StrLength(modBuf); i >= tokenPos; --i) {
-                            buffer[i - tokenPos] = modBuf[i] == '\\' ? '/' : modBuf[i];
+                    std::string fullPath = currentDir + "/" + entry->d_name;
+
+                    if (isRegularFile(fullPath)) {
+                        char modBuf[0x100];
+                        StrCopy(modBuf, fullPath.c_str());
+                        char folderTest[4][0x10] = {
+                            "Videos/",
+                            "Videos\\",
+                            "videos/",
+                            "videos\\",
+                        };
+                        int tokenPos = -1;
+                        for (int i = 0; i < 4; ++i) {
+                            tokenPos = FindStringToken(modBuf, folderTest[i], 1);
+                            if (tokenPos >= 0)
+                                break;
                         }
 
-                        // PrintLog(modBuf);
-                        std::string path(buffer);
-                        std::string modPath(modBuf);
-                        char pathLower[0x100];
-                        memset(pathLower, 0, sizeof(char) * 0x100);
-                        for (int c = 0; c < path.size(); ++c) {
-                            pathLower[c] = tolower(path.c_str()[c]);
-                        }
+                        if (tokenPos >= 0) {
+                            char buffer[0x100];
+                            for (int i = StrLength(modBuf); i >= tokenPos; --i) {
+                                buffer[i - tokenPos] = modBuf[i] == '\\' ? '/' : modBuf[i];
+                            }
 
-                        info->fileMap.insert(std::pair<std::string, std::string>(pathLower, modBuf));
+                            // PrintLog(modBuf);
+                            std::string path(buffer);
+                            std::string modPath(modBuf);
+                            char pathLower[0x100];
+                            memset(pathLower, 0, sizeof(char) * 0x100);
+                            for (int c = 0; c < path.size(); ++c) {
+                                pathLower[c] = tolower(path.c_str()[c]);
+                            }
+
+                            info->fileMap.insert(std::pair<std::string, std::string>(pathLower, modBuf));
+                        }
+                    }
+                    else if (isDirectory(fullPath)) {
+                        dirs.push(fullPath);
                     }
                 }
+
+                closedir(dir);
             }
-        } catch (fs::filesystem_error fe) {
-            PrintLog("Videos Folder Scanning Error: ");
-            PrintLog(fe.what());
-        }
     }
 }
 
@@ -384,10 +505,10 @@ void SaveMods()
 {
     char modBuf[0x100];
     sprintf(modBuf, "%smods", modsPath);
-    fs::path modPath = ResolvePath(modBuf);
+    std::string modPath = ResolvePath(modBuf);
 
-    if (fs::exists(modPath) && fs::is_directory(modPath)) {
-        std::string mod_config = modPath.string() + "/modconfig.ini";
+    if (pathExists(modPath) && isDirectory(modPath)) {
+        std::string mod_config = modPath + "/modconfig.ini";
         IniParser modConfig;
 
         for (int m = 0; m < modList.size(); ++m) {

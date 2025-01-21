@@ -77,14 +77,10 @@ struct DrawVertex3D {
     Colour colour;
 };
 
-extern DrawVertex gfxPolyList[VERTEX_COUNT];
-extern short gfxPolyListIndex[INDEX_COUNT];
 extern ushort gfxVertexSize;
 extern ushort gfxVertexSizeOpaque;
 extern ushort gfxIndexSize;
 extern ushort gfxIndexSizeOpaque;
-
-extern DrawVertex3D polyList3D[VERTEX3D_COUNT];
 
 extern ushort vertexSize3D;
 extern ushort indexSize3D;
@@ -122,8 +118,6 @@ extern GfxTexture* retroBuffer;
 extern GfxTexture* retroBuffer2x;
 extern GfxTexture* videoBuffer;
 #endif
-extern DrawVertex screenRect[4];
-extern DrawVertex retroScreenRect[4];
 
 int InitRenderDevice();
 void FlipScreen();

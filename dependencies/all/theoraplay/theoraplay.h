@@ -13,6 +13,12 @@
 extern "C" {
 #endif
 
+#if defined(_WIN32)
+typedef float PCMSample;
+#elif defined(__3DS__)
+typedef long int PCMSample;
+#endif
+
 typedef struct THEORAPLAY_Io THEORAPLAY_Io;
 struct THEORAPLAY_Io
 {
@@ -60,7 +66,7 @@ typedef struct THEORAPLAY_AudioPacket
     int channels;
     int freq;
     int frames;
-    float *samples;  /* frames * channels float32 samples. */
+    PCMSample *samples;  /* frames * channels 4-byte samples. */
     struct THEORAPLAY_AudioPacket *next;
 } THEORAPLAY_AudioPacket;
 

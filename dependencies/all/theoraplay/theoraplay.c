@@ -544,21 +544,21 @@ static int PumpDecoder(TheoraDecoder *ctx, int desired_frames)
         //  loop to one video frame and as much audio as we can eat.
         while (!ctx->halt && ctx->vpackets)
         {
-            float **pcm = NULL;
+            PCMSample **pcm = NULL;
             const int frames = vorbis_synthesis_pcmout(&ctx->vdsp, &pcm);
             
             if (frames > 0)
             {
                 const int channels = ctx->vinfo.channels;
                 int chanidx, frameidx;
-                float *samples;
+                PCMSample *samples;
                 AudioPacket *item = (AudioPacket *) ctx->allocator.allocate(&ctx->allocator, sizeof (AudioPacket));
                 if (item == NULL) goto cleanup;
                 item->playms = (unsigned long) ((((double) ctx->audioframes) / ((double) ctx->vinfo.rate)) * 1000.0);
                 item->channels = channels;
                 item->freq = ctx->vinfo.rate;
                 item->frames = frames;
-                item->samples = (float *) ctx->allocator.allocate(&ctx->allocator, sizeof (float) * frames * channels);
+                item->samples = (PCMSample *) ctx->allocator.allocate(&ctx->allocator, sizeof (PCMSample) * frames * channels);
                 item->next = NULL;
 
                 if (item->samples == NULL)

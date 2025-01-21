@@ -36,14 +36,14 @@ int gfxDataPosition;
 GFXSurface gfxSurface[SURFACE_COUNT];
 byte graphicData[GFXDATA_SIZE];
 
-DrawVertex gfxPolyList[VERTEX_COUNT];
-short gfxPolyListIndex[INDEX_COUNT];
+DrawVertex* gfxPolyList;
+short* gfxPolyListIndex;
 ushort gfxVertexSize       = 0;
 ushort gfxVertexSizeOpaque = 0;
 ushort gfxIndexSize        = 0;
 ushort gfxIndexSizeOpaque  = 0;
 
-DrawVertex3D polyList3D[VERTEX3D_COUNT];
+DrawVertex3D* polyList3D;
 
 ushort vertexSize3D = 0;
 ushort indexSize3D  = 0;
@@ -84,8 +84,9 @@ GfxTexture* retroBuffer = 0;
 GfxTexture* retroBuffer2x = 0;
 GfxTexture* videoBuffer = 0;
 #endif
-DrawVertex screenRect[4];
-DrawVertex retroScreenRect[4];
+DrawVertex* screenRect;
+DrawVertex* retroScreenRect;
+DrawVertex3D *screenVerts;
 
 #if !RETRO_USE_ORIGINAL_CODE
 // enable integer scaling, which is a modification of enhanced scaling
@@ -270,6 +271,13 @@ int InitRenderDevice()
 
 #if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
     Engine.glContext = Gfx_Initialize(SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, gameTitle);
+
+    gfxPolyList = (DrawVertex*)Gfx_LinearAlloc(VERTEX_COUNT * sizeof(DrawVertex));
+    gfxPolyListIndex = (short*)Gfx_LinearAlloc(INDEX_COUNT * sizeof(short));
+    polyList3D = (DrawVertex3D*)Gfx_LinearAlloc(VERTEX3D_COUNT * sizeof(DrawVertex3D));
+    screenRect = (DrawVertex*)Gfx_LinearAlloc(4 * sizeof(DrawVertex));
+    retroScreenRect = (DrawVertex*)Gfx_LinearAlloc(4 * sizeof(DrawVertex));
+    screenVerts = (DrawVertex3D*)Gfx_LinearAlloc(4 * sizeof(DrawVertex3D));
 
     Engine.screenRefreshRate = 60;
     Engine.startFullScreen = false;
@@ -831,7 +839,7 @@ void RenderFromTexture()
     Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
     Gfx_SetVertexBufs(sizeof(DrawVertex), screenRect);
     Gfx_SetBlend(false);
-    Gfx_DrawElements(6, &gfxPolyListIndex);
+    Gfx_DrawElements(6, gfxPolyListIndex);
 #endif
 }
 
@@ -906,7 +914,7 @@ void RenderFromRetroBuffer()
 
     Gfx_SetVertexBufs(sizeof(DrawVertex), retroScreenRect);
     Gfx_SetBlend(false);
-    Gfx_DrawElements(6, &gfxPolyListIndex);
+    Gfx_DrawElements(6, gfxPolyListIndex);
 #endif
 }
 
@@ -914,7 +922,6 @@ void RenderFromRetroBuffer()
 void FlipScreenVideo()
 {
 #if RETRO_USING_OPENGL
-    DrawVertex3D screenVerts[4];
     for (int i = 0; i < 4; ++i) {
         screenVerts[i].u = retroScreenRect[i].u;
         screenVerts[i].v = retroScreenRect[i].v;
@@ -973,7 +980,7 @@ void FlipScreenVideo()
     Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
     Gfx_SetVertexBufs(sizeof(DrawVertex3D), screenVerts);
     Gfx_SetBlend(false);
-    Gfx_DrawElements(6, &gfxPolyListIndex);
+    Gfx_DrawElements(6, gfxPolyListIndex);
 #endif
 }
 
@@ -1013,6 +1020,13 @@ void ReleaseRenderDevice()
     if (Engine.glContext) {
 		for (int i = 0; i < HW_TEXTURE_COUNT; i++)
             Gfx_TextureDestroy(gfxTextureID[i]);
+
+        Gfx_LinearFree(screenVerts);
+        Gfx_LinearFree(retroScreenRect);
+        Gfx_LinearFree(screenRect);
+        Gfx_LinearFree(polyList3D);
+        Gfx_LinearFree(gfxPolyListIndex);
+        Gfx_LinearFree(gfxPolyList);
 
 		Gfx_Finalize(Engine.glContext);
 	}

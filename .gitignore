@@ -4,6 +4,11 @@
 # VS Code
 .vscode/
 
+# 3DS artifacts
+*.cia
+*.3dsx
+*.smdh
+
 # VitaSDK artifacts
 dependencies/vita
 *.self*
@@ -41,7 +46,9 @@ bin/
 #Safety
 [Ss]cripts/
 [Mm]ods/
+log.txt
 *.exe
+*.elf
 *.ini
 *.bin
 *.rsdk

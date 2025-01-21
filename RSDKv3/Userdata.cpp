@@ -64,7 +64,10 @@ LeaderboardEntry leaderboards[LEADERBOARD_COUNT];
 #include <sys/stat.h>
 #include <sys/types.h>
 #elif RETRO_PLATFORM == RETRO_3DS
-// TODO: Key bindings
+extern "C" {
+#include <3ds/types.h>
+#include <3ds/services/hid.h>
+}
 #elif RETRO_PLATFORM == RETRO_3DSSIM
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -384,10 +387,17 @@ void InitUserdata()
         ini.SetFloat("Audio", "SFXVolume", sfxVolume / (float)MAX_VOLUME);
 
 #if RETRO_PLATFORM == RETRO_3DS
-    // TODO: Input mappings
-#endif
-
-#if RETRO_PLATFORM == RETRO_3DSSIM
+    ini.SetComment("Keyboard 1", "IK1Comment",
+                    "Keyboard Mappings for P1");
+    ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = KEY_CPAD_UP | KEY_DUP);
+    ini.SetInteger("Keyboard 1", "Down", inputDevice[INPUT_DOWN].keyMappings = KEY_CPAD_DOWN | KEY_DDOWN);
+    ini.SetInteger("Keyboard 1", "Left", inputDevice[INPUT_LEFT].keyMappings = KEY_CPAD_LEFT | KEY_DLEFT);
+    ini.SetInteger("Keyboard 1", "Right", inputDevice[INPUT_RIGHT].keyMappings = KEY_CPAD_RIGHT | KEY_DRIGHT);
+    ini.SetInteger("Keyboard 1", "A", inputDevice[INPUT_BUTTONA].keyMappings = KEY_A);
+    ini.SetInteger("Keyboard 1", "B", inputDevice[INPUT_BUTTONB].keyMappings = KEY_B);
+    ini.SetInteger("Keyboard 1", "C", inputDevice[INPUT_BUTTONC].keyMappings = KEY_Y);
+    ini.SetInteger("Keyboard 1", "Start", inputDevice[INPUT_START].keyMappings = KEY_START);
+#elif RETRO_PLATFORM == RETRO_3DSSIM
     ini.SetComment("Keyboard 1", "IK1Comment",
                    "Keyboard Mappings for P1 (Based on: https://github.com/libsdl-org/sdlwiki/blob/main/SDL2/SDLScancodeLookup.mediawiki)");
     ini.SetInteger("Keyboard 1", "Up", inputDevice[INPUT_UP].keyMappings = VK_UP);
@@ -559,10 +569,23 @@ void InitUserdata()
             sfxVolume = 0;
 
 #if RETRO_PLATFORM == RETRO_3DS
-        // TODO: Input mappings
-#endif
-
-#if RETRO_PLATFORM == RETRO_3DSSIM
+        if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))
+            inputDevice[0].keyMappings = KEY_CPAD_UP | KEY_DUP;
+        if (!ini.GetInteger("Keyboard 1", "Down", &inputDevice[INPUT_DOWN].keyMappings))
+            inputDevice[1].keyMappings = KEY_CPAD_DOWN | KEY_DDOWN;
+        if (!ini.GetInteger("Keyboard 1", "Left", &inputDevice[INPUT_LEFT].keyMappings))
+            inputDevice[2].keyMappings = KEY_CPAD_LEFT | KEY_DLEFT;
+        if (!ini.GetInteger("Keyboard 1", "Right", &inputDevice[INPUT_RIGHT].keyMappings))
+            inputDevice[3].keyMappings = KEY_CPAD_RIGHT | KEY_DRIGHT;
+        if (!ini.GetInteger("Keyboard 1", "A", &inputDevice[INPUT_BUTTONA].keyMappings))
+            inputDevice[4].keyMappings = KEY_A;
+        if (!ini.GetInteger("Keyboard 1", "B", &inputDevice[INPUT_BUTTONB].keyMappings))
+            inputDevice[5].keyMappings = KEY_B;
+        if (!ini.GetInteger("Keyboard 1", "C", &inputDevice[INPUT_BUTTONC].keyMappings))
+            inputDevice[6].keyMappings = KEY_Y;
+        if (!ini.GetInteger("Keyboard 1", "Start", &inputDevice[INPUT_START].keyMappings))
+            inputDevice[7].keyMappings = KEY_START;
+#elif RETRO_PLATFORM == RETRO_3DSSIM
         if (!ini.GetInteger("Keyboard 1", "Up", &inputDevice[INPUT_UP].keyMappings))
             inputDevice[0].keyMappings = VK_UP;
         if (!ini.GetInteger("Keyboard 1", "Down", &inputDevice[INPUT_DOWN].keyMappings))

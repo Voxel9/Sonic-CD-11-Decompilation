@@ -54,6 +54,10 @@ int main(int argc, char *argv[])
     SDL_StartTicks();
 #endif
 
+#if RETRO_PLATFORM == RETRO_3DS
+    chdir("sdmc:/3ds/SonicCD/");
+#endif
+
 #if !RETRO_USE_ORIGINAL_CODE
     parseArguments(argc, argv);
 #endif

@@ -55,9 +55,13 @@ bool Gfx_IsDevMenuTriggered(GfxContext* ctx)
     return glfwGetKey(ctx->window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 }
 
-void Gfx_SwapBuffers(GfxContext* ctx)
+void Gfx_FrameBegin()
 {
     glfwPollEvents();
+}
+
+void Gfx_FrameEnd(GfxContext* ctx)
+{
     glfwSwapBuffers(ctx->window);
 }
 
@@ -283,4 +287,16 @@ void Gfx_RotateZ(float angle)
 void Gfx_Scale(float x, float y, float z)
 {
     glScalef(x, y, z);
+}
+
+// GPU mem functions
+
+void* Gfx_LinearAlloc(size_t size)
+{
+    return _aligned_malloc(size, 0x80);
+}
+
+void Gfx_LinearFree(void* mem)
+{
+    _aligned_free(mem);
 }

@@ -58,11 +58,11 @@ ICON			:=	res/icon.png
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
-CFLAGS	:=	-O3 -ffast-math -fsigned-char -mword-relocations -ffunction-sections
+CFLAGS	:=	-g -O3 -fsigned-char -mword-relocations -ffunction-sections
 
 CFLAGS	+=	$(ARCH) $(INCLUDE) -D__3DS__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
 
 ASFLAGS	:=	$(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

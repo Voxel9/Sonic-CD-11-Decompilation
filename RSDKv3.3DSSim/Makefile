@@ -43,10 +43,10 @@ CPPFILES	:=	Animation.cpp \
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS		:= -O3 -m32 -static -D_WIN32
+CFLAGS		:= -g -O3 -m32 -static -D_WIN32
 
 CXXFLAGS	:=	$(shell pkg-config --cflags --static vorbisfile vorbis theora glew glfw3) \
-				$(CFLAGS) -fno-rtti -std=c++17
+				$(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
 
 LIBS		:=	$(shell pkg-config --libs --static vorbisfile vorbis theora glew glfw3) \
 				-lmingw32 -lopengl32 -lWinmm

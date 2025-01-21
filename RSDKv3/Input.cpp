@@ -4,7 +4,10 @@
 #include <vector>
 
 #if RETRO_PLATFORM == RETRO_3DS
-// TODO
+extern "C" {
+#include <3ds/types.h>
+#include <3ds/services/hid.h>
+}
 #elif RETRO_PLATFORM == RETRO_3DSSIM
 #define WIN32_MEAN_AND_LEAN
 #include <windows.h>
@@ -361,7 +364,33 @@ void ControllerClose(byte controllerID)
 void ProcessInput()
 {
 #if RETRO_PLATFORM == RETRO_3DS
-    // TODO: ctrulib
+    hidScanInput();
+    u32 kHeld = hidKeysHeld();
+
+    for (int i = 0; i < INPUT_ANY; i++) {
+        if (kHeld & inputDevice[i].keyMappings) {
+            inputDevice[i].setHeld();
+            if (!inputDevice[INPUT_ANY].hold)
+                inputDevice[INPUT_ANY].setHeld();
+        }
+        else if (inputDevice[i].hold)
+            inputDevice[i].setReleased();
+    }
+
+    bool isPressed = false;
+    for (int i = 0; i < INPUT_BUTTONCOUNT; i++) {
+        if (kHeld & inputDevice[i].keyMappings) {
+            isPressed = true;
+            break;
+        }
+    }
+    if (!isPressed)
+        inputDevice[INPUT_ANY].setReleased();
+
+    if (inputDevice[INPUT_ANY].press || inputDevice[INPUT_ANY].hold || touches > 1)
+        Engine.dimTimer = 0;
+    else if (Engine.dimTimer < Engine.dimLimit && !Engine.masterPaused)
+        ++Engine.dimTimer;
 #elif RETRO_PLATFORM == RETRO_3DSSIM
     byte keyState[256];
     GetKeyboardState((PBYTE)keyState);
