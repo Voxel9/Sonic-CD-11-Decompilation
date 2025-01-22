@@ -1,26 +1,32 @@
 #include "platform/Timing.hpp"
 
+#include <sys/time.h>
 #include <3ds.h>
 
-static u64 g_startTicks;
+static struct timeval start;
 
-void SDL_StartTicks()
+void Time_StartTicks()
 {
-    g_startTicks = svcGetSystemTick();
+    gettimeofday(&start, NULL);
 }
 
-unsigned int SDL_GetTicks()
+unsigned int Time_GetTicks()
 {
-    u64 elapsed = svcGetSystemTick() - g_startTicks;
-    return elapsed * 1000 / SYSCLOCK_ARM11;
+    unsigned int ticks;
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	ticks = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
+
+	return (ticks);
 }
 
-unsigned long long SDL_GetPerformanceFrequency()
+unsigned long long Time_GetPerformanceFrequency()
 {
     return osGetTimeRef().sysclock_hz;
 }
 
-unsigned long long SDL_GetPerformanceCounter()
+unsigned long long Time_GetPerformanceCounter()
 {
     return osGetTimeRef().value_tick;
 }

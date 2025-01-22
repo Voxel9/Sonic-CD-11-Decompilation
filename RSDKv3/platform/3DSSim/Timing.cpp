@@ -8,13 +8,13 @@
 
 static DWORD start;
 
-void SDL_StartTicks()
+void Time_StartTicks()
 {
     timeBeginPeriod(1); // use 1 ms timer precision
     start = timeGetTime();
 }
 
-unsigned int SDL_GetTicks()
+unsigned int Time_GetTicks()
 {
     DWORD now, ticks;
 
@@ -28,7 +28,7 @@ unsigned int SDL_GetTicks()
     return (ticks);
 }
 
-unsigned long long SDL_GetPerformanceFrequency()
+unsigned long long Time_GetPerformanceFrequency()
 {
     LARGE_INTEGER frequency;
 
@@ -39,7 +39,7 @@ unsigned long long SDL_GetPerformanceFrequency()
     return frequency.QuadPart;
 }
 
-unsigned long long SDL_GetPerformanceCounter()
+unsigned long long Time_GetPerformanceCounter()
 {
     LARGE_INTEGER counter;
 

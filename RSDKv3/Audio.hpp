@@ -13,7 +13,7 @@
 #include "SDL.h"
 #endif
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
 
 #define LockAudioDevice()   SDL_LockAudio()
 #define UnlockAudioDevice() SDL_UnlockAudio()
@@ -46,7 +46,7 @@ struct StreamInfo {
 #if RETRO_USING_SDL1
     SDL_AudioSpec spec;
 #endif
-#if RETRO_USING_SDL2
+#if RETRO_USING_SDL2_AUDIO
     SDL_AudioStream *stream;
 #endif
     short buffer[MIX_BUFFER_SAMPLES];
@@ -107,7 +107,7 @@ extern StreamInfo streamInfo[STREAMFILE_COUNT];
 extern StreamFile *streamFilePtr;
 extern StreamInfo *streamInfoPtr;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
 extern SDL_AudioSpec audioDeviceFormat;
 #endif
 
@@ -122,12 +122,12 @@ inline void FreeMusInfo()
 {
     LockAudioDevice();
 
-#if RETRO_USING_SDL2
+#if RETRO_USING_SDL2_AUDIO
     if (streamInfo[currentStreamIndex].stream)
         SDL_FreeAudioStream(streamInfo[currentStreamIndex].stream);
 #endif
     ov_clear(&streamInfo[currentStreamIndex].vorbisFile);
-#if RETRO_USING_SDL2
+#if RETRO_USING_SDL2_AUDIO
     streamInfo[currentStreamIndex].stream = nullptr;
 #endif
     if (streamFile[currentStreamIndex].buffer)

@@ -134,7 +134,7 @@ void PlayVideoFile(char *filePath)
         videoAR = float(videoWidth) / float(videoHeight);
 
         SetupVideoBuffer(videoWidth, videoHeight);
-        vidBaseticks = SDL_GetTicks();
+        vidBaseticks = Time_GetTicks();
         vidFrameMS   = (videoVidData->fps == 0.0) ? 0 : ((unsigned int)(1000.0 / videoVidData->fps));
         videoPlaying = 1; // playing ogv
         trackID      = TRACK_COUNT - 1;
@@ -228,7 +228,7 @@ int ProcessVideo()
         if (videoPlaying == 1) {
             THEORAPLAY_pumpDecode(videoDecoder, 5);
 
-            const unsigned int now = (SDL_GetTicks() - vidBaseticks);
+            const unsigned int now = (Time_GetTicks() - vidBaseticks);
 
             if (!videoVidData)
                 videoVidData = THEORAPLAY_getVideo(videoDecoder);
@@ -291,7 +291,7 @@ void StopVideoPlayback()
         // `videoPlaying` and `videoDecoder` are read by
         // the audio thread, so lock it to prevent a race
         // condition that results in invalid memory accesses.
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
         SDL_LockAudio();
 #endif
 
@@ -310,7 +310,7 @@ void StopVideoPlayback()
         CloseVideoBuffer();
         videoPlaying = 0;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
         SDL_UnlockAudio();
 #endif
     }

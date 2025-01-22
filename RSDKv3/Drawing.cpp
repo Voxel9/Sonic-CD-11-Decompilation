@@ -258,6 +258,8 @@ int InitRenderDevice()
 
     Engine.useHQModes = false; // disabled
     Engine.borderless = false; // disabled
+#elif RETRO_USING_SDL2_AUDIO
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
 #endif
 
 #if RETRO_USING_OPENGL

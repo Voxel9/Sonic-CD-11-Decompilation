@@ -105,10 +105,12 @@ typedef unsigned int uint;
 #define BASE_PATH            ""
 #define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
+#define RETRO_USE_SDL2_AUDIO (1)
 #elif RETRO_PLATFORM == RETRO_3DSSIM
 #define BASE_PATH            ""
 #define DEFAULT_SCREEN_XSIZE 400
 #define DEFAULT_FULLSCREEN   false
+#define RETRO_USE_SDL2_AUDIO (1)
 #else
 #ifndef BASE_PATH
 #define BASE_PATH            ""
@@ -119,21 +121,29 @@ typedef unsigned int uint;
 #define DEFAULT_FULLSCREEN   false
 #endif
 
-#if !defined(RETRO_USE_SDL2) && !defined(RETRO_USE_SDL1)
+#if !defined(RETRO_USE_SDL2) && !defined(RETRO_USE_SDL1) && !defined(RETRO_USE_SDL2_AUDIO)
 #define RETRO_USE_SDL2 (1)
 #endif
 
 #if RETRO_PLATFORM == RETRO_WIN || RETRO_PLATFORM == RETRO_OSX || RETRO_PLATFORM == RETRO_iOS || RETRO_PLATFORM == RETRO_VITA                        \
-    || RETRO_PLATFORM == RETRO_UWP || RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_LINUX
+    || RETRO_PLATFORM == RETRO_UWP || RETRO_PLATFORM == RETRO_ANDROID || RETRO_PLATFORM == RETRO_LINUX                                               \
+    || RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
 #ifdef RETRO_USE_SDL2
 #define RETRO_USING_SDL1 (0)
 #define RETRO_USING_SDL2 (1)
+#define RETRO_USING_SDL2_AUDIO (1)
 #elif defined(RETRO_USE_SDL1)
 #define RETRO_USING_SDL1 (1)
 #define RETRO_USING_SDL2 (0)
+#define RETRO_USING_SDL2_AUDIO (0)
+#elif defined(RETRO_USE_SDL2_AUDIO)
+#define RETRO_USING_SDL1 (0)
+#define RETRO_USING_SDL2 (0)
+#define RETRO_USING_SDL2_AUDIO (1)
 #endif
 #else // Since its an else & not an elif these platforms probably aren't supported yet
 #define RETRO_USING_SDL1 (0)
+#define RETRO_USING_SDL1_AUDIO (0)
 #define RETRO_USING_SDL2 (0)
 #endif
 
@@ -385,11 +395,13 @@ enum RetroBytecodeFormat {
 #include <theoraplay.h>
 #elif RETRO_PLATFORM == RETRO_3DS
 #include <platform/Timing.hpp>
+#include <SDL2/SDL.h>
 #include <tremor/ivorbisfile.h>
 #include <theora/theora.h>
 #include <theoraplay.h>
 #elif RETRO_PLATFORM == RETRO_3DSSIM
 #include <platform/Timing.hpp>
+#include <SDL2/SDL.h>
 #include <vorbis/vorbisfile.h>
 #include <theora/theora.h>
 #include <theoraplay.h>

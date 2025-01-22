@@ -376,12 +376,12 @@ void Gfx_PopMatrix(void)
 
 void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
-    Mtx_OrthoTilt(MtxStack_Cur(curMtxStack), left, right, bottom, top, zFar, zNear, false);
+    Mtx_OrthoTilt(MtxStack_Cur(curMtxStack), left, right, bottom, top, zFar, zNear, true);
 }
 
 void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
 {
-    Mtx_PerspStereoTilt(MtxStack_Cur(curMtxStack), fovy, aspect, near, far, iod, screen, false);
+    Mtx_PerspStereoTilt(MtxStack_Cur(curMtxStack), fovy, aspect, near, far, iod, screen, true);
 }
 
 void Gfx_Translate(float x, float y, float z)
