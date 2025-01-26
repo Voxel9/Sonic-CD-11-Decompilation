@@ -1,15 +1,21 @@
 #include "RetroEngine.hpp"
 #include <string>
 
+#if RETRO_PLATFORM == RETRO_3DS
+#include <platform/3DS/Video3DS.hpp>
+#endif
+
 int currentVideoFrame = 0;
 int videoFrameCount   = 0;
 int videoWidth        = 0;
 int videoHeight       = 0;
 float videoAR         = 0;
 
+#if RETRO_PLATFORM != RETRO_3DS
 THEORAPLAY_Decoder *videoDecoder;
 const THEORAPLAY_VideoFrame *videoVidData;
 THEORAPLAY_Io callbacks;
+#endif
 
 byte videoSurface = 0;
 int videoFilePos  = 0;
@@ -19,6 +25,7 @@ int vidBaseticks  = 0;
 
 bool videoSkipped = false;
 
+#if RETRO_PLATFORM != RETRO_3DS
 static long videoRead(THEORAPLAY_Io *io, void *buf, long buflen)
 {
     FileIO *file    = (FileIO *)io->userdata;
@@ -33,6 +40,7 @@ static void videoClose(THEORAPLAY_Io *io)
     FileIO *file = (FileIO *)io->userdata;
     fClose(file);
 }
+#endif
 
 void PlayVideoFile(char *filePath)
 {
@@ -94,6 +102,22 @@ void PlayVideoFile(char *filePath)
     }
 
     FileIO *file = fOpen(filepath, "rb");
+#if RETRO_PLATFORM == RETRO_3DS
+    if (file) {
+        CloseFile();
+
+        PlayVideo3DS(filepath);
+
+        videoPlaying = 1;
+        trackID      = TRACK_COUNT - 1;
+
+        videoSkipped = false;
+        Engine.gameMode = ENGINE_VIDEOWAIT;
+    }
+    else {
+        PrintLog("Couldn't find file '%s'!", filepath);
+    }
+#else
     if (file) {
         PrintLog("Loaded File '%s'!", filepath);
 
@@ -145,10 +169,16 @@ void PlayVideoFile(char *filePath)
     else {
         PrintLog("Couldn't find file '%s'!", filepath);
     }
+#endif
 }
 
 void UpdateVideoFrame()
 {
+#if RETRO_PLATFORM == RETRO_3DS
+    if (videodone) {
+         StopVideoPlayback();	
+    }
+#else
     if (videoPlaying == 2) {
         if (currentVideoFrame < videoFrameCount) {
             GFXSurface *surface = &gfxSurface[videoSurface];
@@ -200,6 +230,7 @@ void UpdateVideoFrame()
             CloseFile();
         }
     }
+#endif
 }
 
 int ProcessVideo()
@@ -218,14 +249,25 @@ int ProcessVideo()
             videoSkipped = true;
         }
 
+#if RETRO_PLATFORM == RETRO_3DS
+        if (videoSkipped || videodone) {
+            StopVideoPlayback();
+            ResumeSound();
+            return 1;
+        }
+#else
         if (!THEORAPLAY_isDecoding(videoDecoder) || (videoSkipped && fadeMode >= 0xFF)) {
             StopVideoPlayback();
             ResumeSound();
             return 1; // video finished
         }
+#endif
 
         // Don't pause or it'll go wild
         if (videoPlaying == 1) {
+#if RETRO_PLATFORM == RETRO_3DS
+            ProcessVideo3DS();
+#else
             THEORAPLAY_pumpDecode(videoDecoder, 5);
 
             const unsigned int now = (Time_GetTicks() - vidBaseticks);
@@ -277,7 +319,7 @@ int ProcessVideo()
                 THEORAPLAY_freeVideo(videoVidData);
                 videoVidData = NULL;
             }
-
+#endif
             return 2; // its playing as expected
         }
     }
@@ -287,6 +329,14 @@ int ProcessVideo()
 
 void StopVideoPlayback()
 {
+#if RETRO_PLATFORM == RETRO_3DS
+    if (videoPlaying == 1) {
+        CloseVideo3DS();
+        videoPlaying = 0;
+    }
+    if (Engine.gameMode != ENGINE_EXITGAME)
+        Engine.gameMode = ENGINE_MAINGAME;
+#else
     if (videoPlaying == 1) {
         // `videoPlaying` and `videoDecoder` are read by
         // the audio thread, so lock it to prevent a race
@@ -314,11 +364,12 @@ void StopVideoPlayback()
         SDL_UnlockAudio();
 #endif
     }
+#endif
 }
 
 void SetupVideoBuffer(int width, int height)
 {
-#if RETRO_USING_OPENGL
+#if RETRO_USING_OPENGL && RETRO_PLATFORM != RETRO_3DS
     if (videoBuffer) {
         Gfx_TextureDestroy(videoBuffer);
         videoBuffer = 0;
@@ -342,7 +393,7 @@ void SetupVideoBuffer(int width, int height)
 void CloseVideoBuffer()
 {
     if (videoPlaying == 1) {
-#if RETRO_USING_OPENGL
+#if RETRO_USING_OPENGL && RETRO_PLATFORM != RETRO_3DS
         if (videoBuffer) {
             Gfx_TextureDestroy(videoBuffer);
             videoBuffer = 0;

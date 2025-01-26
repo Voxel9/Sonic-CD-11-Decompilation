@@ -219,12 +219,6 @@ inline void ReleaseStageSfx()
     stageSFXCount = 0;
 }
 
-inline void ReleaseAudioDevice()
-{
-    StopMusic();
-    StopAllSfx();
-    ReleaseStageSfx();
-    ReleaseGlobalSfx();
-}
+void ReleaseAudioDevice();
 
 #endif // !AUDIO_H

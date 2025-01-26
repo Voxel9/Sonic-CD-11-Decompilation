@@ -1,5 +1,9 @@
 #include "RetroEngine.hpp"
 
+#if RETRO_PLATFORM == RETRO_3DS
+#include <platform/3DS/Video3DS.hpp>
+#endif
+
 // Workaround for a "bug" in Linux with AMD cards where the presented buffer
 // isn't cleared and displays corrupted memory in the letter/pillar boxes.
 //
@@ -258,8 +262,6 @@ int InitRenderDevice()
 
     Engine.useHQModes = false; // disabled
     Engine.borderless = false; // disabled
-#elif RETRO_USING_SDL2_AUDIO
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
 #endif
 
 #if RETRO_USING_OPENGL
@@ -925,6 +927,7 @@ void FlipScreenVideo()
 {
 #if RETRO_USING_OPENGL
     for (int i = 0; i < 4; ++i) {
+        screenVerts[i].z = 0.0f;
         screenVerts[i].u = retroScreenRect[i].u;
         screenVerts[i].v = retroScreenRect[i].v;
         screenVerts[i].colour.r = 0xFF;
@@ -933,6 +936,19 @@ void FlipScreenVideo()
         screenVerts[i].colour.a = 0xFF;
     }
 
+#if RETRO_PLATFORM == RETRO_3DS
+    screenVerts[0].x = -1.75f;
+    screenVerts[0].y = 1.0f;
+
+    screenVerts[1].x = -1.75f;
+    screenVerts[1].y = -2.25f;
+
+    screenVerts[2].x = 1.0f;
+    screenVerts[2].y = 1.0f;
+
+    screenVerts[3].x = 1.0f;
+    screenVerts[3].y = -2.25f;
+#else
     float best = minVal(viewWidth / (float)videoWidth, viewHeight / (float)videoHeight);
 
     float w = videoWidth * best;
@@ -946,25 +962,28 @@ void FlipScreenVideo()
 
     screenVerts[0].x = x;
     screenVerts[0].y = y;
-    screenVerts[0].z = 0.0f;
 
     screenVerts[1].x = w + x;
     screenVerts[1].y = y;
-    screenVerts[1].z = 0.0f;
 
     screenVerts[2].x = x;
     screenVerts[2].y = h + y;
-    screenVerts[2].z = 0.0f;
 
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
-    screenVerts[3].z = 0.0f;
+#endif
 
     Gfx_Clear();
 
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
+
+#if RETRO_PLATFORM == RETRO_3DS
+    BindVideoTex3DS();
+#else
     Gfx_TextureBind(videoBuffer);
+#endif
+
 #if DONT_USE_VIEW_ANGLE
     Gfx_Clear();
 #else

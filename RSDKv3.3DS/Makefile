@@ -14,10 +14,11 @@ BUILD		:=	build
 
 SRC_DIRS	:=	../RSDKv3 \
 				../RSDKv3/platform/3DS \
+				../RSDKv3/platform/3DS/theoraplayer \
 				../dependencies/all/theoraplay \
 				../dependencies/all/tinyxml2
 
-CFILES		:=	theoraplay.c
+CFILES		:=	
 
 CPPFILES	:=	Animation.cpp \
 				Audio.cpp \
@@ -45,6 +46,10 @@ CPPFILES	:=	Animation.cpp \
 				\
 				Graphics.cpp \
 				Timing.cpp \
+				Video3DS.cpp \
+				\
+				th_frame.cpp \
+				th_video.cpp \
 				\
 				tinyxml2.cpp
 
@@ -60,7 +65,7 @@ ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
 CFLAGS	:=	-g -O3 -fsigned-char -mword-relocations -ffunction-sections
 
-CFLAGS	+=	$(ARCH) $(INCLUDE) -D__3DS__
+CFLAGS	+=	$(ARCH) $(INCLUDE) -D__3DS__ -DARM_ASM_CLIP15
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
 

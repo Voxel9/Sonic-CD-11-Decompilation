@@ -48,6 +48,8 @@ int InitAudioPlayback()
 {
     StopAllSfx(); //"init"
 #if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+
     SDL_AudioSpec want;
     want.freq     = AUDIO_FREQUENCY;
     want.format   = AUDIO_FORMAT;
@@ -350,7 +352,7 @@ void ProcessAudioPlayback(void *userdata, unsigned char *stream, int len)
         // Mix music
         ProcessMusicStream(mix_buffer, samples_to_do * sizeof(short));
 
-#if RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL2_AUDIO && RETRO_PLATFORM != RETRO_3DS
         // Process music being played by a ogv video
         if (videoPlaying == 1) {
             // Fetch THEORAPLAY audio packets, and shove them into the SDL Audio Stream
@@ -772,4 +774,13 @@ void SetSfxAttributes(int sfx, int loopCount, sbyte pan)
     sfxInfo->pan          = pan;
     sfxInfo->sfxID        = sfx;
     UnlockAudioDevice();
+}
+void ReleaseAudioDevice()
+{
+    StopMusic();
+    StopAllSfx();
+    ReleaseStageSfx();
+    ReleaseGlobalSfx();
+
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
