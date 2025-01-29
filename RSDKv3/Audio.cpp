@@ -21,9 +21,8 @@ SFXInfo sfxList[SFX_COUNT];
 ChannelInfo sfxChannels[CHANNEL_COUNT];
 
 int currentStreamIndex = 0;
-StreamFile streamFile[STREAMFILE_COUNT];
 StreamInfo streamInfo[STREAMFILE_COUNT];
-StreamFile *streamFilePtr = NULL;
+TrackInfo* streamFilePtr = NULL;
 StreamInfo *streamInfoPtr = NULL;
 
 int currentMusicTrack = -1;
@@ -189,7 +188,7 @@ void LoadGlobalSfx()
 
 size_t readVorbis(void *mem, size_t size, size_t nmemb, void *ptr)
 {
-    StreamFile *file = (StreamFile *)ptr;
+    TrackInfo *file = (TrackInfo *)ptr;
 
     size_t n = size * nmemb;
     if (size * nmemb > file->fileSize - file->filePos)
@@ -203,7 +202,7 @@ size_t readVorbis(void *mem, size_t size, size_t nmemb, void *ptr)
 }
 int seekVorbis(void *ptr, ogg_int64_t offset, int whence)
 {
-    StreamFile *file = (StreamFile *)ptr;
+    TrackInfo *file = (TrackInfo *)ptr;
 
     switch (whence) {
         case SEEK_SET: whence = 0; break;
@@ -216,7 +215,7 @@ int seekVorbis(void *ptr, ogg_int64_t offset, int whence)
 }
 long tellVorbis(void *ptr)
 {
-    StreamFile *file = (StreamFile *)ptr;
+    TrackInfo *file = (TrackInfo *)ptr;
     return file->filePos;
 }
 int closeVorbis(void *ptr) { return 1; }
@@ -568,77 +567,95 @@ void SetSfxName(const char *sfxName, int sfxID, bool global)
 
 void LoadMusic()
 {
+    LockAudioDevice();
+
+    // Unload current track data if there is any
+    if (musicTracks[currentMusicTrack].fileSize > 0) {
+        if (musicTracks[currentMusicTrack].buffer)
+            free(musicTracks[currentMusicTrack].buffer);
+
+        musicTracks[currentMusicTrack].buffer = NULL;
+        musicTracks[currentMusicTrack].fileSize = 0;
+        musicTracks[currentMusicTrack].filePos = 0;
+    }
+
+    FileInfo info;
+    if (LoadFile(musicTracks[currentMusicTrack].fileName, &info)) {
+        TrackInfo *musFile                    = &musicTracks[currentMusicTrack];
+        musFile->filePos                      = 0;
+        musFile->fileSize                     = info.vFileSize;
+        musFile->buffer                       = (byte *)malloc(musFile->fileSize);
+
+        FileRead(musFile->buffer, musFile->fileSize);
+        CloseFile();
+    }
+
+    UnlockAudioDevice();
+}
+
+void ChangeMusic()
+{
     currentStreamIndex++;
     currentStreamIndex %= STREAMFILE_COUNT;
 
     LockAudioDevice();
 
-    if (streamFile[currentStreamIndex].fileSize > 0)
+    if (musicTracks[currentMusicTrack].fileSize > 0)
         FreeMusInfo();
 
-    FileInfo info;
-    if (LoadFile(musicTracks[currentMusicTrack].fileName, &info)) {
-        StreamInfo *strmInfo = &streamInfo[currentStreamIndex];
+    StreamInfo *strmInfo = &streamInfo[currentStreamIndex];
+    TrackInfo *musFile = &musicTracks[currentMusicTrack];
 
-        StreamFile *musFile                   = &streamFile[currentStreamIndex];
-        musFile->filePos                      = 0;
-        musFile->fileSize                     = info.vFileSize;
-        streamFile[currentStreamIndex].buffer = (byte *)malloc(musFile->fileSize);
+    // Reset to the beginning of the track
+    musFile->filePos = 0;
 
-        FileRead(streamFile[currentStreamIndex].buffer, musFile->fileSize);
-        CloseFile();
+    ov_callbacks callbacks;
 
-        ov_callbacks callbacks;
+    callbacks.read_func  = readVorbis;
+    callbacks.seek_func  = seekVorbis;
+    callbacks.tell_func  = tellVorbis;
+    callbacks.close_func = closeVorbis;
 
-        callbacks.read_func  = readVorbis;
-        callbacks.seek_func  = seekVorbis;
-        callbacks.tell_func  = tellVorbis;
-        callbacks.close_func = closeVorbis;
-
-        int error = ov_open_callbacks(musFile, &strmInfo->vorbisFile, NULL, 0, callbacks);
-        if (error == 0) {
-            strmInfo->vorbBitstream = -1;
-            strmInfo->vorbisFile.vi = ov_info(&strmInfo->vorbisFile, -1);
+    int error = ov_open_callbacks(musFile, &strmInfo->vorbisFile, NULL, 0, callbacks);
+    if (error == 0) {
+        strmInfo->vorbBitstream = -1;
+        strmInfo->vorbisFile.vi = ov_info(&strmInfo->vorbisFile, -1);
 
 #if RETRO_USING_SDL2_AUDIO
-            strmInfo->stream = SDL_NewAudioStream(AUDIO_S16, strmInfo->vorbisFile.vi->channels, (int)strmInfo->vorbisFile.vi->rate,
-                                                  audioDeviceFormat.format, audioDeviceFormat.channels, audioDeviceFormat.freq);
-            if (!strmInfo->stream) {
-                PrintLog("Failed to create stream: %s", SDL_GetError());
-            }
+        strmInfo->stream = SDL_NewAudioStream(AUDIO_S16, strmInfo->vorbisFile.vi->channels, (int)strmInfo->vorbisFile.vi->rate,
+                                                audioDeviceFormat.format, audioDeviceFormat.channels, audioDeviceFormat.freq);
+        if (!strmInfo->stream) {
+            PrintLog("Failed to create stream: %s", SDL_GetError());
+        }
 #endif
 
 #if RETRO_USING_SDL1_AUDIO
-            strmInfo->spec.format   = AUDIO_S16;
-            strmInfo->spec.channels = strmInfo->vorbisFile.vi->channels;
-            strmInfo->spec.freq     = (int)strmInfo->vorbisFile.vi->rate;
+        strmInfo->spec.format   = AUDIO_S16;
+        strmInfo->spec.channels = strmInfo->vorbisFile.vi->channels;
+        strmInfo->spec.freq     = (int)strmInfo->vorbisFile.vi->rate;
 #endif
 
-            musicStatus         = MUSIC_PLAYING;
-            masterVolume        = MAX_VOLUME;
-            trackID             = currentMusicTrack;
-            strmInfo->trackLoop = musicTracks[currentMusicTrack].trackLoop;
-            strmInfo->loopPoint = musicTracks[currentMusicTrack].loopPoint;
-            strmInfo->loaded    = true;
-            streamFilePtr       = &streamFile[currentStreamIndex];
-            streamInfoPtr       = &streamInfo[currentStreamIndex];
-            currentMusicTrack   = -1;
-        }
-        else {
-            musicStatus = MUSIC_STOPPED;
-            PrintLog("Failed to load vorbis! error: %d", error);
-            switch (error) {
-                default: PrintLog("Vorbis open error: Unknown (%d)", error); break;
-                case OV_EREAD: PrintLog("Vorbis open error: A read from media returned an error"); break;
-                case OV_ENOTVORBIS: PrintLog("Vorbis open error: Bitstream does not contain any Vorbis data"); break;
-                case OV_EVERSION: PrintLog("Vorbis open error: Vorbis version mismatch"); break;
-                case OV_EBADHEADER: PrintLog("Vorbis open error: Invalid Vorbis bitstream header"); break;
-                case OV_EFAULT: PrintLog("Vorbis open error: Internal logic fault; indicates a bug or heap / stack corruption"); break;
-            }
-        }
+        musicStatus         = MUSIC_PLAYING;
+        masterVolume        = MAX_VOLUME;
+        trackID             = currentMusicTrack;
+        strmInfo->trackLoop = musicTracks[currentMusicTrack].trackLoop;
+        strmInfo->loopPoint = musicTracks[currentMusicTrack].loopPoint;
+        strmInfo->loaded    = true;
+        streamFilePtr       = &musicTracks[currentMusicTrack];
+        streamInfoPtr       = &streamInfo[currentStreamIndex];
+        currentMusicTrack   = -1;
     }
     else {
         musicStatus = MUSIC_STOPPED;
+        PrintLog("Failed to load vorbis! error: %d", error);
+        switch (error) {
+            default: PrintLog("Vorbis open error: Unknown (%d)", error); break;
+            case OV_EREAD: PrintLog("Vorbis open error: A read from media returned an error"); break;
+            case OV_ENOTVORBIS: PrintLog("Vorbis open error: Bitstream does not contain any Vorbis data"); break;
+            case OV_EVERSION: PrintLog("Vorbis open error: Vorbis version mismatch"); break;
+            case OV_EBADHEADER: PrintLog("Vorbis open error: Invalid Vorbis bitstream header"); break;
+            case OV_EFAULT: PrintLog("Vorbis open error: Internal logic fault; indicates a bug or heap / stack corruption"); break;
+        }
     }
     UnlockAudioDevice();
 }
@@ -652,6 +669,10 @@ void SetMusicTrack(char *filePath, byte trackID, bool loop, uint loopPoint)
     track->trackLoop = loop;
     track->loopPoint = loopPoint;
     UnlockAudioDevice();
+
+    // Preload the music for this track
+    currentMusicTrack = trackID;
+    LoadMusic();
 }
 bool PlayMusic(int track)
 {
@@ -662,7 +683,7 @@ bool PlayMusic(int track)
         if (musicStatus != MUSIC_LOADING) {
             currentMusicTrack = track;
             musicStatus       = MUSIC_LOADING;
-            LoadMusic();
+            ChangeMusic();
             return true;
         }
         else {
