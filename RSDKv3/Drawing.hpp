@@ -115,7 +115,6 @@ extern GfxTexture* gfxTextureID[HW_TEXTURE_COUNT];
 extern GfxRenderTarget* framebufferHW;
 extern GfxTexture* renderbufferHW;
 extern GfxTexture* retroBuffer;
-extern GfxTexture* retroBuffer2x;
 extern GfxTexture* videoBuffer;
 #endif
 
@@ -143,7 +142,6 @@ inline void ClearGraphicsData()
 void ClearScreen(byte index);
 
 void SetScreenSize(int width, int lineSize);
-void CopyFrameOverlay2x();
 void TransferRetroBuffer();
 
 inline bool CheckSurfaceSize(int size)
@@ -179,7 +177,6 @@ void Draw3DSkyLayer(int layerID);
 
 // Shape Drawing
 void DrawRectangle(int XPos, int YPos, int width, int height, int R, int G, int B, int A);
-void SetFadeHQ(int R, int G, int B, int A);
 void DrawTintRectangle(int XPos, int YPos, int width, int height);
 void DrawScaledTintMask(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY,
                         int sheetID);

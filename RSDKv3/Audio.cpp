@@ -28,7 +28,7 @@ StreamInfo *streamInfoPtr = NULL;
 
 int currentMusicTrack = -1;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
 SDL_AudioSpec audioDeviceFormat;
 
 #if RETRO_USING_SDL2_AUDIO
@@ -47,7 +47,7 @@ SDL_AudioStream *ogv_stream;
 int InitAudioPlayback()
 {
     StopAllSfx(); //"init"
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
     SDL_InitSubSystem(SDL_INIT_AUDIO);
 
     SDL_AudioSpec want;
@@ -86,7 +86,7 @@ int InitAudioPlayback()
         audioEnabled = false;
         return true; // no audio but game wont crash now
     }
-#elif RETRO_USING_SDL1
+#elif RETRO_USING_SDL1_AUDIO
     if (SDL_OpenAudio(&want, &audioDeviceFormat) == 0) {
         audioEnabled = true;
         SDL_PauseAudio(0);
@@ -96,7 +96,7 @@ int InitAudioPlayback()
         audioEnabled = false;
         return true; // no audio but game wont crash now
     }
-#endif // !RETRO_USING_SDL1
+#endif // !RETRO_USING_SDL1_AUDIO
 
 #endif
 
@@ -267,16 +267,20 @@ void ProcessMusicStream(int *stream, size_t bytes_wanted)
                 ProcessAudioMixing(stream, streamInfoPtr->buffer, bytes_done / sizeof(Sint16), (bgmVolume * masterVolume) / MAX_VOLUME, 0);
 #endif
 
-#if RETRO_USING_SDL1
+#if RETRO_USING_SDL1_AUDIO
             size_t bytes_gotten = 0;
             byte *buffer        = (byte *)malloc(bytes_wanted);
             memset(buffer, 0, bytes_wanted);
             while (bytes_gotten < bytes_wanted) {
                 // We need more samples: get some
-                long bytes_read = ov_read(&streamInfoPtr->vorbisFile, (char *)streamInfoPtr->buffer,
-                                          sizeof(streamInfoPtr->buffer) > (bytes_wanted - bytes_gotten) ? (bytes_wanted - bytes_gotten)
-                                                                                                        : sizeof(streamInfoPtr->buffer),
-                                          0, 2, 1, &streamInfoPtr->vorbBitstream);
+                long bytes_read = ov_read(
+                    &streamInfoPtr->vorbisFile,
+                    (char *)streamInfoPtr->buffer,
+                    sizeof(streamInfoPtr->buffer) > (bytes_wanted - bytes_gotten) ? (bytes_wanted - bytes_gotten) : sizeof(streamInfoPtr->buffer),
+#if RETRO_PLATFORM != RETRO_3DS
+                    0, 2, 1,
+#endif
+                    &streamInfoPtr->vorbBitstream);
 
                 if (bytes_read == 0) {
                     // We've reached the end of the file
@@ -385,7 +389,7 @@ void ProcessAudioPlayback(void *userdata, unsigned char *stream, int len)
         }
 #endif
 
-#if RETRO_USING_SDL1
+#if RETRO_USING_SDL1_AUDIO
         // Process music being played by a video
         // TODO: SDL1.2 lacks SDL_AudioStream so until someone finds good way to replicate that, I'm gonna leave this commented out
         /*if (videoPlaying) {
@@ -473,7 +477,7 @@ void ProcessAudioPlayback(void *userdata, unsigned char *stream, int len)
                     }
                 }
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
                 ProcessAudioMixing(mix_buffer, buffer, (int)samples_done, sfxVolume, sfx->pan);
 #endif
             }
@@ -604,7 +608,7 @@ void LoadMusic()
             }
 #endif
 
-#if RETRO_USING_SDL1
+#if RETRO_USING_SDL1_AUDIO
             strmInfo->spec.format   = AUDIO_S16;
             strmInfo->spec.channels = strmInfo->vorbisFile.vi->channels;
             strmInfo->spec.freq     = (int)strmInfo->vorbisFile.vi->rate;
@@ -688,7 +692,7 @@ void LoadSfx(char *filePath, byte sfxID)
         CloseFile();
 
         LockAudioDevice();
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
         SDL_RWops *src = SDL_RWFromMem(sfx, info.vFileSize);
         if (src == NULL) {
             PrintLog("Unable to open sfx: %s", info.fileName);

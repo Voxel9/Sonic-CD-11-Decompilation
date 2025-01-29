@@ -117,12 +117,12 @@ typedef struct GfxTexture {
     GLuint texID;
 } GfxTexture;
 
-GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1)
+GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1, bool isVRAM)
 {
     GfxTexture *ret = (GfxTexture*)malloc(sizeof(GfxTexture));
     ret->width = width;
     ret->height = height;
-    ret->type = isRGB5A1 ? GL_UNSIGNED_SHORT_5_5_5_1 : GL_UNSIGNED_BYTE;
+    ret->type = isRGB5A1 ? GL_UNSIGNED_SHORT_5_5_5_1 : GL_UNSIGNED_INT_8_8_8_8;
 
     glGenTextures(1, &ret->texID);
     glBindTexture(GL_TEXTURE_2D, ret->texID);

@@ -30,7 +30,7 @@ void Gfx_SetVertexBufs(int stride, void* verts);
 void Gfx_DrawElements(int count, void* indices);
 
 // Texture functions
-GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1);
+GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1, bool isVRAM);
 void Gfx_TextureBind(GfxTexture* tex);
 void Gfx_TextureUpload(GfxTexture* tex, void* pixels);
 void Gfx_TextureSetFilter(GfxTexture* tex, bool isLinear);

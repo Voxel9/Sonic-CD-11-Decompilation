@@ -7,6 +7,13 @@ static struct timeval start;
 
 void Time_StartTicks()
 {
+    bool isN3DS = false;
+    APT_CheckNew3DS(&isN3DS);
+
+	if(isN3DS) {
+        osSetSpeedupEnable(true);
+    }
+
     gettimeofday(&start, NULL);
 }
 

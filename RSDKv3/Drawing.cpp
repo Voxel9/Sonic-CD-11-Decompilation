@@ -85,7 +85,6 @@ GfxTexture* gfxTextureID[HW_TEXTURE_COUNT];
 GfxRenderTarget* framebufferHW = 0;
 GfxTexture* renderbufferHW = 0;
 GfxTexture* retroBuffer = 0;
-GfxTexture* retroBuffer2x = 0;
 GfxTexture* videoBuffer = 0;
 #endif
 DrawVertex* screenRect;
@@ -100,6 +99,19 @@ bool disableEnhancedScaling = false;
 // enable bilinear scaling, which just disables the fancy upscaling that enhanced scaling does.
 bool bilinearScaling = false;
 #endif
+
+static inline unsigned int ceilPowerOfTwo(unsigned int x) {
+    if (x == 0) return 1; // Edge case: return 1 for zero input
+
+    x--;  // Handle exact powers of two correctly
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    
+    return x + 1;
+}
 
 int InitRenderDevice()
 {
@@ -311,12 +323,12 @@ int InitRenderDevice()
     Gfx_Scale(1.0 / HW_TEXTURE_SIZE, 1.0 / HW_TEXTURE_SIZE, 1.0f);
 
     for (int i = 0; i < HW_TEXTURE_COUNT; i++) {
-        gfxTextureID[i] = Gfx_TextureCreate(HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, true);
+        gfxTextureID[i] = Gfx_TextureCreate(HW_TEXTURE_SIZE, HW_TEXTURE_SIZE, true, false);
         Gfx_TextureUpload(gfxTextureID[i], texBuffer);
         Gfx_TextureSetFilter(gfxTextureID[i], false);
     }
 
-    renderbufferHW = Gfx_TextureCreate(256, 512, true);
+    renderbufferHW = Gfx_TextureCreate(256, 512, true, true);
     Gfx_TextureSetFilter(renderbufferHW, Engine.scalingMode ? true : false);
 
     framebufferHW = Gfx_RenderTargetCreateFromTexture(renderbufferHW);
@@ -330,17 +342,14 @@ int InitRenderDevice()
 
     Gfx_Clear();
 
-    retroBuffer = Gfx_TextureCreate(SCREEN_XSIZE, SCREEN_YSIZE, false);
+    retroBuffer = Gfx_TextureCreate(ceilPowerOfTwo(SCREEN_XSIZE), ceilPowerOfTwo(SCREEN_YSIZE), false, false);
     Gfx_TextureSetFilter(retroBuffer, Engine.scalingMode ? true : false);
-
-    retroBuffer2x = Gfx_TextureCreate(SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, false);
-    Gfx_TextureSetFilter(retroBuffer2x, Engine.scalingMode ? true : false);
 
     for (int c = 0; c < 0x10000; ++c) {
         int r               = (c & 0b1111100000000000) >> 8;
         int g               = (c & 0b0000011111100000) >> 3;
         int b               = (c & 0b0000000000011111) << 3;
-        gfxPalette16to32[c] = (0xFF << 24) | (b << 16) | (g << 8) | (r << 0);
+        gfxPalette16to32[c] = (r << 24) | (g << 16) | (b << 8) | (0xFF << 0);
     }
     SetScreenDimensions(SCREEN_XSIZE, SCREEN_YSIZE, SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale);
 #endif
@@ -366,16 +375,10 @@ int InitRenderDevice()
     if (renderType == RENDER_SW) {
         Engine.frameBuffer   = new ushort[GFX_LINESIZE * SCREEN_YSIZE];
         memset(Engine.frameBuffer, 0, (GFX_LINESIZE * SCREEN_YSIZE) * sizeof(ushort));
-        if (Engine.useHQModes) {
-            Engine.frameBuffer2x = new ushort[GFX_LINESIZE_DOUBLE * (SCREEN_YSIZE * 2)];
-            memset(Engine.frameBuffer2x, 0, GFX_LINESIZE_DOUBLE * (SCREEN_YSIZE * 2) * sizeof(ushort));
-        }
         
 #if RETRO_USING_OPENGL
-        Engine.texBuffer   = new uint[SCREEN_XSIZE * SCREEN_YSIZE];
-        Engine.texBuffer2x = new uint[(SCREEN_XSIZE * 2) * (SCREEN_YSIZE * 2)];
-        memset(Engine.texBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint));
-        memset(Engine.texBuffer2x, 0, (SCREEN_XSIZE * 2) * (SCREEN_YSIZE * 2) * sizeof(uint));
+        Engine.texBuffer   = new uint[ceilPowerOfTwo(SCREEN_XSIZE) * SCREEN_YSIZE];
+        memset(Engine.texBuffer, 0, (ceilPowerOfTwo(SCREEN_XSIZE) * SCREEN_YSIZE) * sizeof(uint));
 #endif
     }
 
@@ -396,7 +399,7 @@ void FlipScreen()
 
 #if !RETRO_USE_ORIGINAL_CODE
     float dimAmount = 1.0;
-    if ((!Engine.masterPaused || Engine.frameStep) && !drawStageGFXHQ) {
+    if (!Engine.masterPaused || Engine.frameStep) {
         if (Engine.dimTimer < Engine.dimLimit) {
             if (Engine.dimPercent < 1.0) {
                 Engine.dimPercent += 0.05;
@@ -451,12 +454,6 @@ void FlipScreen()
             bool cond2 = std::round((Engine.windowYSize / screenysize) * 24) / 24 == std::floor(Engine.windowYSize / screenysize);
             if (cond1 || cond2)
                 disableEnhancedScaling = true;
-        }
-
-        // get 2x resolution if HQ is enabled.
-        if (drawStageGFXHQ) {
-            screenxsize *= 2;
-            screenysize *= 2;
         }
 
         if ((Engine.scalingMode != 0 && !disableEnhancedScaling) && Engine.gameMode != ENGINE_VIDEOWAIT) {
@@ -521,43 +518,8 @@ void FlipScreen()
 
         ushort *pixels = NULL;
         if (Engine.gameMode != ENGINE_VIDEOWAIT) {
-            if (!drawStageGFXHQ) {
-                SDL_UpdateTexture(Engine.screenBuffer, NULL, (void *)Engine.frameBuffer, GFX_LINESIZE * sizeof(ushort));
-                SDL_RenderCopy(Engine.renderer, Engine.screenBuffer, NULL, destScreenPos);
-            }
-            else {
-                int w = 0, h = 0;
-                SDL_QueryTexture(Engine.screenBuffer2x, NULL, NULL, &w, &h);
-                SDL_LockTexture(Engine.screenBuffer2x, NULL, (void **)&pixels, &pitch);
-
-                // Width of the SDL texture in 16bit pixels
-                const int lineWidth = pitch / sizeof(ushort);
-
-                // 2x nearest neighbor scaling of the upper lines
-                ushort *framebufferPtr = Engine.frameBuffer;
-                for (int y = 0; y < (SCREEN_YSIZE / 2) + 12; ++y) {
-                    for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                        *pixels = *framebufferPtr;
-                        *(pixels + 1) = *framebufferPtr;
-                        *(pixels + lineWidth) = *framebufferPtr;
-                        *(pixels + lineWidth + 1) = *framebufferPtr;
-                        pixels += 2;
-                        framebufferPtr++;
-                    }
-                    framebufferPtr += GFX_LINESIZE - SCREEN_XSIZE;
-                    pixels += lineWidth;
-                }
-
-                // Simple copy of the lower lines from the pre-scaled framebuffer
-                framebufferPtr = Engine.frameBuffer2x;
-                for (int y = 0; y < ((SCREEN_YSIZE / 2) - 12) * 2; ++y) {
-                    memcpy(pixels, framebufferPtr, (SCREEN_XSIZE * 2) * sizeof(ushort));
-                    framebufferPtr += GFX_LINESIZE_DOUBLE;
-                    pixels += lineWidth;
-                }
-                SDL_UnlockTexture(Engine.screenBuffer2x);
-                SDL_RenderCopy(Engine.renderer, Engine.screenBuffer2x, NULL, destScreenPos);
-            }
+            SDL_UpdateTexture(Engine.screenBuffer, NULL, (void *)Engine.frameBuffer, GFX_LINESIZE * sizeof(ushort));
+            SDL_RenderCopy(Engine.renderer, Engine.screenBuffer, NULL, destScreenPos);
         }
         else {
             SDL_RenderCopy(Engine.renderer, Engine.videoBuffer, NULL, destScreenPos);
@@ -670,6 +632,7 @@ void FlipScreenFB()
     if (render3DEnabled) {
         float floor3DTop    = 2.0;
         float floor3DBottom = SCREEN_YSIZE + 4.0;
+        float aspect        = SCREEN_XSIZE / SCREEN_YSIZE;
 
         // Non Blended rendering
         Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
@@ -680,7 +643,7 @@ void FlipScreenFB()
         Gfx_SetViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
         Gfx_PushMatrix();
         Gfx_LoadIdentity();
-        Gfx_PerspStereo(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
+        Gfx_PerspStereo(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
         Gfx_RotateZ(-90.0);
 
         Gfx_MatrixMode(MTX_MODE_MODELVIEW);
@@ -736,6 +699,7 @@ void FlipScreenNoFB()
         float scale         = viewHeight / SCREEN_YSIZE;
         float floor3DTop    = -2.0 * scale;
         float floor3DBottom = (viewHeight)-4.0 * scale;
+        float aspect        = SCREEN_XSIZE / SCREEN_YSIZE;
 
         // Non Blended rendering
         Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
@@ -746,7 +710,7 @@ void FlipScreenNoFB()
         Gfx_SetViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
         Gfx_PushMatrix();
         Gfx_LoadIdentity();
-        Gfx_PerspStereo(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
+        Gfx_PerspStereo(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
 
         Gfx_MatrixMode(MTX_MODE_MODELVIEW);
         Gfx_LoadIdentity();
@@ -840,6 +804,7 @@ void RenderFromTexture()
 #endif
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
+    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
     Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
     Gfx_SetVertexBufs(sizeof(DrawVertex), screenRect);
     Gfx_SetBlend(false);
@@ -850,56 +815,10 @@ void RenderFromTexture()
 void RenderFromRetroBuffer()
 {
 #if RETRO_USING_OPENGL
-    if (drawStageGFXHQ) {
-        Gfx_TextureBind(retroBuffer2x);
-
-        uint *texBufferPtr     = Engine.texBuffer2x;
-        ushort *framebufferPtr = Engine.frameBuffer;
-        for (int y = 0; y < (SCREEN_YSIZE / 2) + 12; ++y) {
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                framebufferPtr++;
-            }
-            framebufferPtr += GFX_LINESIZE - SCREEN_XSIZE;
-
-            framebufferPtr -= GFX_LINESIZE;
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                texBufferPtr++;
-
-                framebufferPtr++;
-            }
-            framebufferPtr += GFX_LINESIZE - SCREEN_XSIZE;
-        }
-
-        framebufferPtr = Engine.frameBuffer2x;
-        for (int y = 0; y < ((SCREEN_YSIZE / 2) - 12) * 2; ++y) {
-            for (int x = 0; x < SCREEN_XSIZE; ++x) {
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                framebufferPtr++;
-                texBufferPtr++;
-
-                *texBufferPtr = gfxPalette16to32[*framebufferPtr];
-                framebufferPtr++;
-                texBufferPtr++;
-            }
-            framebufferPtr += 2 * (GFX_LINESIZE - SCREEN_XSIZE);
-        }
-
-        Gfx_TextureUpload(retroBuffer2x, Engine.texBuffer2x);
-    }
-
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_TextureBind(drawStageGFXHQ ? retroBuffer2x : retroBuffer);
+    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    Gfx_TextureBind(retroBuffer);
 #if DONT_USE_VIEW_ANGLE
     Gfx_Clear();
 #else
@@ -937,17 +856,17 @@ void FlipScreenVideo()
     }
 
 #if RETRO_PLATFORM == RETRO_3DS
-    screenVerts[0].x = -1.75f;
-    screenVerts[0].y = 1.0f;
+    screenVerts[0].y = -1.875f;
+    screenVerts[0].x = -1.0f;
 
-    screenVerts[1].x = -1.75f;
-    screenVerts[1].y = -2.25f;
+    screenVerts[1].y = -1.875f;
+    screenVerts[1].x = 1.5625f;
 
-    screenVerts[2].x = 1.0f;
     screenVerts[2].y = 1.0f;
+    screenVerts[2].x = -1.0f;
 
-    screenVerts[3].x = 1.0f;
-    screenVerts[3].y = -2.25f;
+    screenVerts[3].y = 1.0f;
+    screenVerts[3].x = 1.5625f;
 #else
     float best = minVal(viewWidth / (float)videoWidth, viewHeight / (float)videoHeight);
 
@@ -977,6 +896,7 @@ void FlipScreenVideo()
 
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
+    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 
 #if RETRO_PLATFORM == RETRO_3DS
     BindVideoTex3DS();
@@ -1009,14 +929,10 @@ void ReleaseRenderDevice()
 {
     if (Engine.frameBuffer)
         delete[] Engine.frameBuffer;
-    if (Engine.frameBuffer2x)
-        delete[] Engine.frameBuffer2x;
 
 #if RETRO_USING_OPENGL
     if (Engine.texBuffer)
         delete[] Engine.texBuffer;
-    if (Engine.texBuffer2x)
-        delete[] Engine.texBuffer2x;
 #endif
 
     if (renderType == RENDER_SW) {
@@ -1218,40 +1134,6 @@ void SetScreenSize(int width, int lineSize)
     GFX_FBUFFERMINUSONE   = SCREEN_YSIZE * lineSize - 1;
 }
 
-void CopyFrameOverlay2x()
-{
-    ushort *frameBuffer   = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-    ushort *frameBuffer2x = Engine.frameBuffer2x;
-
-    for (int y = 0; y < (SCREEN_YSIZE / 2) - 12; ++y) {
-        for (int x = 0; x < GFX_LINESIZE; ++x) {
-            if (*frameBuffer == 0xF81F) { // magenta
-                frameBuffer2x += 2;
-            }
-            else {
-                *frameBuffer2x = *frameBuffer;
-                frameBuffer2x++;
-                *frameBuffer2x = *frameBuffer;
-                frameBuffer2x++;
-            }
-            ++frameBuffer;
-        }
-
-        frameBuffer -= GFX_LINESIZE;
-        for (int x = 0; x < GFX_LINESIZE; ++x) {
-            if (*frameBuffer == 0xF81F) { // magenta
-                frameBuffer2x += 2;
-            }
-            else {
-                *frameBuffer2x = *frameBuffer;
-                frameBuffer2x++;
-                *frameBuffer2x = *frameBuffer;
-                frameBuffer2x++;
-            }
-            ++frameBuffer;
-        }
-    }
-}
 void TransferRetroBuffer()
 {
 #if RETRO_USING_OPENGL
@@ -1264,7 +1146,7 @@ void TransferRetroBuffer()
             texBufferPtr[x] = gfxPalette16to32[frameBufferPtr[x]];
         }
 
-        texBufferPtr += SCREEN_XSIZE;
+        texBufferPtr += ceilPowerOfTwo(SCREEN_XSIZE);
         frameBufferPtr += GFX_LINESIZE;
     }
 
@@ -1324,9 +1206,6 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     if (retroBuffer)
         Gfx_TextureDestroy(retroBuffer);
 
-    if (retroBuffer2x)
-        Gfx_TextureDestroy(retroBuffer2x);
-
     // Setup framebuffer texture
 
     int bufferW = 0;
@@ -1343,7 +1222,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     } while (val < SCREEN_YSIZE);
     bufferH--;
 
-    renderbufferHW = Gfx_TextureCreate(1 << bufferH, 1 << bufferW, true);
+    renderbufferHW = Gfx_TextureCreate(1 << bufferH, 1 << bufferW, true, true);
     Gfx_TextureSetFilter(renderbufferHW, Engine.scalingMode ? true : false);
 
     framebufferHW = Gfx_RenderTargetCreateFromTexture(renderbufferHW);
@@ -1353,11 +1232,8 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     Gfx_RenderTargetBind(nullptr);
 
-    retroBuffer = Gfx_TextureCreate(SCREEN_XSIZE, SCREEN_YSIZE, false);
+    retroBuffer = Gfx_TextureCreate(ceilPowerOfTwo(SCREEN_XSIZE), ceilPowerOfTwo(SCREEN_YSIZE), false, false);
     Gfx_TextureSetFilter(retroBuffer, Engine.scalingMode ? true : false);
-
-    retroBuffer2x = Gfx_TextureCreate(SCREEN_XSIZE * 2, SCREEN_YSIZE * 2, false);
-    Gfx_TextureSetFilter(retroBuffer2x, Engine.scalingMode ? true : false);
 #endif
 
     screenRect[0].x = -1;
@@ -1409,7 +1285,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     retroScreenRect[1].x = 1;
     retroScreenRect[1].y = 1;
-    retroScreenRect[1].u = HW_TEXTURE_SIZE;
+    retroScreenRect[1].u = HW_TEXTURE_SIZE - 224;
     retroScreenRect[1].v = 0;
     retroScreenRect[1].colour.r = 0xFF;
     retroScreenRect[1].colour.g = 0xFF;
@@ -1419,7 +1295,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     retroScreenRect[2].x = -1;
     retroScreenRect[2].y = -1;
     retroScreenRect[2].u = 0;
-    retroScreenRect[2].v = HW_TEXTURE_SIZE;
+    retroScreenRect[2].v = HW_TEXTURE_SIZE - 64;
     retroScreenRect[2].colour.r = 0xFF;
     retroScreenRect[2].colour.g = 0xFF;
     retroScreenRect[2].colour.b = 0xFF;
@@ -1427,8 +1303,8 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     retroScreenRect[3].x = 1;
     retroScreenRect[3].y = -1;
-    retroScreenRect[3].u = HW_TEXTURE_SIZE;
-    retroScreenRect[3].v = HW_TEXTURE_SIZE;
+    retroScreenRect[3].u = HW_TEXTURE_SIZE - 224;
+    retroScreenRect[3].v = HW_TEXTURE_SIZE - 64;
     retroScreenRect[3].colour.r = 0xFF;
     retroScreenRect[3].colour.g = 0xFF;
     retroScreenRect[3].colour.b = 0xFF;
@@ -1856,12 +1732,9 @@ void DrawStageGFX()
             case LAYER_HSCROLL: DrawHLineScrollLayer(0); break;
             case LAYER_VSCROLL: DrawVLineScrollLayer(0); break;
             case LAYER_3DFLOOR:
-                drawStageGFXHQ = false;
                 Draw3DFloorLayer(0);
                 break;
             case LAYER_3DSKY:
-                if (Engine.useHQModes)
-                    drawStageGFXHQ = true;
                 if (renderType == RENDER_SW)
                     Draw3DSkyLayer(0);
                 else
@@ -1882,12 +1755,9 @@ void DrawStageGFX()
             case LAYER_HSCROLL: DrawHLineScrollLayer(1); break;
             case LAYER_VSCROLL: DrawVLineScrollLayer(1); break;
             case LAYER_3DFLOOR:
-                drawStageGFXHQ = false;
                 Draw3DFloorLayer(1);
                 break;
             case LAYER_3DSKY:
-                if (Engine.useHQModes)
-                    drawStageGFXHQ = true;
                 if (renderType == RENDER_SW)
                     Draw3DSkyLayer(1);
                 else
@@ -1903,12 +1773,9 @@ void DrawStageGFX()
             case LAYER_HSCROLL: DrawHLineScrollLayer(2); break;
             case LAYER_VSCROLL: DrawVLineScrollLayer(2); break;
             case LAYER_3DFLOOR:
-                drawStageGFXHQ = false;
                 Draw3DFloorLayer(2);
                 break;
             case LAYER_3DSKY:
-                if (Engine.useHQModes)
-                    drawStageGFXHQ = true;
                 if (renderType == RENDER_SW)
                     Draw3DSkyLayer(2);
                 else
@@ -1925,12 +1792,9 @@ void DrawStageGFX()
             case LAYER_HSCROLL: DrawHLineScrollLayer(3); break;
             case LAYER_VSCROLL: DrawVLineScrollLayer(3); break;
             case LAYER_3DFLOOR:
-                drawStageGFXHQ = false;
                 Draw3DFloorLayer(3);
                 break;
             case LAYER_3DSKY:
-                if (Engine.useHQModes)
-                    drawStageGFXHQ = true;
                 if (renderType == RENDER_HW)
                     Draw3DSkyLayer(3);
                 else
@@ -1948,25 +1812,12 @@ void DrawStageGFX()
         DrawObjectList(7); // Extra Origins draw list (who knows why it comes before 6)
     DrawObjectList(6);
 
-#if !RETRO_USE_ORIGINAL_CODE
-    if (drawStageGFXHQ)
-        DrawDebugOverlays();
-#endif
-
-    if (drawStageGFXHQ && renderType == RENDER_SW) {
-        CopyFrameOverlay2x();
-        if (fadeMode > 0) {
-            DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, fadeR, fadeG, fadeB, fadeA);
-            SetFadeHQ(fadeR, fadeG, fadeB, fadeA);
-        }
-    }
-    else if (fadeMode > 0) {
+    if (fadeMode > 0) {
         DrawRectangle(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, fadeR, fadeG, fadeB, fadeA);
     }
 
 #if !RETRO_USE_ORIGINAL_CODE
-    if (!drawStageGFXHQ)
-        DrawDebugOverlays();
+    DrawDebugOverlays();
 #endif
 }
 
@@ -2050,10 +1901,6 @@ void DrawDebugOverlays()
             int y = (SCREEN_YSIZE - (0x10 << 2));
             for (int c = 0; c < PALETTE_SIZE; ++c) {
                 int g = fullPalette32[p][c].g;
-                // HQ mode overrides any magenta px, so slightly change the g channel since it has the most bits to make it "not quite magenta"
-                if (drawStageGFXHQ && fullPalette32[p][c].r == 0xFF && fullPalette32[p][c].g == 0x00 && fullPalette32[p][c].b == 0xFF)
-                    g += 8;
-
                 DrawRectangle(x + ((c & 0xF) << 1) + ((p % (PALETTE_COUNT / 2)) * (2 * 16)),
                               y + ((c >> 4) << 1) + ((p / (PALETTE_COUNT / 2)) * (2 * 16)), 2, 2, fullPalette32[p][c].r, g, fullPalette32[p][c].b,
                               0xFF);
@@ -4591,9 +4438,7 @@ void Draw3DSkyLayer(int layerID)
         int sinValue           = sinMLookupTable[layer->angle & 0x1FF];
         int cosValue           = cosMLookupTable[layer->angle & 0x1FF];
         ushort *frameBufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-        ushort *bufferPtr      = Engine.frameBuffer2x;
-        if (!drawStageGFXHQ)
-            bufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
+        ushort *bufferPtr      = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
         byte *gfxLineBufferPtr = &gfxLineBuffer[((SCREEN_YSIZE / 2) + 12)];
         int layerXPos          = layer->XPos >> 4;
         int layerZPos          = layer->ZPos >> 4;
@@ -4624,19 +4469,12 @@ void Draw3DSkyLayer(int layerID)
 
                     if (*tilePixel > 0)
                         *bufferPtr = activePalette[*tilePixel];
-                    else if (drawStageGFXHQ)
-                        *bufferPtr = *frameBufferPtr;
-                }
-                else if (drawStageGFXHQ) {
-                    *bufferPtr = *frameBufferPtr;
                 }
 
                 if (lineBuffer & 1)
                     ++frameBufferPtr;
 
-                if (drawStageGFXHQ)
-                    bufferPtr++;
-                else if (lineBuffer & 1)
+                if (lineBuffer & 1)
                     ++bufferPtr;
 
                 lineBuffer++;
@@ -4647,14 +4485,8 @@ void Draw3DSkyLayer(int layerID)
             if (!(i & 1))
                 frameBufferPtr -= GFX_LINESIZE;
 
-            if (!(i & 1) && !drawStageGFXHQ)
+            if (!(i & 1))
                 bufferPtr -= GFX_LINESIZE;
-        }
-
-        if (drawStageGFXHQ) {
-            frameBufferPtr = &Engine.frameBuffer[((SCREEN_YSIZE / 2) + 12) * GFX_LINESIZE];
-            int cnt        = ((SCREEN_YSIZE / 2) - 12) * GFX_LINESIZE;
-            while (cnt--) *frameBufferPtr++ = 0xF81F; // Magenta
         }
     }
 
@@ -4760,49 +4592,6 @@ void DrawRectangle(int XPos, int YPos, int width, int height, int R, int G, int 
             gfxIndexSize += 6;
         }
     }
-}
-
-void SetFadeHQ(int R, int G, int B, int A)
-{
-    if (A <= 0)
-        return;
-    if (A > 0xFF)
-        A = 0xFF;
-    if (renderType == RENDER_SW) {
-        int pitch              = GFX_LINESIZE_DOUBLE;
-        ushort *frameBufferPtr = Engine.frameBuffer2x;
-        ushort clr             = 0;
-        PACK_RGB888(clr, R, G, B);
-        if (A == 0xFF) {
-            int h = SCREEN_YSIZE;
-            while (h--) {
-                int w = pitch;
-                while (w--) {
-                    *frameBufferPtr = clr;
-                    ++frameBufferPtr;
-                }
-            }
-        }
-        else {
-            ushort *fbufferBlend = &blendLookupTable[0x20 * (0xFF - A)];
-            ushort *pixelBlend   = &blendLookupTable[0x20 * A];
-
-            int h = SCREEN_YSIZE;
-            while (h--) {
-                int w = pitch;
-                while (w--) {
-                    int R = (fbufferBlend[(*frameBufferPtr & 0xF800) >> 11] + pixelBlend[(clr & 0xF800) >> 11]) << 11;
-                    int G = (fbufferBlend[(*frameBufferPtr & 0x7E0) >> 6] + pixelBlend[(clr & 0x7E0) >> 6]) << 6;
-                    int B = fbufferBlend[*frameBufferPtr & 0x1F] + pixelBlend[clr & 0x1F];
-
-                    *frameBufferPtr = R | G | B;
-                    ++frameBufferPtr;
-                }
-            }
-        }
-    }
-
-    // Not Avaliable in HW mode
 }
 
 void DrawTintRectangle(int XPos, int YPos, int width, int height)

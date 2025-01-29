@@ -13,7 +13,7 @@
 #include "SDL.h"
 #endif
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL2_AUDIO
 
 #define LockAudioDevice()   SDL_LockAudio()
 #define UnlockAudioDevice() SDL_UnlockAudio()
@@ -43,7 +43,7 @@ struct TrackInfo {
 struct StreamInfo {
     OggVorbis_File vorbisFile;
     int vorbBitstream;
-#if RETRO_USING_SDL1
+#if RETRO_USING_SDL1_AUDIO
     SDL_AudioSpec spec;
 #endif
 #if RETRO_USING_SDL2_AUDIO
@@ -107,7 +107,7 @@ extern StreamInfo streamInfo[STREAMFILE_COUNT];
 extern StreamFile *streamFilePtr;
 extern StreamInfo *streamInfoPtr;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
 extern SDL_AudioSpec audioDeviceFormat;
 #endif
 

@@ -341,8 +341,8 @@ void StopVideoPlayback()
         // `videoPlaying` and `videoDecoder` are read by
         // the audio thread, so lock it to prevent a race
         // condition that results in invalid memory accesses.
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
-        SDL_LockAudio();
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
+        LockAudioDevice();
 #endif
 
         if (videoSkipped && fadeMode >= 0xFF)
@@ -360,8 +360,8 @@ void StopVideoPlayback()
         CloseVideoBuffer();
         videoPlaying = 0;
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO
-        SDL_UnlockAudio();
+#if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
+        UnlockAudioDevice();
 #endif
     }
 #endif
@@ -374,7 +374,7 @@ void SetupVideoBuffer(int width, int height)
         Gfx_TextureDestroy(videoBuffer);
         videoBuffer = 0;
     }
-    videoBuffer = Gfx_TextureCreate(width, height, false);
+    videoBuffer = Gfx_TextureCreate(width, height, false, false);
     Gfx_TextureUpload(videoBuffer, videoVidData->pixels);
     Gfx_TextureSetFilter(videoBuffer, true);
 #elif RETRO_USING_SDL1

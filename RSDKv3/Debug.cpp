@@ -7,7 +7,6 @@ void InitDevMenu()
 #if RETRO_USE_MOD_LOADER
     for (int m = 0; m < modList.size(); ++m) ScanModFolder(&modList[m]);
 #endif
-    drawStageGFXHQ = false;
     xScrollOffset  = 0;
     yScrollOffset  = 0;
     StopMusic();
@@ -68,7 +67,6 @@ void InitDevMenu()
 }
 void InitErrorMessage()
 {
-    drawStageGFXHQ = false;
     xScrollOffset  = 0;
     yScrollOffset  = 0;
     StopMusic();

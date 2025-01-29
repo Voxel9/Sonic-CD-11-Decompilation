@@ -15,7 +15,6 @@ BUILD		:=	build
 SRC_DIRS	:=	../RSDKv3 \
 				../RSDKv3/platform/3DS \
 				../RSDKv3/platform/3DS/theoraplayer \
-				../dependencies/all/theoraplay \
 				../dependencies/all/tinyxml2
 
 CFILES		:=	
@@ -72,7 +71,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
 ASFLAGS	:=	$(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:=	-lSDL2 -lSDL2main -ltheoradec -lvorbisidec -logg -lcitro3d -lctru -lm
+LIBS	:=	-lSDL -ltheoradec -lvorbisidec -logg -lcitro3d -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

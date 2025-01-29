@@ -45,10 +45,10 @@ CPPFILES	:=	Animation.cpp \
 #---------------------------------------------------------------------------------
 CFLAGS		:= -g -O3 -m32 -static -D_WIN32
 
-CXXFLAGS	:=	$(shell pkg-config --cflags --static vorbisfile vorbis theora glew glfw3 sdl2) \
+CXXFLAGS	:=	$(shell pkg-config --cflags --static vorbisfile vorbis theora glew glfw3 sdl) \
 				$(CFLAGS) -fno-rtti -fno-exceptions -std=c++17
 
-LIBS		:=	$(shell pkg-config --libs --static vorbisfile vorbis theora glew glfw3 sdl2) \
+LIBS		:=	$(shell pkg-config --libs --static vorbisfile vorbis theora glew glfw3 sdl) \
 				-lmingw32 -lopengl32 -lWinmm
 
 #---------------------------------------------------------------------------------

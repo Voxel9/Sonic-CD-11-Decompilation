@@ -15,8 +15,6 @@ extern const u32 vshader_shbin_size;
     GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGB5A1) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB565) | \
     GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
-static unsigned char swizzleTexBuffer[4 * 1024 * 1024];
-
 static C3D_RenderTarget* mainRT;
 
 static C3D_MtxStack mtxStacks[MAX_MTX_MODES];
@@ -171,57 +169,6 @@ typedef struct GfxTexture {
     bool isRGB5A1;
 } GfxTexture;
 
-constexpr size_t prevPowerOfTwo(size_t value)
-{
-    return value > 0 ? 1 << (31 - __builtin_clz(static_cast<unsigned>(value))) : 0;
-}
-
-constexpr bool isPowerOfTwo(size_t value)
-{
-    return value > 0 && (value & (value - 1)) == 0;
-}
-
-// Templated nearest-neighbor resize function
-template <typename T>
-void resizeToPrevPowerOfTwo(const T* in, T* out, size_t w, size_t h)
-{
-    // Check if dimensions are already powers of two
-    size_t newWidth = isPowerOfTwo(w) ? w : prevPowerOfTwo(w);
-    size_t newHeight = isPowerOfTwo(h) ? h : prevPowerOfTwo(h);
-
-    // If no resizing is needed, directly copy the input pixels
-    if (newWidth == w && newHeight == h) {
-        memcpy(out, in, w * h * sizeof(T));
-        return;
-    }
-
-    // Compute scaling factors (using fixed-point arithmetic)
-    const uint32_t xScale = (static_cast<uint32_t>(w) << 16) / newWidth;
-    const uint32_t yScale = (static_cast<uint32_t>(h) << 16) / newHeight;
-
-    // Perform nearest-neighbor resizing (optimized loop for ARMv6k)
-    for (size_t y = 0; y < newHeight; ++y) {
-        const size_t srcY = (y * yScale) >> 16;
-        const T* srcRow = in + srcY * w;
-        T* destRow = out + y * newWidth;
-
-        size_t x = 0;
-
-        // Process pixels in blocks for better performance
-        for (; x + 3 < newWidth; x += 4) {
-            destRow[x] = srcRow[(x * xScale) >> 16];
-            destRow[x + 1] = srcRow[((x + 1) * xScale) >> 16];
-            destRow[x + 2] = srcRow[((x + 2) * xScale) >> 16];
-            destRow[x + 3] = srcRow[((x + 3) * xScale) >> 16];
-        }
-
-        // Process remaining pixels
-        for (; x < newWidth; ++x) {
-            destRow[x] = srcRow[(x * xScale) >> 16];
-        }
-    }
-}
-
 // Morton interleaving using bit manipulation, optimized for ARMv6K
 static inline u32 MortonInterleave(u32 x, u32 y)
 {
@@ -287,12 +234,18 @@ void SwizzleTexBuffer(T* in, T* out, u32 w, u32 h)
     }
 }
 
-GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1)
+GfxTexture* Gfx_TextureCreate(int width, int height, bool isRGB5A1, bool isVRAM)
 {
     GfxTexture *ret = (GfxTexture*)malloc(sizeof(GfxTexture));
     ret->isRGB5A1 = isRGB5A1;
 
-    C3D_TexInit(&ret->c3dTex, width, height, isRGB5A1 ? GPU_RGBA5551 : GPU_RGBA8);
+    bool success = C3D_TexInitWithParams(
+        &ret->c3dTex,
+        NULL,
+        (C3D_TexInitParams){ (u16)width, (u16)height, 0, isRGB5A1 ? GPU_RGBA5551 : GPU_RGBA8, GPU_TEX_2D, isVRAM });
+
+    if(!success) exit(0);
+
     C3D_TexSetWrap(&ret->c3dTex, GPU_CLAMP_TO_EDGE, GPU_CLAMP_TO_EDGE);
 
     return ret;
@@ -328,26 +281,28 @@ void Gfx_TextureDestroy(GfxTexture* tex)
 // Framebuffer functions
 
 typedef struct GfxRenderTarget {
-    C3D_RenderTarget* rt;
+    C3D_RenderTarget* c3dRT;
 } GfxRenderTarget;
 
 GfxRenderTarget* Gfx_RenderTargetCreateFromTexture(GfxTexture* tex)
 {
     GfxRenderTarget *ret = (GfxRenderTarget*)malloc(sizeof(GfxRenderTarget));
 
-    // TODO
+    ret->c3dRT = C3D_RenderTargetCreateFromTex(&tex->c3dTex, GPU_TEXFACE_2D, 0, -1);
+
+    if(!ret->c3dRT) exit(0);
 
     return ret;
 }
 
 void Gfx_RenderTargetBind(GfxRenderTarget* rt)
 {
-    // TODO
+    C3D_FrameDrawOn(rt ? rt->c3dRT : mainRT);
 }
 
 void Gfx_RenderTargetDestroy(GfxRenderTarget* rt)
 {
-    // TODO
+    C3D_RenderTargetDelete(rt->c3dRT);
 
     free(rt);
 }

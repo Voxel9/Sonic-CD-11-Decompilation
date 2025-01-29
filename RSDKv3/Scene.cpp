@@ -80,7 +80,6 @@ CollisionMasks collisionMasks[2];
 byte tilesetGFXData[TILESET_SIZE];
 
 ushort tile3DFloorBuffer[0x100 * 0x100];
-bool drawStageGFXHQ = false;
 
 #if RETRO_USE_MOD_LOADER
 bool loadGlobalScripts = false; // stored here so I can use it later
@@ -233,7 +232,6 @@ void ProcessStage(void)
             break;
 
         case STAGEMODE_NORMAL:
-            drawStageGFXHQ = false;
             if (fadeMode > 0)
                 fadeMode--;
 
@@ -289,7 +287,6 @@ void ProcessStage(void)
             break;
 
         case STAGEMODE_PAUSED:
-            drawStageGFXHQ = false;
             if (fadeMode > 0)
                 fadeMode--;
 
