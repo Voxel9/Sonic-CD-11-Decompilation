@@ -33,11 +33,6 @@ inline int GetLowerRate(int intendRate, int targetRate)
 bool ProcessEvents()
 {
 #if RETRO_PLATFORM == RETRO_3DS || RETRO_PLATFORM == RETRO_3DSSIM
-    if(Gfx_IsQuitTriggered(Engine.glContext)) {
-        Engine.gameMode = ENGINE_EXITGAME;
-        return false;
-    }
-
     // Dev Menu
     if(Gfx_IsDevMenuTriggered(Engine.glContext)) {
         if (Engine.devMenu) {
@@ -378,7 +373,7 @@ void RetroEngine::Run()
     unsigned long long curTicks   = 0;
     unsigned long long prevTicks  = 0;
 
-    while (running) {
+    while (running && Gfx_MainLoop(Engine.glContext)) {
 #if !RETRO_USE_ORIGINAL_CODE
         if (!vsync) {
             curTicks = Time_GetPerformanceCounter();
@@ -502,7 +497,7 @@ void RetroEngine::Run()
     SaveMods();
 #endif
 
-#if RETRO_USING_SDL1 || RETRO_USING_SDL2_AUDIO || RETRO_USING_SDL2
+#if RETRO_USING_SDL1 || RETRO_USING_SDL2 || RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
     SDL_Quit();
 #endif
 }
@@ -1193,7 +1188,7 @@ void RetroEngine::Callback(int callbackID)
             stageMode = STAGEMODE_LOAD;
             break;
         case CALLBACK_EXIT_SELECTED:
-            // gameMode = ENGINE_EXITGAME;
+            gameMode = ENGINE_EXITGAME;
             PrintLog("Callback: Exit Selected");
             if (bytecodeMode == BYTECODE_PC) {
                 running = false;

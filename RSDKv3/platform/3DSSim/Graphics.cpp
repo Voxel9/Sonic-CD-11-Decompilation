@@ -45,9 +45,9 @@ GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
     return ret;
 }
 
-bool Gfx_IsQuitTriggered(GfxContext* ctx)
+bool Gfx_MainLoop(GfxContext* ctx)
 {
-    return glfwWindowShouldClose(ctx->window);
+    return !glfwWindowShouldClose(ctx->window);
 }
 
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx)

@@ -16,7 +16,7 @@ struct GfxRenderTarget;
 
 // Context functions
 GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle);
-bool Gfx_IsQuitTriggered(GfxContext* ctx);
+bool Gfx_MainLoop(GfxContext* ctx);
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx);
 void Gfx_FrameBegin();
 void Gfx_FrameEnd(GfxContext* ctx);

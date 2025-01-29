@@ -73,9 +73,9 @@ GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
     return ret;
 }
 
-bool Gfx_IsQuitTriggered(GfxContext* ctx)
+bool Gfx_MainLoop(GfxContext* ctx)
 {
-    return !aptMainLoop();
+    return aptMainLoop();
 }
 
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx)
