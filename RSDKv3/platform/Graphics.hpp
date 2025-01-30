@@ -25,6 +25,7 @@ void Gfx_Finalize(GfxContext* ctx);
 // Renderstate functions
 void Gfx_Clear();
 void Gfx_SetViewport(int x, int y, int width, int height);
+void Gfx_SetViewportTilt(int x, int y, int width, int height);
 void Gfx_SetBlend(bool enable);
 void Gfx_SetVertexBufs(int stride, void* verts);
 void Gfx_DrawElements(int count, void* indices);
@@ -47,7 +48,9 @@ void Gfx_LoadIdentity(void);
 void Gfx_PushMatrix(void);
 void Gfx_PopMatrix(void);
 void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar);
+void Gfx_OrthoTilt(float left, float right, float bottom, float top, float zNear, float zFar);
 void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen);
+void Gfx_PerspStereoTilt(float fovy, float aspect, float near, float far, float iod, float screen);
 void Gfx_Translate(float x, float y, float z);
 void Gfx_RotateY(float angle);
 void Gfx_RotateZ(float angle);

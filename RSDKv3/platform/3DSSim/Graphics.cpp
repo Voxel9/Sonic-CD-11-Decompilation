@@ -79,9 +79,19 @@ void Gfx_Clear()
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Gfx_SetViewport(int x, int y, int width, int height)
+static void _viewport(int x, int y, int width, int height)
 {
     glViewport(x, y, width, height);
+}
+
+void Gfx_SetViewport(int x, int y, int width, int height)
+{
+    _viewport(x, y, width, height);
+}
+
+void Gfx_SetViewportTilt(int x, int y, int width, int height)
+{
+    _viewport(x, y, width, height);
 }
 
 void Gfx_SetBlend(bool enable)
@@ -234,12 +244,12 @@ void Gfx_PopMatrix(void)
     glPopMatrix();
 }
 
-void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+static void _ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
     glOrtho(left, right, bottom, top, zNear, zFar);
 }
 
-void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
+static void _persp_stereo(float fovy, float aspect, float near, float far, float iod, float screen)
 {
     float matrix[16];
     float w = 1.0 / tanf(fovy * 0.5f);
@@ -267,6 +277,26 @@ void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod,
     matrix[15] = 0;
 
     glMultMatrixf(matrix);
+}
+
+void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+    _ortho(left, right, bottom, top, zNear, zFar);
+}
+
+void Gfx_OrthoTilt(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+    _ortho(left, right, bottom, top, zNear, zFar);
+}
+
+void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
+{
+    _persp_stereo(fovy, aspect, near, far, iod, screen);
+}
+
+void Gfx_PerspStereoTilt(float fovy, float aspect, float near, float far, float iod, float screen)
+{
+    _persp_stereo(fovy, aspect, near, far, iod, screen);
 }
 
 void Gfx_Translate(float x, float y, float z)

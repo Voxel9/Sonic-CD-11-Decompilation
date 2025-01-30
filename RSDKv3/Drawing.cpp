@@ -621,9 +621,9 @@ void FlipScreenFB()
     Gfx_LoadIdentity();
     Gfx_RotateZ(-90.0);
     Gfx_Ortho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
-    Gfx_SetViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
 
     Gfx_RenderTargetBind(framebufferHW);
+    Gfx_SetViewport(0, 0, SCREEN_YSIZE, SCREEN_XSIZE);
 
     Gfx_TextureBind(gfxTextureID[texPaletteNum]);
 
@@ -686,8 +686,8 @@ void FlipScreenNoFB()
 
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_Ortho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_OrthoTilt(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
+    Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
 
     Gfx_TextureBind(gfxTextureID[texPaletteNum]);
 
@@ -707,10 +707,10 @@ void FlipScreenNoFB()
         Gfx_SetBlend(true);
 
         // Init 3D Plane
-        Gfx_SetViewport(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
+        Gfx_SetViewportTilt(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
         Gfx_PushMatrix();
         Gfx_LoadIdentity();
-        Gfx_PerspStereo(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
+        Gfx_PerspStereoTilt(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
 
         Gfx_MatrixMode(MTX_MODE_MODELVIEW);
         Gfx_LoadIdentity();
@@ -724,7 +724,7 @@ void FlipScreenNoFB()
 
         // Return for blended rendering
         Gfx_MatrixMode(MTX_MODE_PROJECTION);
-        Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+        Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
         Gfx_PopMatrix();
     }
     else {
@@ -765,8 +765,8 @@ void FlipScreenHRes()
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
 
-    Gfx_Ortho(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
-    Gfx_SetViewport(viewOffsetX, 0, bufferWidth, bufferHeight);
+    Gfx_OrthoTilt(0, SCREEN_XSIZE << 4, SCREEN_YSIZE << 4, 0.0, -1.0, 1.0);
+    Gfx_SetViewportTilt(viewOffsetX, 0, bufferWidth, bufferHeight);
     Gfx_TextureBind(gfxTextureID[texPaletteNum]);
     Gfx_SetBlend(false);
     Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], true);
@@ -804,8 +804,8 @@ void RenderFromTexture()
 #endif
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_OrthoTilt(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
     Gfx_SetVertexBufs(sizeof(DrawVertex), screenRect);
     Gfx_SetBlend(false);
     Gfx_DrawElements(6, gfxPolyListIndex);
@@ -817,7 +817,7 @@ void RenderFromRetroBuffer()
 #if RETRO_USING_OPENGL
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    Gfx_OrthoTilt(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
     Gfx_TextureBind(retroBuffer);
 #if DONT_USE_VIEW_ANGLE
     Gfx_Clear();
@@ -833,7 +833,7 @@ void RenderFromRetroBuffer()
         Gfx_Clear();
     }
 #endif
-    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
 
     Gfx_SetVertexBufs(sizeof(DrawVertex), retroScreenRect);
     Gfx_SetBlend(false);
@@ -896,7 +896,7 @@ void FlipScreenVideo()
 
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    Gfx_OrthoTilt(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 
 #if RETRO_PLATFORM == RETRO_3DS
     BindVideoTex3DS();
@@ -918,7 +918,7 @@ void FlipScreenVideo()
         Gfx_Clear();
     }
 #endif
-    Gfx_SetViewport(viewOffsetX, 0, viewWidth, viewHeight);
+    Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
     Gfx_SetVertexBufs(sizeof(DrawVertex3D), screenVerts);
     Gfx_SetBlend(false);
     Gfx_DrawElements(6, gfxPolyListIndex);
