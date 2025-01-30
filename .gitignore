@@ -44,15 +44,16 @@ bin/
 [Oo]bj/
 
 #Safety
-[Ss]cripts/
+[Dd]ata*/
 [Mm]ods/
+[Ss]cripts/
+[Vv]ideos/
 log.txt
 *.exe
 *.elf
 *.ini
 *.bin
 *.rsdk
-*.ogv
 
 # Visual Studio Debugging
 RSDKv3/[Dd]ata/
