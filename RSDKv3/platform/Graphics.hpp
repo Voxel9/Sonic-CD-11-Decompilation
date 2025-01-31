@@ -53,7 +53,6 @@ void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod,
 void Gfx_PerspStereoTilt(float fovy, float aspect, float near, float far, float iod, float screen);
 void Gfx_Translate(float x, float y, float z);
 void Gfx_RotateY(float angle);
-void Gfx_RotateZ(float angle);
 void Gfx_Scale(float x, float y, float z);
 
 // GPU mem functions

@@ -337,7 +337,7 @@ void Gfx_PopMatrix(void)
 void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
 {
     C3D_Mtx mtx;
-    Mtx_Ortho(&mtx, left, right, bottom, top, zFar, zNear, true);
+    Mtx_OrthoTilt(&mtx, left, right, bottom, top, zFar, zNear, true);
     Mtx_Multiply(MtxStack_Cur(curMtxStack), MtxStack_Cur(curMtxStack), &mtx);
 }
 
@@ -351,7 +351,7 @@ void Gfx_OrthoTilt(float left, float right, float bottom, float top, float zNear
 void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
 {
     C3D_Mtx mtx;
-    Mtx_PerspStereo(&mtx, fovy, aspect, near, far, iod, screen, true);
+    Mtx_PerspStereoTilt(&mtx, fovy, aspect, near, far, iod, screen, true);
     Mtx_Multiply(MtxStack_Cur(curMtxStack), MtxStack_Cur(curMtxStack), &mtx);
 }
 
@@ -370,11 +370,6 @@ void Gfx_Translate(float x, float y, float z)
 void Gfx_RotateY(float angle)
 {
     Mtx_RotateY(MtxStack_Cur(curMtxStack), C3D_AngleFromDegrees(angle), true);
-}
-
-void Gfx_RotateZ(float angle)
-{
-    Mtx_RotateZ(MtxStack_Cur(curMtxStack), C3D_AngleFromDegrees(angle), true);
 }
 
 void Gfx_Scale(float x, float y, float z)

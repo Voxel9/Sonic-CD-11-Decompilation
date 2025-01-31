@@ -244,59 +244,71 @@ void Gfx_PopMatrix(void)
     glPopMatrix();
 }
 
-static void _ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+    glRotatef(-90.0f, 0.0, 0.0, 1.0);
+    glOrtho(left, right, bottom, top, zNear, zFar);
+}
+
+void Gfx_OrthoTilt(float left, float right, float bottom, float top, float zNear, float zFar)
 {
     glOrtho(left, right, bottom, top, zNear, zFar);
 }
 
-static void _persp_stereo(float fovy, float aspect, float near, float far, float iod, float screen)
+void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
 {
     float matrix[16];
-    float w = 1.0 / tanf(fovy * 0.5f);
-    float h = 1.0 / (w * aspect);
-    float q = (near + far) / (far - near);
+    float fovy_tan = tanf(fovy/2.0f);
 
-    matrix[0] = w;
-    matrix[1] = 0;
+    matrix[0] = 0;
+    matrix[1] = -1.0f / (aspect * fovy_tan);
     matrix[2] = 0;
     matrix[3] = 0;
 
-    matrix[4] = 0;
-    matrix[5] = h / 2;
+    matrix[4] = 1.0f / fovy_tan;
+    matrix[5] = 0;
     matrix[6] = 0;
     matrix[7] = 0;
 
     matrix[8]  = 0;
     matrix[9]  = 0;
-    matrix[10] = q;
+    matrix[10] = near / (near - far);
     matrix[11] = 1.0;
 
     matrix[12] = 0;
     matrix[13] = 0;
-    matrix[14] = (((far * -2.0f) * near) / (far - near));
+    matrix[14] = far*near / (near - far);
     matrix[15] = 0;
 
     glMultMatrixf(matrix);
 }
 
-void Gfx_Ortho(float left, float right, float bottom, float top, float zNear, float zFar)
-{
-    _ortho(left, right, bottom, top, zNear, zFar);
-}
-
-void Gfx_OrthoTilt(float left, float right, float bottom, float top, float zNear, float zFar)
-{
-    _ortho(left, right, bottom, top, zNear, zFar);
-}
-
-void Gfx_PerspStereo(float fovy, float aspect, float near, float far, float iod, float screen)
-{
-    _persp_stereo(fovy, aspect, near, far, iod, screen);
-}
-
 void Gfx_PerspStereoTilt(float fovy, float aspect, float near, float far, float iod, float screen)
 {
-    _persp_stereo(fovy, aspect, near, far, iod, screen);
+    float matrix[16];
+    float fovy_tan = tanf(fovy/2.0f);
+
+    matrix[0] = 1.0f / (aspect * fovy_tan);
+    matrix[1] = 0;
+    matrix[2] = 0;
+    matrix[3] = 0;
+
+    matrix[4] = 0;
+    matrix[5] = 1.0f / fovy_tan;
+    matrix[6] = 0;
+    matrix[7] = 0;
+
+    matrix[8]  = 0;
+    matrix[9]  = 0;
+    matrix[10] = near / (near - far);
+    matrix[11] = 1.0;
+
+    matrix[12] = 0;
+    matrix[13] = 0;
+    matrix[14] = far*near / (near - far);
+    matrix[15] = 0;
+
+    glMultMatrixf(matrix);
 }
 
 void Gfx_Translate(float x, float y, float z)
@@ -307,11 +319,6 @@ void Gfx_Translate(float x, float y, float z)
 void Gfx_RotateY(float angle)
 {
     glRotatef(angle, 0.0, 1.0, 0.0);
-}
-
-void Gfx_RotateZ(float angle)
-{
-    glRotatef(angle, 0.0, 0.0, 1.0);
 }
 
 void Gfx_Scale(float x, float y, float z)

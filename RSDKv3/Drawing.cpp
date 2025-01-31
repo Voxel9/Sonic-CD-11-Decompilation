@@ -619,7 +619,6 @@ void FlipScreenFB()
 #if RETRO_USING_OPENGL
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_RotateZ(-90.0);
     Gfx_Ortho(0, SCREEN_XSIZE << 4, 0.0, SCREEN_YSIZE << 4, -1.0, 1.0);
 
     Gfx_RenderTargetBind(framebufferHW);
@@ -630,9 +629,8 @@ void FlipScreenFB()
     Gfx_SetBlend(false);
 
     if (render3DEnabled) {
-        float floor3DTop    = 2.0;
-        float floor3DBottom = SCREEN_YSIZE + 4.0;
-        float aspect        = SCREEN_XSIZE / SCREEN_YSIZE;
+        float floor3DTop    = 5.0;
+        float floor3DBottom = SCREEN_YSIZE;
 
         // Non Blended rendering
         Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
@@ -643,12 +641,11 @@ void FlipScreenFB()
         Gfx_SetViewport(floor3DTop, 0, floor3DBottom, SCREEN_XSIZE);
         Gfx_PushMatrix();
         Gfx_LoadIdentity();
-        Gfx_PerspStereo(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
-        Gfx_RotateZ(-90.0);
+        Gfx_PerspStereo(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
 
         Gfx_MatrixMode(MTX_MODE_MODELVIEW);
         Gfx_LoadIdentity();
-        Gfx_Scale(1.20f, 0.98f, -1.0f);
+        Gfx_Scale(1.20f, 1.1f, -1.0f);
         Gfx_RotateY(floor3DAngle + 180.0f);
         Gfx_Translate(floor3DXPos, floor3DYPos, floor3DZPos);
 
@@ -696,10 +693,8 @@ void FlipScreenNoFB()
     Gfx_TextureSetFilter(gfxTextureID[texPaletteNum], Engine.scalingMode ? true : false);
 
     if (render3DEnabled) {
-        float scale         = viewHeight / SCREEN_YSIZE;
-        float floor3DTop    = -2.0 * scale;
-        float floor3DBottom = (viewHeight)-4.0 * scale;
-        float aspect        = SCREEN_XSIZE / SCREEN_YSIZE;
+        float floor3DTop    = 0.0;
+        float floor3DBottom = SCREEN_YSIZE - 10.0;
 
         // Non Blended rendering
         Gfx_SetVertexBufs(sizeof(DrawVertex), gfxPolyList);
@@ -710,11 +705,11 @@ void FlipScreenNoFB()
         Gfx_SetViewportTilt(viewOffsetX, floor3DTop, viewWidth, floor3DBottom);
         Gfx_PushMatrix();
         Gfx_LoadIdentity();
-        Gfx_PerspStereoTilt(1.8326f, aspect, 0.1f, 2000.0f, 0.0f, 96.0f);
+        Gfx_PerspStereoTilt(1.8326f, viewAspect, 0.1f, 2000.0f, 0.0f, 96.0f);
 
         Gfx_MatrixMode(MTX_MODE_MODELVIEW);
         Gfx_LoadIdentity();
-        Gfx_Scale(1.35f, -0.9f, -1.0f);
+        Gfx_Scale(1.20f, -1.1f, -1.0f);
         Gfx_RotateY(floor3DAngle + 180.0f);
         Gfx_Translate(floor3DXPos, floor3DYPos, floor3DZPos);
 
