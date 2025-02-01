@@ -817,19 +817,6 @@ void FlipScreenVideo()
         screenVerts[i].colour.a = 0xFF;
     }
 
-#if RETRO_PLATFORM == RETRO_3DS
-    screenVerts[0].y = -1.875f;
-    screenVerts[0].x = -1.0f;
-
-    screenVerts[1].y = -1.875f;
-    screenVerts[1].x = 1.5625f;
-
-    screenVerts[2].y = 1.0f;
-    screenVerts[2].x = -1.0f;
-
-    screenVerts[3].y = 1.0f;
-    screenVerts[3].x = 1.5625f;
-#else
     float best = minVal(viewWidth / (float)videoWidth, viewHeight / (float)videoHeight);
 
     float w = videoWidth * best;
@@ -852,7 +839,6 @@ void FlipScreenVideo()
 
     screenVerts[3].x = w + x;
     screenVerts[3].y = h + y;
-#endif
 
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
@@ -1247,7 +1233,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     retroScreenRect[1].x = 1;
     retroScreenRect[1].y = 1;
-    retroScreenRect[1].u = HW_TEXTURE_SIZE - 224;
+    retroScreenRect[1].u = HW_TEXTURE_SIZE;
     retroScreenRect[1].v = 0;
     retroScreenRect[1].colour.r = 0xFF;
     retroScreenRect[1].colour.g = 0xFF;
@@ -1257,7 +1243,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     retroScreenRect[2].x = -1;
     retroScreenRect[2].y = -1;
     retroScreenRect[2].u = 0;
-    retroScreenRect[2].v = HW_TEXTURE_SIZE - 64;
+    retroScreenRect[2].v = HW_TEXTURE_SIZE;
     retroScreenRect[2].colour.r = 0xFF;
     retroScreenRect[2].colour.g = 0xFF;
     retroScreenRect[2].colour.b = 0xFF;
@@ -1265,8 +1251,8 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     retroScreenRect[3].x = 1;
     retroScreenRect[3].y = -1;
-    retroScreenRect[3].u = HW_TEXTURE_SIZE - 224;
-    retroScreenRect[3].v = HW_TEXTURE_SIZE - 64;
+    retroScreenRect[3].u = HW_TEXTURE_SIZE;
+    retroScreenRect[3].v = HW_TEXTURE_SIZE;
     retroScreenRect[3].colour.r = 0xFF;
     retroScreenRect[3].colour.g = 0xFF;
     retroScreenRect[3].colour.b = 0xFF;

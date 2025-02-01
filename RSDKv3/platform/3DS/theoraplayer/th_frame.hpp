@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <citro2d.h>
+#include <citro3d.h>
 
 #include "th_video.hpp"
 
 typedef struct theora_3ds_vframe {
-	C2D_Image img;
+	C3D_Tex* img_tex;
 	C3D_Tex buff[2];
 	bool curbuf;
 } TH3DS_Frame;

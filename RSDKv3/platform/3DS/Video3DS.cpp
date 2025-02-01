@@ -1,5 +1,6 @@
 #include "Video3DS.hpp"
 #include "theoraplayer/th_frame.hpp"
+#include "Debug.hpp"    // For PrintLog()
 
 #include <3ds.h>
 #include <SDL2/SDL.h>
@@ -20,6 +21,10 @@ LightEvent soundEvent;
 
 int isplaying = false;
 bool videodone = false;
+
+// For RetroEngine drawing
+extern int videoWidth;
+extern int videoHeight;
 
 int InitAudioPlayback();
 void ReleaseAudioDevice();
@@ -61,7 +66,7 @@ static int isOgg(const char* filepath) {
     char magic[16];
 
     if (!fp) {
-        printf("Could not open %s. Please make sure file exists.\n", filepath);
+        PrintLog("Could not open %s. Please make sure file exists.\n", filepath);
         return 0;
     }
 
@@ -79,22 +84,25 @@ static void changeFile(const char* filepath) {
     int ret = 0;
 
     if (!isOgg(filepath)) {
-        printf("The file is not an ogg file.\n");
+        PrintLog("The file is not an ogg file.\n");
         return;
     }
 
     if ((ret = THEORA_Create(&vidCtx, filepath))) {
-        printf("THEORA_Create exited with error, %d.\n", ret);
+        PrintLog("THEORA_Create exited with error, %d.\n", ret);
         return;
     }
 
     if (!THEORA_HasVideo(&vidCtx) && !THEORA_HasAudio(&vidCtx)) {
-        printf("No audio or video stream could be found.\n");
+        PrintLog("No audio or video stream could be found.\n");
         return;
     }
 
     vinfo = THEORA_vidinfo(&vidCtx);
     ainfo = THEORA_audinfo(&vidCtx);
+
+    videoWidth = -vinfo->width;
+    videoHeight = vinfo->height;
 
     audioInit(ainfo);
 
@@ -105,22 +113,20 @@ static void changeFile(const char* filepath) {
 }
 
 void PlayVideo3DS(const char* fileName) {
-    // de-init Retro Engine audio thread
+    // de-init Retro Engine audio
     ReleaseAudioDevice();
 
     ndspInit();
     ndspSetCallback(audioCallback, NULL);
-    printf("Loading from %s\n", fileName);
-
-    //gfxSet3D(false);
+    PrintLog("Loading from %s\n", fileName);
 
     changeFile(fileName);
     videodone = false;
 }
 
 void ProcessVideo3DS() {
-    //if (THEORA_eos(&vidCtx))
-    //    break;
+    if (THEORA_eos(&vidCtx))
+        videodone = true;
 
     if (THEORA_HasAudio(&vidCtx)) {
         for (int cur_wvbuf = 0; cur_wvbuf < WAVEBUFCOUNT; cur_wvbuf++) {
@@ -149,11 +155,11 @@ void ProcessVideo3DS() {
 }
 
 void BindVideoTex3DS() {
-    C3D_TexBind(0, frame.img.tex);
+    C3D_TexBind(0, frame.img_tex);
 }
 
 void CloseVideo3DS() {
-    printf("video done, attempting to de-init");
+    PrintLog("video done, attempting to de-init");
 
     videodone = true;
 
@@ -164,10 +170,8 @@ void CloseVideo3DS() {
 
     THEORA_Close(&vidCtx);
 
-    // re-init Retro Engine audio thread
     ndspExit();
-    //ndspInit();
-    InitAudioPlayback();
 
-    //gfxSet3D(true);
+    // re-init Retro Engine audio
+    InitAudioPlayback();
 }

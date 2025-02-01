@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+#include "Debug.hpp"	// For PrintLog()
 #include "th_video.hpp"
 
 #define VIDEO_DEFAULT_BUFFER_SIZE 4096
@@ -168,7 +169,7 @@ int THEORA_CallbackCreate(THEORA_Context* ctx, void* datasource, THEORA_callback
 				break;
 			}
 			if(!th_decode_headerin(&ctx->tinfo, &ctx->tcomment, &tsetup, &packet)){
-				fprintf(stderr,"Error parsing Theora stream headers; "
+				PrintLog("Error parsing Theora stream headers; "
 				"corrupt stream?\n");
 				return 1;
 			}
@@ -182,7 +183,7 @@ int THEORA_CallbackCreate(THEORA_Context* ctx, void* datasource, THEORA_callback
 				break;
 			}
 			if(vorbis_synthesis_headerin(&ctx->vinfo, &ctx->vcomment, &packet)){
-				fprintf(stderr,"Error parsing Vorbis stream headers; corrupt stream?\n");
+				PrintLog("Error parsing Vorbis stream headers; corrupt stream?\n");
 				return 1;
 			}
 			ctx->vpackets++;
@@ -195,7 +196,7 @@ int THEORA_CallbackCreate(THEORA_Context* ctx, void* datasource, THEORA_callback
 			oggQueuePage(ctx); /* demux into the appropriate stream */
 		} else{
 			if(oggGetData(ctx)==0) {
-				fprintf(stderr,"End of file while searching for codec headers.\n");
+				PrintLog("End of file while searching for codec headers.\n");
 				return 1;
 			}
 		}
@@ -370,7 +371,7 @@ static double get_time(THEORA_Context *ctx)
 		int minutes     = ((long)timebase/60)%60;
 		int hours       = (long)timebase/3600;
 
-		fprintf(stderr,"   Playing: %d:%02d:%02d.%02d\n",
+		PrintLog("   Playing: %d:%02d:%02d.%02d\n",
 			hours,minutes,seconds,hundredths);
 		up=now;
 	}
@@ -418,7 +419,7 @@ int THEORAi_readvideo(THEORA_Context *ctx)
 			int minutes     = ((long)timebase/60)%60;
 			int hours       = (long)timebase/3600;
 
-			fprintf(stderr,"   Granule time: %d:%02d:%02d.%02d\n",
+			PrintLog("   Granule time: %d:%02d:%02d.%02d\n",
 				hours,minutes,seconds,hundredths);
 		}*/
 

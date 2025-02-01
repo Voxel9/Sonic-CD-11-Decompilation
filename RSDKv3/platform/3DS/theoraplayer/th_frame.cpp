@@ -8,6 +8,7 @@
 
 #include <citro2d.h>
 
+#include "Debug.hpp"	// For PrintLog()
 #include "th_frame.hpp"
 
 Handle y2rEvent;
@@ -37,30 +38,30 @@ int frameInit(TH3DS_Frame* vframe, THEORA_videoinfo* info) {
 			// nothing to report
 			break;
 		case TH_CS_ITU_REC_470M:
-			printf("	encoder specified ITU Rec 470M (NTSC) color.\n");
+			PrintLog("	encoder specified ITU Rec 470M (NTSC) color.\n");
 			break;
 		case TH_CS_ITU_REC_470BG:
-			printf("	encoder specified ITU Rec 470BG (PAL) color.\n");
+			PrintLog("	encoder specified ITU Rec 470BG (PAL) color.\n");
 			break;
 		default:
-			printf("warning: encoder specified unknown colorspace (%d).\n",	info->colorspace);
+			PrintLog("warning: encoder specified unknown colorspace (%d).\n",	info->colorspace);
 			break;
 	}
 
 	switch(info->fmt)
 	{
 		case TH_PF_420:
-			printf(" 4:2:0 video\n");
+			PrintLog(" 4:2:0 video\n");
 			break;
 		case TH_PF_422:
-			printf(" 4:2:2 video\n");
+			PrintLog(" 4:2:2 video\n");
 			break;
 		case TH_PF_444:
 			puts("YUV444 is not supported by Y2R");
 			return 2;
 		case TH_PF_RSVD:
 		default:
-			printf(" video\n	(UNKNOWN Chroma sampling!)\n");
+			PrintLog(" video\n	(UNKNOWN Chroma sampling!)\n");
 			return 2;
 	}
 
@@ -71,18 +72,8 @@ int frameInit(TH3DS_Frame* vframe, THEORA_videoinfo* info) {
 		memset(curtex->data, 0, curtex->size);
 	}
 
-	Tex3DS_SubTexture* subtex = (Tex3DS_SubTexture*)malloc(sizeof(Tex3DS_SubTexture));
-
-	subtex->width = info->width;
-	subtex->height = info->height;
-	subtex->left = 0.0f;
-	subtex->top = 1.0f;
-	subtex->right = (float)info->width/bitCeil(info->width);
-	subtex->bottom = 1.0-((float)info->height/bitCeil(info->height));
-
 	vframe->curbuf = false;
-	vframe->img.tex = &vframe->buff[vframe->curbuf];
-	vframe->img.subtex = subtex;
+	vframe->img_tex = &vframe->buff[vframe->curbuf];
 
 	return 0;
 }
@@ -99,9 +90,6 @@ void frameDelete(TH3DS_Frame* vframe) {
 		//free(image->tex);
 	}
 
-	if (vframe->img.subtex)
-		free((void*)vframe->img.subtex);
-
 	y2rExit();
 }
 
@@ -114,7 +102,7 @@ void frameWrite(TH3DS_Frame* vframe, THEORA_videoinfo* info, th_ycbcr_buffer ybr
 		return;
 
 	if (!ybr[0].data || !ybr[1].data || !ybr[2].data) {
-		printf("Error: ybr data is null\n");
+		PrintLog("Error: ybr data is null\n");
 		return;
 	}
 
@@ -161,5 +149,5 @@ void frameWrite(TH3DS_Frame* vframe, THEORA_videoinfo* info, th_ycbcr_buffer ybr
 	//svcWaitSynchronization(y2rEvent, -1);
 	//svcWaitSynchronization(y2rEvent, 6e7);
 	vframe->curbuf = drawbuf;
-	vframe->img.tex = wframe;
+	vframe->img_tex = wframe;
 }
