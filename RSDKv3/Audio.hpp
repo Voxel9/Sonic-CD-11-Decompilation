@@ -38,10 +38,6 @@ struct TrackInfo {
     char fileName[0x40];
     bool trackLoop;
     uint loopPoint;
-
-    byte *buffer;
-    int fileSize;
-    int filePos;
 };
 
 struct StreamInfo {
@@ -74,6 +70,12 @@ struct ChannelInfo {
     sbyte pan;
 };
 
+struct StreamFile {
+    byte *buffer;
+    int fileSize;
+    int filePos;
+};
+
 enum MusicStatuses {
     MUSIC_STOPPED = 0,
     MUSIC_PLAYING = 1,
@@ -100,11 +102,10 @@ extern SFXInfo sfxList[SFX_COUNT];
 extern ChannelInfo sfxChannels[CHANNEL_COUNT];
 
 extern int currentStreamIndex;
+extern StreamFile streamFile[STREAMFILE_COUNT];
 extern StreamInfo streamInfo[STREAMFILE_COUNT];
-extern TrackInfo* streamFilePtr;
+extern StreamFile *streamFilePtr;
 extern StreamInfo *streamInfoPtr;
-
-extern int currentMusicTrack;
 
 #if RETRO_USING_SDL1_AUDIO || RETRO_USING_SDL2_AUDIO
 extern SDL_AudioSpec audioDeviceFormat;
@@ -129,6 +130,9 @@ inline void FreeMusInfo()
 #if RETRO_USING_SDL2_AUDIO
     streamInfo[currentStreamIndex].stream = nullptr;
 #endif
+    if (streamFile[currentStreamIndex].buffer)
+        free(streamFile[currentStreamIndex].buffer);
+    streamFile[currentStreamIndex].buffer = NULL;
 
     UnlockAudioDevice();
 }
