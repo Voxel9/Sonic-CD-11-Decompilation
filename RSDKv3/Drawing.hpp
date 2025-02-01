@@ -77,10 +77,9 @@ struct DrawVertex3D {
     Colour colour;
 };
 
-extern ushort gfxVertexSize;
-extern ushort gfxVertexSizeOpaque;
-extern ushort gfxIndexSize;
-extern ushort gfxIndexSizeOpaque;
+extern ushort gfxVertexSize[MAX_STEREO_EYES];
+extern ushort gfxIndexSize[MAX_STEREO_EYES];
+extern ushort gfxIndexSizeOpaque[MAX_STEREO_EYES];
 
 extern ushort vertexSize3D;
 extern ushort indexSize3D;

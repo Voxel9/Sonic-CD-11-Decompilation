@@ -24,6 +24,7 @@ struct GfxRenderTarget;
 GfxContext* Gfx_Initialize(const char* gameTitle);
 bool Gfx_MainLoop(GfxContext* ctx);
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx);
+float Gfx_3DStrength();
 void Gfx_FrameBegin();
 void Gfx_FrameEnd(GfxContext* ctx);
 void Gfx_Finalize(GfxContext* ctx);

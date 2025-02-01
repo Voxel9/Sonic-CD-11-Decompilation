@@ -667,7 +667,8 @@ void ProcessStageSelect()
     }
 
     if (renderType == RENDER_HW) {
-        gfxIndexSizeOpaque  = gfxIndexSize;
-        gfxVertexSizeOpaque = gfxVertexSize;
+        for(int eye = 0; eye < MAX_STEREO_EYES; eye++) {
+            gfxIndexSizeOpaque[eye]  = gfxIndexSize[eye];
+        }
     }
 }

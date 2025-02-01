@@ -76,6 +76,11 @@ bool Gfx_IsDevMenuTriggered(GfxContext* ctx)
     return glfwGetKey(ctx->window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 }
 
+float Gfx_3DStrength()
+{
+    return 0.0f;
+}
+
 void Gfx_FrameBegin()
 {
     glfwPollEvents();

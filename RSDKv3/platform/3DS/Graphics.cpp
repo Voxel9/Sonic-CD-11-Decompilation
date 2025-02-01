@@ -86,6 +86,11 @@ bool Gfx_IsDevMenuTriggered(GfxContext* ctx)
     return (hidKeysDown() & KEY_SELECT) == KEY_SELECT;
 }
 
+float Gfx_3DStrength()
+{
+    return osGet3DSliderState();
+}
+
 void Gfx_FrameBegin()
 {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);

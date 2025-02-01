@@ -407,20 +407,22 @@ void RetroEngine::Run()
                     switch (gameMode) {
                         case ENGINE_DEVMENU:
                             if (renderType == RENDER_HW) {
-                                gfxIndexSize        = 0;
-                                gfxVertexSize       = 0;
-                                gfxIndexSizeOpaque  = 0;
-                                gfxVertexSizeOpaque = 0;
+                                for(int eye = 0; eye < MAX_STEREO_EYES; eye++) {
+                                    gfxIndexSize[eye]        = 0;
+                                    gfxVertexSize[eye]       = 0;
+                                    gfxIndexSizeOpaque[eye]  = 0;
+                                }
                             }
                             ProcessStageSelect();
                             break;
 
                         case ENGINE_MAINGAME:
                             if (renderType == RENDER_HW) {
-                                gfxIndexSize        = 0;
-                                gfxVertexSize       = 0;
-                                gfxIndexSizeOpaque  = 0;
-                                gfxVertexSizeOpaque = 0;
+                                for(int eye = 0; eye < MAX_STEREO_EYES; eye++) {
+                                    gfxIndexSize[eye]        = 0;
+                                    gfxVertexSize[eye]       = 0;
+                                    gfxIndexSizeOpaque[eye]  = 0;
+                                }
                                 vertexSize3D        = 0;
                                 indexSize3D         = 0;
                                 render3DEnabled     = false;
