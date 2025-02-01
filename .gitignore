@@ -47,7 +47,7 @@ bin/
 [Dd]ata*/
 [Mm]ods/
 [Ss]cripts/
-[Vv]ideos/
+[Vv]ideos*/
 log.txt
 *.exe
 *.elf
