@@ -15,7 +15,7 @@ extern const u32 vshader_shbin_size;
     GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGB5A1) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB565) | \
     GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
-static C3D_RenderTarget* mainRT;
+static C3D_RenderTarget* mainRT[MAX_STEREO_EYES];
 
 static C3D_MtxStack mtxStacks[MAX_MTX_MODES];
 static int ulocMtx[MAX_MTX_MODES];
@@ -29,20 +29,23 @@ typedef struct GfxContext {
     shaderProgram_s program;
 } GfxContext;
 
-GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
+GfxContext* Gfx_Initialize(const char* gameTitle)
 {
     GfxContext *ret = (GfxContext*)malloc(sizeof(GfxContext));
 
     // Init video
     gfxInit(GSP_RGB565_OES, GSP_RGB565_OES, false);
+    gfxSet3D(true);
     consoleInit(GFX_BOTTOM, NULL);
 
     // Init Citro3D
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
     // Init render targets
-    mainRT = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA5551, -1);
-    C3D_RenderTargetSetOutput(mainRT, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    mainRT[STEREO_EYE_LEFT] = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA5551, -1);
+    mainRT[STEREO_EYE_RIGHT] = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA5551, -1);
+    C3D_RenderTargetSetOutput(mainRT[STEREO_EYE_LEFT], GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    C3D_RenderTargetSetOutput(mainRT[STEREO_EYE_RIGHT], GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
 
     // Init render states
     C3D_TexEnv* env = C3D_GetTexEnv(0);
@@ -86,7 +89,7 @@ bool Gfx_IsDevMenuTriggered(GfxContext* ctx)
 void Gfx_FrameBegin()
 {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C3D_FrameDrawOn(mainRT);
+    C3D_FrameDrawOn(mainRT[STEREO_EYE_LEFT]);
 }
 
 void Gfx_FrameEnd(GfxContext* ctx)
@@ -101,7 +104,8 @@ void Gfx_Finalize(GfxContext* ctx)
     DVLB_Free(ctx->vshaderDVLB);
 
     // Release render targets
-    C3D_RenderTargetDelete(mainRT);
+    C3D_RenderTargetDelete(mainRT[STEREO_EYE_RIGHT]);
+    C3D_RenderTargetDelete(mainRT[STEREO_EYE_LEFT]);
 
     // Cleanup Citro3D
     C3D_Fini();
@@ -300,9 +304,9 @@ GfxRenderTarget* Gfx_RenderTargetCreateFromTexture(GfxTexture* tex)
     return ret;
 }
 
-void Gfx_RenderTargetBind(GfxRenderTarget* rt)
+void Gfx_RenderTargetBind(GfxRenderTarget* rt, int eye)
 {
-    C3D_FrameDrawOn(rt ? rt->c3dRT : mainRT);
+    C3D_FrameDrawOn(rt ? rt->c3dRT : mainRT[eye]);
 }
 
 void Gfx_RenderTargetDestroy(GfxRenderTarget* rt)

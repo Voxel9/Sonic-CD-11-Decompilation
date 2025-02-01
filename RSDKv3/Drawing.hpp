@@ -85,14 +85,8 @@ extern ushort gfxIndexSizeOpaque;
 extern ushort vertexSize3D;
 extern ushort indexSize3D;
 extern ushort tileUVArray[TILEUV_SIZE];
-extern float floor3DXPos;
-extern float floor3DYPos;
-extern float floor3DZPos;
-extern float floor3DAngle;
 extern bool render3DEnabled;
-extern bool hq3DFloorEnabled;
 
-extern ushort texBuffer[HW_TEXBUFFER_SIZE];
 extern byte texBufferMode;
 
 #if !RETRO_USE_ORIGINAL_CODE
@@ -122,7 +116,6 @@ int InitRenderDevice();
 void FlipScreen();
 void FlipScreenFB();
 void FlipScreenNoFB();
-void FlipScreenHRes();
 void RenderFromTexture();
 void RenderFromRetroBuffer();
 

@@ -12,7 +12,10 @@ typedef struct GfxContext {
     GLFWwindow* window;
 } GfxContext;
 
-GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
+static GLuint mainRT[MAX_STEREO_EYES];
+static GLuint mainRTRightTex;
+
+GfxContext* Gfx_Initialize(const char* gameTitle)
 {
     GfxContext *ret = (GfxContext*)malloc(sizeof(GfxContext));
 
@@ -22,7 +25,7 @@ GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
 
-    ret->window = glfwCreateWindow(width, height, gameTitle, NULL, NULL);
+    ret->window = glfwCreateWindow(400, 240, gameTitle, NULL, NULL);
     assert(ret->window != nullptr);
 
     glfwMakeContextCurrent(ret->window);
@@ -41,6 +44,24 @@ GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle)
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
+
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+
+    // Init main render targets
+    mainRT[STEREO_EYE_LEFT] = 0;
+
+    glGenFramebuffers(1, &mainRT[STEREO_EYE_RIGHT]);
+    glBindFramebuffer(GL_FRAMEBUFFER, mainRT[STEREO_EYE_RIGHT]);
+
+    glGenTextures(1, &mainRTRightTex);
+    glBindTexture(GL_TEXTURE_2D, mainRTRightTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 400, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mainRTRightTex, 0);
 
     return ret;
 }
@@ -67,6 +88,9 @@ void Gfx_FrameEnd(GfxContext* ctx)
 
 void Gfx_Finalize(GfxContext* ctx)
 {
+    glDeleteFramebuffers(1, &mainRT[STEREO_EYE_RIGHT]);
+    glDeleteTextures(1, &mainRTRightTex);
+
     glfwDestroyWindow(ctx->window);
     free(ctx);
 }
@@ -75,23 +99,17 @@ void Gfx_Finalize(GfxContext* ctx)
 
 void Gfx_Clear()
 {
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-}
-
-static void _viewport(int x, int y, int width, int height)
-{
-    glViewport(x, y, width, height);
+    // glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void Gfx_SetViewport(int x, int y, int width, int height)
 {
-    _viewport(x, y, width, height);
+    glViewport(x, y, width, height);
 }
 
 void Gfx_SetViewportTilt(int x, int y, int width, int height)
 {
-    _viewport(x, y, width, height);
+    glViewport(x, y, width, height);
 }
 
 void Gfx_SetBlend(bool enable)
@@ -205,9 +223,9 @@ GfxRenderTarget* Gfx_RenderTargetCreateFromTexture(GfxTexture* tex)
     return ret;
 }
 
-void Gfx_RenderTargetBind(GfxRenderTarget* rt)
+void Gfx_RenderTargetBind(GfxRenderTarget* rt, int eye)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, rt ? rt->rtID : 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, rt ? rt->rtID : mainRT[eye]);
 }
 
 void Gfx_RenderTargetDestroy(GfxRenderTarget* rt)

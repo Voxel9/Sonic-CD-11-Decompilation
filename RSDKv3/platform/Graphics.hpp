@@ -3,6 +3,12 @@
 
 #include <cstddef>
 
+typedef enum GfxStereoEye {
+    STEREO_EYE_LEFT,
+    STEREO_EYE_RIGHT,
+    MAX_STEREO_EYES,
+} GfxStereoEye;
+
 typedef enum GfxMatrixMode {
     MTX_MODE_MODELVIEW,
     MTX_MODE_PROJECTION,
@@ -15,7 +21,7 @@ struct GfxTexture;
 struct GfxRenderTarget;
 
 // Context functions
-GfxContext* Gfx_Initialize(int width, int height, const char* gameTitle);
+GfxContext* Gfx_Initialize(const char* gameTitle);
 bool Gfx_MainLoop(GfxContext* ctx);
 bool Gfx_IsDevMenuTriggered(GfxContext* ctx);
 void Gfx_FrameBegin();
@@ -39,7 +45,7 @@ void Gfx_TextureDestroy(GfxTexture* tex);
 
 // Framebuffer functions
 GfxRenderTarget* Gfx_RenderTargetCreateFromTexture(GfxTexture* tex);
-void Gfx_RenderTargetBind(GfxRenderTarget* rt);
+void Gfx_RenderTargetBind(GfxRenderTarget* rt, int eye);
 void Gfx_RenderTargetDestroy(GfxRenderTarget* rt);
 
 // Matrix functions
