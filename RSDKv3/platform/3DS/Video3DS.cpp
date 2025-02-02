@@ -101,7 +101,7 @@ static void changeFile(const char* filepath) {
     vinfo = THEORA_vidinfo(&vidCtx);
     ainfo = THEORA_audinfo(&vidCtx);
 
-    videoWidth = -vinfo->width;
+    videoWidth = vinfo->width;
     videoHeight = vinfo->height;
 
     audioInit(ainfo);

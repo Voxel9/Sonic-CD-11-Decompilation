@@ -89,7 +89,7 @@ GfxTexture* videoBuffer = 0;
 #endif
 DrawVertex* screenRect;
 DrawVertex* retroScreenRect;
-DrawVertex3D *screenVerts;
+DrawVertex *screenVerts;
 
 #if !RETRO_USE_ORIGINAL_CODE
 // enable integer scaling, which is a modification of enhanced scaling
@@ -295,7 +295,7 @@ int InitRenderDevice()
     polyList3D = (DrawVertex3D*)Gfx_LinearAlloc(VERTEX3D_COUNT * sizeof(DrawVertex3D));
     screenRect = (DrawVertex*)Gfx_LinearAlloc(4 * sizeof(DrawVertex));
     retroScreenRect = (DrawVertex*)Gfx_LinearAlloc(4 * sizeof(DrawVertex));
-    screenVerts = (DrawVertex3D*)Gfx_LinearAlloc(4 * sizeof(DrawVertex3D));
+    screenVerts = (DrawVertex*)Gfx_LinearAlloc(4 * sizeof(DrawVertex));
 
     Engine.screenRefreshRate = 60;
     Engine.startFullScreen = false;
@@ -776,7 +776,12 @@ void RenderFromRetroBuffer()
 #if RETRO_USING_OPENGL
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_OrthoTilt(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+
+    float right = (float)viewWidth / ceilPowerOfTwo(viewWidth);
+    float top = 1.0 - ((float)viewHeight / ceilPowerOfTwo(viewHeight));
+
+    Gfx_OrthoTilt(0, right, top, 1.0, -1.0, 1.0);
+
     Gfx_TextureBind(retroBuffer);
 
     Gfx_RenderTargetBind(nullptr, STEREO_EYE_LEFT);
@@ -808,7 +813,6 @@ void FlipScreenVideo()
 {
 #if RETRO_USING_OPENGL
     for (int i = 0; i < 4; ++i) {
-        screenVerts[i].z = 0.0f;
         screenVerts[i].u = retroScreenRect[i].u;
         screenVerts[i].v = retroScreenRect[i].v;
         screenVerts[i].colour.r = 0xFF;
@@ -817,36 +821,37 @@ void FlipScreenVideo()
         screenVerts[i].colour.a = 0xFF;
     }
 
-    float best = minVal(viewWidth / (float)videoWidth, viewHeight / (float)videoHeight);
-
-    float w = videoWidth * best;
-    float h = videoHeight * best;
-
-    float x = normalize((viewWidth - w) / 2, 0, viewWidth) * 2 - 1.0f;
-    float y = -(normalize((viewHeight - h) / 2, 0, viewHeight) * 2 - 1.0f);
-
-    w = normalize(w, 0, viewWidth) * 2;
-    h = -(normalize(h, 0, viewHeight) * 2);
-
-    screenVerts[0].x = x;
-    screenVerts[0].y = y;
-
-    screenVerts[1].x = w + x;
-    screenVerts[1].y = y;
-
-    screenVerts[2].x = x;
-    screenVerts[2].y = h + y;
-
-    screenVerts[3].x = w + x;
-    screenVerts[3].y = h + y;
-
     Gfx_MatrixMode(MTX_MODE_PROJECTION);
     Gfx_LoadIdentity();
-    Gfx_OrthoTilt(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    Gfx_OrthoTilt(0.0, videoWidth, videoHeight, 0.0, -1.0, 1.0);
 
 #if RETRO_PLATFORM == RETRO_3DS
+    screenVerts[0].x = 0;
+    screenVerts[0].y = ceilPowerOfTwo(videoHeight);
+
+    screenVerts[1].x = ceilPowerOfTwo(videoWidth);
+    screenVerts[1].y = ceilPowerOfTwo(videoHeight);
+
+    screenVerts[2].x = 0;
+    screenVerts[2].y = 0;
+
+    screenVerts[3].x = ceilPowerOfTwo(videoWidth);
+    screenVerts[3].y = 0;
+
     BindVideoTex3DS();
 #else
+    screenVerts[0].x = 0;
+    screenVerts[0].y = 0;
+
+    screenVerts[1].x = videoWidth;
+    screenVerts[1].y = 0;
+
+    screenVerts[2].x = 0;
+    screenVerts[2].y = videoHeight;
+
+    screenVerts[3].x = videoWidth;
+    screenVerts[3].y = videoHeight;
+
     Gfx_TextureBind(videoBuffer);
 #endif
 
@@ -867,7 +872,7 @@ void FlipScreenVideo()
     }
 #endif
     Gfx_SetViewportTilt(viewOffsetX, 0, viewWidth, viewHeight);
-    Gfx_SetVertexBufs(sizeof(DrawVertex3D), screenVerts);
+    Gfx_SetVertexBufs(sizeof(DrawVertex), screenVerts);
     Gfx_SetBlend(false);
     Gfx_DrawElements(6, gfxPolyListIndex);
 #endif
@@ -1222,7 +1227,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
 
     // HW_TEXTURE_SIZE == 1.0 due to the scaling we did on the Texture Matrix earlier
 
-    retroScreenRect[0].x = -1;
+    retroScreenRect[0].x = 0;
     retroScreenRect[0].y = 1;
     retroScreenRect[0].u = 0;
     retroScreenRect[0].v = 0;
@@ -1240,8 +1245,8 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     retroScreenRect[1].colour.b = 0xFF;
     retroScreenRect[1].colour.a = 0xFF;
 
-    retroScreenRect[2].x = -1;
-    retroScreenRect[2].y = -1;
+    retroScreenRect[2].x = 0;
+    retroScreenRect[2].y = 0;
     retroScreenRect[2].u = 0;
     retroScreenRect[2].v = HW_TEXTURE_SIZE;
     retroScreenRect[2].colour.r = 0xFF;
@@ -1250,7 +1255,7 @@ void SetScreenDimensions(int width, int height, int winWidth, int winHeight)
     retroScreenRect[2].colour.a = 0xFF;
 
     retroScreenRect[3].x = 1;
-    retroScreenRect[3].y = -1;
+    retroScreenRect[3].y = 0;
     retroScreenRect[3].u = HW_TEXTURE_SIZE;
     retroScreenRect[3].v = HW_TEXTURE_SIZE;
     retroScreenRect[3].colour.r = 0xFF;
