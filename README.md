@@ -18,112 +18,39 @@ A complete decompilation of Retro Engine v3.
 
 Even if your platform isn't supported by the official releases, you **must** buy or officially download it for the assets (you don't need to run the official release, you just need the game assets). Note that only FMV files from the original Steam release of the game are supported; mobile and Origins video files do not work.
 
-# Advantages over the PC version of Sonic CD
-* Sharp, pixel-perfect display.
-* Controls are completely remappable via the settings.ini file.
-* The window allows windows shortcuts to be used.
-* Complete support for using mobile/updated scripts, allowing for features the official PC version never got to be played on PC.
-* Native Windows x64 version, as well as an x86 version.
+# 3DS Port
+## Features
+- Built on recent decomp source, as of Feb 2025
+- Both Old and New 3DS supported
+- Fast hardware (GPU) rendering by default
+- (NEW) Software renderer supported, but slow special stages on N3DS, and slow in general on O3DS
+- (NEW) FMV playback (Currently slow on O3DS and choppy on N3DS, use ffmpeg to scale down OGVs)
+- (NEW) Mod support, set up and install them as you normally would
+- Stereoscopic 3D support (hardware renderer only)
+- Remappable keys in settings.ini (uses [bitmasks](https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/services/hid.h) from libctru)
+- Access dev menu at any time by pressing SELECT
 
-# Advantages over the Mobile versions of Sonic CD
-* The rendering backend is based off the PC version by default, so palettes are fully supported (Tidal Tempest water in particular).
+## Setup
+- [Dump dspfirm.cdc](https://github.com/zoogie/DSP1/releases) from your 3DS, make sure it's at `sdmc:/3ds/`. This is necessary for audio to work.
+- For the best experience, use Data.rsdk from the official mobile version and place it at `sdmc:/3ds/SonicCD/`.
+- For the best experience, copy the decompiled scripts from [here](https://github.com/RSDKModding/RSDKv3-Script-Decompilation) to `sdmc:/3DS/SonicCD/Scripts/`.
+  - Make sure to set `TxtScripts` in settings.ini to `true` after doing this.
+- (Optional) To slightly improve loading times, [extract Data.rsdk contents](https://forums.sonicretro.org/index.php?threads/rsdk-unpacker.30338/) to `sdmc:/3ds/SonicCD/Data/`.
+  - Make sure Data.rsdk itself is removed from `sdmc:/3ds/SonicCD/` or set `DataFile` in settings.ini to blank.
+- (Optional) For FMV playback, copy the `videos/` folder from the original Steam release to `sdmc:/3ds/SonicCD/`.
+  - To ensure the best playback performance, scale down the OGV files to 400x240 using ffmpeg:
+  - `ffmpeg -i input.ogv -s 400x240 -c:v libtheora -q:v 7 -c:a libvorbis -q:a 4 output.ogv`
+- (Optional) To set up mods, place any mod folders into `sdmc:/3ds/SonicCD/mods/`.
+  - Also copy the decompiled scripts as instructed above if you haven't already, as most mods require them.
 
-# Additional Tweaks
-* Added a built in mod loader and API, allowing to easily create and play mods with features such as save file redirection and XML GameConfig data.
-* There is now a settings.ini file that the game uses to load all settings, similar to Sonic Mania.
-* The dev menu can now be accessed from anywhere by pressing the `ESC` key if enabled in the config.
-* The `F12` pause, `F11` step over & fast forward debug features from Sonic Mania have all been ported and are enabled if `devMenu` is enabled in the config.
-* A number of additional dev menu debug features have been added:
-  * `F1` will load the first scene in the Presentation stage list (usually the title screen).
-  * `F2` and `F3` will load the previous and next scene in the current stage list.
-  * `F5` will reload the current scene, as well as all assets and scripts.
-  * `F8` and `F9` will visualize touch screen and object hitboxes.
-  * `F10` will activate a palette overlay that shows the game's 8 internal palettes in real time.
-* If `useSteamDir` is set in the config (Windows only), the game will try to load savedata from Steam's `userdata` directory (where the original Steam version saves to).
-* Added the idle screen dimming feature from Sonic Mania Plus, as well as allowing the user to disable it or set how long it takes for the screen to dim.
+## Building
+- [Install devkitARM and 3ds-dev](https://devkitpro.org/wiki/Getting_Started)
+- Install the following packages: `3ds-sdl 3ds-libogg 3ds-libvorbisidec 3ds-libtheora`
+- Clone/download this repository
+- `cd` to the `RSDKv3.3DS` folder
+- Run `make`
 
-# How to Build
-
-This project uses [CMake](https://cmake.org/), a versatile building system that supports many different compilers and platforms. You can download CMake [here](https://cmake.org/download/). **(Make sure to enable the feature to add CMake to the system PATH during the installation!)**
-
-## Get the source code
-
-In order to clone the repository, you need to install Git, which you can get [here](https://git-scm.com/downloads).
-
-Clone the repo **recursively**, using:
-`git clone --recursive https://github.com/RSDKModding/RSDKv3-Decompilation`
-
-If you've already cloned the repo, run this command inside of the repository:
-```git submodule update --init --recursive```
-
-## Getting dependencies
-
-### Windows
-To handle dependencies, you'll need to install [Visual Studio Community](https://visualstudio.microsoft.com/downloads/) (make sure to install the `Desktop development with C++` package during the installation) and [vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started?pivots=shell-cmd#1---set-up-vcpkg) (You only need to follow `1 - Set up vcpkg`).
-
-After installing those, run the following in Command Prompt (make sure to replace `[vcpkg root]` with the path to the vcpkg installation!):
-- `[vcpkg root]\vcpkg.exe install glew sdl2 libogg libtheora libvorbis --triplet=x64-windows-static` (If you're compiling a 32-bit build, replace `x64-windows-static` with `x86-windows-static`.)
-
-Finally, follow the [compilation steps below](#compiling) using `-DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_PREFIX_PATH=[vcpkg root]/installed/x64-windows-static/` as arguments for `cmake -B build`.
-  - Make sure to replace each instance of `[vcpkg root]` with the path to the vcpkg installation!
-  - If you're compiling a 32-bit build, replace each instance of `x64-windows-static` with `x86-windows-static`.
-
-### Linux
-Install the following dependencies: then follow the [compilation steps below](#compiling):
-- **pacman (Arch):** `sudo pacman -S base-devel cmake glew sdl2 libogg libtheora libvorbis`
-- **apt (Debian/Ubuntu):** `sudo apt install build-essential cmake libglew-dev libglfw3-dev libsdl2-dev libogg-dev libtheora-dev libvorbis-dev`
-- **rpm (Fedora):** `sudo dnf install make gcc cmake glew-devel glfw-devel sdl2-devel libogg-devel libtheora-devel libvorbis-devel zlib-devel`
-- **apk (Alpine/PostmarketOS)** `sudo apk add build-base cmake glew-dev glfw-dev sdl2-dev libogg-dev libtheora-dev libvorbis-dev`
-- Your favorite package manager here, [make a pull request](https://github.com/RSDKModding/RSDKv3-Decompilation/fork)
-
-### Mac
-Follow the build instructions [here.](./dependencies/mac/README.md)
-
-### Android
-Follow the android build instructions [here.](./dependencies/android/README.md)
-
-## Compiling
-
-Compiling is as simple as typing the following in the root repository directory:
-```
-cmake -B build
-cmake --build build --config release
-```
-
-The resulting build will be located somewhere in `build/` depending on your system.
-
-The following cmake arguments are available when compiling:
-- Use these by adding `-D[flag-name]=[value]` to the end of the `cmake -B build` command. For example, to build with `RETRO_DISABLE_PLUS` set to on, add `-DRETRO_DISABLE_PLUS=on` to the command.
-
-### RSDKv3 flags
-- `RETRO_DISABLE_PLUS`: Whether or not to disable the Plus DLC. Takes a boolean (on/off): build with `on` when compiling for distribution. Defaults to `off`.
-- `RETRO_FORCE_CASE_INSENSITIVE`: Forces case insensivity when loading files. Takes a boolean, defaults to `off`.
-- `RETRO_MOD_LOADER`: Enables or disables the mod loader. Takes a boolean, defaults to `on`.
-- `RETRO_USE_HW_RENDER`: Enables the Hardware Renderer as an option. Takes a boolean, defaults to `on`.
-- `RETRO_ORIGINAL_CODE`: Removes any custom code. *A playable game will not be built with this enabled.* Takes a boolean, defaults to `off`.
-- `RETRO_SDL_VERSION`: *Only change this if you know what you're doing.* Switches between using SDL1 or SDL2. Takes an integer of either `1` or `2`, defaults to `2`.
-
-## Unofficial Branches
-Follow the installation instructions in the readme of each branch.
-* For the **Nintendo Switch**, go to [heyjoeway's fork](https://github.com/heyjoeway/Sonic-CD-11-Decompilation).
-* For the **Nintendo 3DS**, go to [SaturnSH2x2's fork](https://github.com/SaturnSH2x2/Sonic-CD-11-3DS).
-  * A New Nintendo 3DS is required for the game to run smoothly.
-  
-Because these branches are unofficial, we can't provide support for them and they may not be up-to-date.
-
-## Other Platforms
-Currently the only supported platforms are the ones listed above, however the backend uses libogg, libvorbis, libtheora & SDL2 to power it (as well as tinyxml2 for the mod API), so the codebase is very multiplatform.
-If you're able to, you can clone this repo and port it to a platform not on the list.
-
-# FAQ
-You can find the FAQ [here](./FAQ.md).
-
-# Special Thanks
-* [Xeeynamo](https://github.com/Xeeynamo): for creating the RSDK Animation editor & an early version of the script unpacker, both of which got me into RSDK modding.
-* [Sappharad](https://github.com/Sappharad): for making a decompilation of the Windows Phone 7 version of Sonic CD (found [here](https://github.com/Sappharad/rvm_soniccd)) which gave me the idea & motivation to decompile the PC/iOS/Android versions.
-* [SuperSonic16](https://github.com/TheSuperSonic16): for creating & adding some stuff to the Sonic CD mod loader that I asked for.
-* [The Weigman](https://github.com/TheWeigman) for creating the header you see up here along with similar assets.
-* Everyone in the [Retro Engine Modding Server](https://dc.railgun.works/retroengine) for being supportive of me and for giving me a place to show off these things that I've found.
-
-# Contact:
-Join the [Retro Engine Modding Discord Server](https://dc.railgun.works/retroengine) for any extra questions you may need to know about the decompilation or modding it.
+## Acknowledgements
+- oreo639 - 3ds-theoraplayer code
+- Rubberduckycooly, st×tic, and RSDKv3-Decompilation contributors
+- Christian "Taxman" Whitehead - Original RSDKv3 author
